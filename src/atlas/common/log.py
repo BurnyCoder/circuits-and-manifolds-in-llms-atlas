@@ -21,6 +21,7 @@ def get_logger(run_name: str = "atlas") -> logging.Logger:
     if log.handlers:
         return log
     log.setLevel(logging.INFO)
+    log.propagate = False  # libraries may install a root handler (basicConfig); avoid printing every line twice
     LOGS.mkdir(parents=True, exist_ok=True)
     path = LOGS / f"{datetime.now():%Y%m%d_%H%M%S}_{run_name}.log"
     # Windows consoles/pipes default to cp1252, which cannot print α, ², arrows or non-Latin text in model outputs
