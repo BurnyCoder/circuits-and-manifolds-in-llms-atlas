@@ -5,8 +5,11 @@ Order in High-Dimensional Chaos" (https://arxiv.org/abs/2603.12261, ICML 2026, C
 https://github.com/ExplainableML/LCS): encode solid-color images with the FLUX VAE, average each image's latent over
 space, center and run PCA — the first three components explain essentially all variance; PC1 tracks lightness, the
 angle in the PC2–PC3 plane tracks hue and the radius tracks saturation (an HSL-like bicone, paper Fig. 2).
-We use the VAE shipped with FLUX.1-schnell (Apache-2.0); the paper used FLUX.1-dev's VAE — we verify the two configs
-match and note it as a caveat. Control: the same pipeline on random-noise images.
+Weights: ``diffusers/FLUX.1-vae`` (the FLUX.1 autoencoder in diffusers format, published ungated by the Hugging Face
+diffusers team; config latent_channels 16, scaling 0.3611, shift 0.1159 = the FLUX.1 VAE). The paper used FLUX.1-dev's
+VAE; the official black-forest-labs repos are gated behind a click-through, so we use this copy and note it as a caveat.
+Only config.json + safetensors are loaded (the repo's endpoint handler.py is never executed).
+Control: the same pipeline on random-noise images.
 """
 
 from __future__ import annotations
@@ -23,7 +26,7 @@ from ..common.log import get_logger
 
 log = get_logger()
 SLUG = "colour-bicone"
-REPO = "black-forest-labs/FLUX.1-schnell"
+REPO = "diffusers/FLUX.1-vae"
 
 
 @torch.no_grad()
@@ -41,7 +44,7 @@ def compute(ctx) -> None:
     from diffusers import AutoencoderKL
 
     t0 = time.time()
-    vae = AutoencoderKL.from_pretrained(REPO, subfolder="vae", torch_dtype=torch.float16 if ctx.device == "cuda" else torch.float32).to(ctx.device).eval()
+    vae = AutoencoderKL.from_pretrained(REPO, torch_dtype=torch.float16 if ctx.device == "cuda" else torch.float32).to(ctx.device).eval()
     rng = np.random.default_rng(ctx.seed)
     n = 120 if ctx.quick else 400
     hsv = np.c_[rng.random(n), rng.random(n), rng.random(n)]  # uniform in HSV, as in the paper

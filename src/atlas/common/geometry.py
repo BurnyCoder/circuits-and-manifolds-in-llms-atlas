@@ -42,8 +42,20 @@ def cyclic_order_pvalue(score: float, n: int, n_perm: int = 20000, seed: int = 0
     return float((null >= score - 1e-12).mean())
 
 
-def ridge_r2(X_tr, y_tr, X_te, y_te, alpha: float = 1.0) -> float:
-    """Closed-form ridge regression (features standardized on train) -> held-out R² for each target column, averaged."""
+def ridge_r2(X_tr, y_tr, X_te, y_te, alpha: float | list[float] = 1.0, groups=None) -> float:
+    """Closed-form ridge regression (features standardized on train) -> held-out R² for each target column, averaged.
+
+    If ``alpha`` is a list, it is chosen by held-out R² on an inner validation split of the *training* rows (every 5th
+    group if ``groups`` is given, e.g. document ids, so tokens of one document never sit on both sides; else every 5th
+    row), then the model is refit on all training rows — the same idea as sklearn's RidgeCV
+    (https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.RidgeCV.html). The test set is never used
+    for the choice.
+    """
+    if np.ndim(alpha) > 0:
+        g = np.asarray(groups) if groups is not None else np.arange(len(X_tr))
+        uniq = np.unique(g)
+        val = np.isin(g, uniq[::5])
+        alpha = max(alpha, key=lambda a: ridge_r2(X_tr[~val], y_tr[~val], X_tr[val], y_tr[val], float(a)))
     mu, sd = X_tr.mean(0), X_tr.std(0) + 1e-6
     A, B = (X_tr - mu) / sd, (X_te - mu) / sd
     ym = y_tr.mean(0)
