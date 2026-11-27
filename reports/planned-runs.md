@@ -98,6 +98,19 @@ Laptop (8 GB) unless marked RunPod.
 | sae-features | GPT-2 small res-jb L8; 5 concept features; α ∈ {0…80} | Golden Gate clamping (Templeton et al. 2024) | Golden Gate on-topic ≥ 50% and ≥ 30 pts above base and random (≥ 15) | random direction |
 | sae-features | same | steering generalizes | ≥ 3/5 concepts gain ≥ 30 pts (≥ 2) | random direction |
 
+## Grokking progress measures from the companion runs (added 2026-11-27, before running)
+
+Not a blind test: the companion project preregistered these hypotheses (its `docs/preregistration.md`, tag `prereg-v1`)
+and we had read its verdict table (11/11 seeds for H1 and H2) before writing this. Our module re-implements its published
+definitions (`docs/operationalizations.md`) independently, from its raw per-checkpoint metrics (`analysis/ckpt_metrics.npz`,
+`analysis/phases.json` on Hugging Face), as a code-level cross-check. The companion's H3–H5 verdicts are quoted from its
+`reports/tables/hypotheses.json` and are not re-tested here.
+
+| Entry | Data | Claim (Nanda et al. 2023, §5) | Our metric (companion definitions) | Pass criterion |
+|---|---|---|---|---|
+| grokking-runs | 11 wd = 1 seeds, 401 checkpoints each | Restricted loss falls before test loss | first checkpoint ≥ t1 where the restricted loss (all pairs) is ≤ 10% of its value at t1, vs the same for test loss | earlier in ≥ 10 of 11 seeds (companion rule: fewer than two failures) |
+| grokking-runs | same | Excluded loss rises during circuit formation | excluded loss (train pairs, key frequencies removed) at t2 ÷ at t1 | > 10× in ≥ 10 of 11 seeds |
+
 ## Amendments (dated; each made after a smoke test and before the corresponding full run)
 
 | Date | Entry | Amendment | Reason |
