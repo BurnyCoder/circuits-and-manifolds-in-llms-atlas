@@ -12,16 +12,33 @@ from `results/<slug>/replication.json`. Do not edit it by hand.
 <!-- table:scoreboard -->
 | Entry | Models | Claims | ✅ pass | 🟡 partial | ❌ fail | Runtime (s) | Generated (UTC) |
 |---|---|---|---|---|---|---|---|
+| [actadd](actadd/experiment.md) | gpt2-xl | 2 | 1 | 0 | 1 | 456 | 2026-11-27 22:38 UTC |
 | [attribution-graphs](attribution-graphs/experiment.md) | gemma-2-2b (Neuronpedia public graphs) | 2 | 2 | 0 | 0 | 88 | 2026-11-27 18:03 UTC |
+| [belief-fractal](belief-fractal/experiment.md) | 4-layer transformer (trained here) | 2 | 1 | 0 | 1 | 1463 | 2026-11-27 22:17 UTC |
+| [block-sparse-featurizers](block-sparse-featurizers/experiment.md) | BSF / TopK SAE (trained here), InceptionV1 | 2 | 2 | 0 | 0 | 49 | 2026-11-27 22:21 UTC |
+| [calculator-probes](calculator-probes/experiment.md) | EleutherAI/pythia-410m, EleutherAI/pythia-1.4b, EleutherAI/pythia-2.8b | 2 | 1 | 0 | 1 | 372 | 2026-11-27 22:50 UTC |
+| [calendar-circles](calendar-circles/experiment.md) | gpt2, Qwen/Qwen3-1.7B | 3 | 2 | 1 | 0 | 798 | 2026-11-27 21:11 UTC |
+| [colour-bicone](colour-bicone/experiment.md) | diffusers/FLUX.1-vae (VAE) | 2 | 2 | 0 | 0 | 30 | 2026-11-27 22:18 UTC |
 | [copy-suppression](copy-suppression/experiment.md) | gpt2 | 3 | 3 | 0 | 0 | 2 | 2026-11-27 17:49 UTC |
 | [curve-detectors](curve-detectors/experiment.md) | InceptionV1 (Lucid weights via Lucent) | 3 | 3 | 0 | 0 | 279 | 2026-11-27 18:30 UTC |
+| [emotions](emotions/experiment.md) | Qwen/Qwen3-1.7B | 4 | 2 | 0 | 2 | 639 | 2026-11-27 23:22 UTC |
 | [greater-than](greater-than/experiment.md) | gpt2 | 3 | 3 | 0 | 0 | 98 | 2026-11-27 17:57 UTC |
 | [grokking](grokking/experiment.md) | 1L transformer (trained here) | 5 | 5 | 0 | 0 | 1585 | 2026-11-27 18:23 UTC |
 | [grokking-runs](grokking-runs/experiment.md) | BurnyCoder/grokking-modular-addition-runs | 5 | 5 | 0 | 0 | 131 | 2026-11-27 19:07 UTC |
 | [induction-heads](induction-heads/experiment.md) | attn-only-2l, gpt2, EleutherAI/pythia-160m | 4 | 4 | 0 | 0 | 1096 | 2026-11-27 17:47 UTC |
 | [ioi](ioi/experiment.md) | gpt2 | 5 | 5 | 0 | 0 | 120 | 2026-11-27 17:49 UTC |
+| [jlens](jlens/experiment.md) | Qwen/Qwen3-1.7B, neuronpedia/jacobian-lens | 3 | 1 | 0 | 2 | 104 | 2026-11-27 22:40 UTC |
+| [linebreak-manifold](linebreak-manifold/experiment.md) | Qwen/Qwen3-1.7B, gpt2 | 4 | 2 | 0 | 2 | 464 | 2026-11-27 21:53 UTC |
+| [manifold-steering](manifold-steering/experiment.md) | Qwen/Qwen3-1.7B | 2 | 1 | 0 | 1 | 201 | 2026-11-27 22:43 UTC |
+| [neuron-basis](neuron-basis/experiment.md) | Qwen/Qwen3-1.7B | 3 | 1 | 1 | 1 | 221 | 2026-11-27 22:27 UTC |
+| [number-helix](number-helix/experiment.md) | EleutherAI/pythia-160m, EleutherAI/pythia-410m, EleutherAI/pythia-1b, EleutherAI/pythia-1.4b, EleutherAI/pythia-2.8b | 3 | 1 | 1 | 1 | 2026 | 2026-11-27 21:45 UTC |
 | [othello-gpt](othello-gpt/experiment.md) | othello-gpt | 3 | 3 | 0 | 0 | 133 | 2026-11-27 18:26 UTC |
-| **Total (9 entries)** | | **33** | **33** | **0** | **0** | | |
+| [refusal-direction](refusal-direction/experiment.md) | Qwen/Qwen2.5-1.5B-Instruct | 2 | 2 | 0 | 0 | 142 | 2026-11-27 22:30 UTC |
+| [sae-features](sae-features/experiment.md) | gpt2, gpt2-small-res-jb SAE | 2 | 2 | 0 | 0 | 582 | 2026-11-27 23:11 UTC |
+| [sae-manifolds](sae-manifolds/experiment.md) | TopK SAEs on synthetic manifolds (trained here) | 2 | 1 | 0 | 1 | 215 | 2026-11-27 23:26 UTC |
+| [stories-in-space](stories-in-space/experiment.md) | Qwen/Qwen2.5-1.5B-Instruct, SimpleStories | 2 | 1 | 0 | 1 | 435 | 2026-11-27 23:01 UTC |
+| [world-model](world-model/experiment.md) | mountain-car world model (trained here) | 2 | 1 | 0 | 1 | 234 | 2026-11-27 22:54 UTC |
+| **Total (26 entries)** | | **75** | **57** | **3** | **15** | | |
 <!-- /table:scoreboard -->
 
 ## Networks used
