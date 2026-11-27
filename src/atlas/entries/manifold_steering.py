@@ -6,8 +6,11 @@ Llama-3.1-8B (layer 28, 64-d PCA) they fit a periodic cubic spline through the a
 answers and steer from one day to another either along the spline or along the straight chord. Along the manifold the
 output distribution moves through the intermediate days and stays near the behaviour manifold (Bhattacharyya energy
 E_BC 0.34 vs 0.93 for linear on weekdays; isometry r .99 vs .89).
-Here: prompts "Let's do some day of the week math. {N} days from {D} is" (answers = 7 days), last-token activations at a
-middle layer, 64-d PCA, periodic spline (scipy CubicSpline, bc_type='periodic') through the 7 answer centroids. For every
+Here: day-arithmetic prompts Qwen3-1.7B solves ("If today is {D}, then two days later it is"; calendar_circles.day_prompts;
+the original "N days from D" template was answered correctly only 0-57% of the time), last-token activations at a middle
+layer, the 6-d subspace spanned by the answer-day centroids (instead of the paper's 64-d PCA, which needs many more
+prompts), periodic spline (scipy CubicSpline, bc_type='periodic') through the 7 centroids of *correctly answered*
+prompts grouped by answer day (so each centroid is what the model represents when it says that day). For every
 ordered pair of days 2–3 apart we replace the 64-d component of a source prompt's activation with points on (a) the spline
 arc and (b) the chord, read the 7-day output distribution, and measure: E_BC = mean Bhattacharyya distance to the
 behaviour manifold (spline through the √p centroids), and the fraction of path points whose argmax is an intermediate day.
@@ -23,7 +26,7 @@ from scipy.interpolate import CubicSpline
 
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
-from .calendar_circles import DAYS, NUMWORDS
+from .calendar_circles import DAYS, day_prompts
 
 log = get_logger()
 SLUG = "manifold-steering"
@@ -44,7 +47,7 @@ def compute(ctx) -> None:
     tok = AutoTokenizer.from_pretrained(MODEL)
     model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.bfloat16).to(ctx.device).eval()
     day_ids = [tok(d, add_special_tokens=False).input_ids[0] for d in DAYS]
-    prompts = [(k, d, f"Let's do some day of the week math. {NUMWORDS[k - 1]} days from{DAYS[d]} is") for k in range(1, 7) for d in range(7)]
+    prompts = day_prompts()
     results = []
     for L in LAYERS if not ctx.quick else LAYERS[:1]:
         H, P, ans = [], [], []
@@ -57,12 +60,15 @@ def compute(ctx) -> None:
             ans.append((d + k) % 7)
         H, P, ans = np.stack(H), np.stack(P), np.array(ans)
         acc = float((P.argmax(1) == ans).mean())
-        mu = H.mean(0)
-        U, S, Vt = np.linalg.svd(H - mu, full_matrices=False)
-        B = Vt[: min(64, len(H) - 1)]
-        Z = (H - mu) @ B.T
-        C = np.stack([Z[ans == c].mean(0) for c in range(7)])  # activation centroids per answer day
-        Pc = np.stack([P[ans == c].mean(0) for c in range(7)])
+        ok = P.argmax(1) == ans  # correctly answered prompts define the centroids and the steering sources
+        # Steering subspace = span of the 7 answer-day centroids (6-d). The paper's 64-d PCA came from many prompts; on our
+        # 63 it would span almost all prompt variation (prefix, offset), and overwriting it with a centroid creates
+        # off-distribution hybrids. Replacing only the centroid-span coordinates keeps everything else in the prompt.
+        Cfull = np.stack([H[ok & (ans == c)].mean(0) for c in range(7)])  # [7, d] centroids of correct prompts
+        mu = Cfull.mean(0)
+        B = np.linalg.svd(Cfull - mu, full_matrices=False)[2][:6]  # orthonormal basis [6, d]
+        C = (Cfull - mu) @ B.T  # centroids in the 6-d day subspace
+        Pc = np.stack([P[ok & (ans == c)].mean(0) for c in range(7)])
         act_spline = periodic_spline(C)
         beh_spline = periodic_spline(np.sqrt(Pc))
         beh_dense = beh_spline(np.linspace(0, 7, 400))
