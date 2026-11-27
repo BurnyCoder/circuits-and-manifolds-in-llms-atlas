@@ -3,12 +3,14 @@
 // Global context: entries say *where* a finding lives via frontmatter `locations: [{model, part, layer, head, ...}]`;
 // ModelExplorer matches those against the parts drawn from these specs.
 
-export type ModelKind = 'transformer' | 'cnn' | 'pipeline'
+export type ModelKind = 'transformer' | 'cnn' | 'pipeline' | 'network'
 
 export interface CnnLayer {
   name: string
   channels: number
 }
+
+export type Family = 'llm' | 'transformer' | 'vision' | 'other'
 
 export interface ModelSpec {
   id: string
@@ -25,15 +27,27 @@ export interface ModelSpec {
   relativeDepth?: boolean
   /** CNN / pipeline stages. */
   stages?: CnnLayer[]
-  /** 'llm' ⊂ 'transformer'; used by the General LLM / General transformer aggregate views. */
-  family?: 'llm' | 'transformer' | 'vision' | 'other'
-  /** Aggregate view: findings of these member families are placed on one generic block by relative depth. */
-  aggregate?: ('llm' | 'transformer')[]
+  /** 'llm' ⊂ 'transformer'; used by the General LLM / General transformer / General neural network aggregate views. */
+  family?: Family
+  /** Aggregate view: findings of these member families are placed on one generic model by relative depth. */
+  aggregate?: Family[]
   blurb: string
   source: string
 }
 
 export const MODELS: ModelSpec[] = [
+  {
+    id: 'general-nn',
+    name: 'General neural network (all models)',
+    kind: 'network',
+    open: true,
+    params: 'aggregate view',
+    relativeDepth: true,
+    aggregate: ['llm', 'transformer', 'vision', 'other'],
+    blurb:
+      'Every finding in the atlas — circuits, manifolds, neurons, features, steering directions, lenses — from every model (language models, vision CNNs, autoencoders, world models, DNA models) placed on one generic network from input to output by relative depth. Toy and synthetic findings without a layer sit in the middle, marked as such.',
+    source: 'https://distill.pub/2020/circuits/zoom-in/',
+  },
   {
     id: 'general-llm',
     name: 'General LLM (all language models)',
@@ -70,6 +84,20 @@ export const MODELS: ModelSpec[] = [
     dModel: 768,
     blurb: 'The workhorse of circuit discovery: IOI, copy suppression, greater-than, induction and calendar circles all live here.',
     source: 'https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf',
+  },
+  {
+    id: 'gpt2-xl',
+    family: 'llm',
+    name: 'GPT-2 XL',
+    kind: 'transformer',
+    open: true,
+    params: '1.5B',
+    // 48 blocks, d_model 1600 (Radford et al. 2019, Table 2); 25 heads (Hugging Face gpt2-xl config.json, n_head).
+    layers: 48,
+    heads: 25,
+    dModel: 1600,
+    blurb: 'ActAdd steering: adding the activation difference of a prompt pair ("Love" − "Hate", weddings) to early/middle residual positions.',
+    source: 'https://huggingface.co/openai-community/gpt2-xl/blob/main/config.json',
   },
   {
     id: 'attn-only-2l',

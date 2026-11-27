@@ -2,7 +2,9 @@
 // - Highlighted heads / MLPs / residual-stream positions / CNN stages / depth bands host a finding (category color).
 // - Tiny thumbnails of each finding's mechanism are pinned next to where it lives; click one to EXPAND the entry's
 //   full interactive visualization right here (or open its page).
-// - "General LLM" / "General transformer" aggregate all models onto one generic block stack by relative depth.
+// - "General LLM" / "General transformer" aggregate all models onto one generic block stack by relative depth;
+//   "General neural network" puts every finding of every model (transformers, CNNs, autoencoders, world models) on one
+//   generic input → hidden layers → output network.
 // - GPT-2 small: heads can be colored by scores measured in this repo; a clicked head shows its real attention pattern.
 // Global context: locations come from entry frontmatter (`locations`, src/lib/types.ts) plus measured induction /
 // previous-token heads from public/data/gpt2-map.json; thumbnails from src/viz/thumbs.tsx; full visualizations from
@@ -12,7 +14,7 @@ import { Link } from 'react-router-dom'
 import { entries } from '../lib/content'
 import { useData } from '../lib/data'
 import { CATEGORY } from '../lib/labels'
-import { MODELS, modelById, type ModelSpec } from '../lib/models'
+import { MODELS, modelById, type Family, type ModelSpec } from '../lib/models'
 import type { Entry, Location } from '../lib/types'
 import Heatmap from '../viz/primitives/Heatmap'
 import { seqScale } from '../viz/primitives/common'
@@ -29,7 +31,7 @@ type Overlay = 'findings' | 'induction' | 'prev' | 'duplicate'
 const DEPTH_ROWS = 20 // closed + aggregate views: rows = 5% depth slices
 
 // ---------- locations -> drawn components ----------
-type VPart = 'vattn' | 'vmlp' | 'vresid' | 'embed' | 'unembed'
+type VPart = 'vattn' | 'vmlp' | 'vresid' | 'vlayer' | 'embed' | 'unembed'
 interface VLoc {
   part: VPart
   depth: [number, number]
@@ -44,6 +46,11 @@ interface Hit {
 function toVirtual(loc: Location, spec: ModelSpec): VLoc | null {
   if (loc.part === 'embed' || loc.part === 'unembed') return { part: loc.part, depth: [0, 100] }
   if (loc.part === 'band') return { part: 'vresid', depth: loc.depth ?? [0, 100] }
+  if (loc.part === 'stage' && spec.stages) {
+    // CNN / pipeline stage i of n covers relative depth [i/n, (i+1)/n] (input stage first).
+    const i = spec.stages.findIndex((st) => st.name === loc.name)
+    return i < 0 ? null : { part: 'vresid', depth: [(i / spec.stages.length) * 100, ((i + 1) / spec.stages.length) * 100] }
+  }
   if (!spec.layers) return null
   const n = spec.layers
   const span = (lo: number, hi: number): [number, number] => [(lo / n) * 100, ((hi + 1) / n) * 100]
@@ -64,7 +71,7 @@ function coversVirtual(v: VLoc, key: string): boolean {
   return v.depth[0] < lo + 100 / DEPTH_ROWS && v.depth[1] > lo
 }
 
-/** Keys: head:L:H, attn:L, mlp:L, resid:L, embed, unembed, stage:NAME, depth:I, vattn:I, vmlp:I, vresid:I */
+/** Keys: head:L:H, attn:L, mlp:L, resid:L, embed, unembed, stage:NAME, depth:I, vattn:I, vmlp:I, vresid:I, vlayer:I */
 function covers(loc: Location, key: string): boolean {
   const [kind, a, b] = key.split(':')
   const L = Number(a)
@@ -143,7 +150,10 @@ function describe(m: ModelSpec, key: string): string {
       return `Generic transformer · MLP ${where}`
     case 'vresid':
       return `Generic transformer · residual stream ${where}`
+    case 'vlayer':
+      return `Generic neural network · hidden layer ${where}`
     default:
+      if (m.kind === 'network') return `Generic neural network · ${kind === 'embed' ? 'input layer' : 'output layer'}`
       return `${m.name} · ${kind === 'embed' ? 'embedding' : 'unembedding'}`
   }
 }
@@ -152,7 +162,7 @@ function describe(m: ModelSpec, key: string): string {
 export default function ModelExplorer() {
   const { data } = useData('gpt2-map.json')
   const map = data as unknown as MapData | undefined
-  const [modelId, setModelId] = useState('general-llm')
+  const [modelId, setModelId] = useState('general-nn')
   const [sel, setSel] = useState<string | null>(null)
   const [hover, setHover] = useState<string | null>(null)
   const [overlay, setOverlay] = useState<Overlay>('findings')
@@ -177,13 +187,22 @@ export default function ModelExplorer() {
 
   const modelHits: Hit[] = useMemo(() => {
     if (!m.aggregate) return hits.filter((h) => h.loc.model === modelId)
+    const network = m.kind === 'network'
     const out: Hit[] = []
     for (const h of hits) {
       const spec = modelById[h.loc.model]
-      if (!spec?.family || !m.aggregate.includes(spec.family as 'llm' | 'transformer')) continue
+      if (!spec?.family || !m.aggregate.includes(spec.family)) continue
       const v = toVirtual(h.loc, spec)
-      if (v) out.push({ ...h, v, loc: { ...h.loc, label: `${spec.name}: ${h.loc.label}` } })
+      // The generic network has one kind of hidden layer: attention / MLP / residual / stage all collapse onto it.
+      if (v) out.push({ ...h, v: network && v.part !== 'embed' && v.part !== 'unembed' ? { ...v, part: 'vlayer' } : v, loc: { ...h.loc, label: `${spec.name}: ${h.loc.label}` } })
     }
+    if (network)
+      for (const e of entries.filter((x) => !x.locations?.length))
+        out.push({
+          entry: e,
+          v: { part: 'vlayer', depth: [47.5, 52.5] },
+          loc: { model: 'none', part: 'band', depth: [47.5, 52.5], label: `${e.models.join(', ')}: no specific layer (toy / synthetic setup or not localized in this atlas)` },
+        })
     return out
   }, [hits, m, modelId])
 
@@ -192,10 +211,18 @@ export default function ModelExplorer() {
     const hs = at(key)
     return hs.length ? CATEGORY[hs[0].entry.category].color : null
   }
+  /** Category colors of every finding at a component, grouped by category (for the multi-colored network rows). */
+  const mix = (key: string) => {
+    const order = Object.keys(CATEGORY)
+    return at(key)
+      .map((h) => h.entry.category)
+      .sort((a, b) => order.indexOf(a) - order.indexOf(b))
+      .map((c) => CATEGORY[c].color)
+  }
   const maxHits = useMemo(() => {
     if (!m.aggregate) return 1
     let mx = 1
-    for (const part of ['vattn', 'vmlp', 'vresid'])
+    for (const part of ['vattn', 'vmlp', 'vresid', 'vlayer'])
       for (let i = 0; i < DEPTH_ROWS; i++) mx = Math.max(mx, modelHits.filter((h) => h.v && coversVirtual(h.v, `${part}:${i}`)).length)
     return mx
   }, [m, modelHits])
@@ -205,8 +232,9 @@ export default function ModelExplorer() {
     for (const h of hits) {
       c[h.loc.model] = (c[h.loc.model] ?? 0) + 1
       const fam = modelById[h.loc.model]?.family
-      for (const agg of MODELS.filter((x) => x.aggregate)) if (fam && agg.aggregate!.includes(fam as 'llm' | 'transformer')) c[agg.id] = (c[agg.id] ?? 0) + 1
+      for (const agg of MODELS.filter((x) => x.aggregate)) if (fam && agg.aggregate!.includes(fam as Family)) c[agg.id] = (c[agg.id] ?? 0) + 1
     }
+    c['general-nn'] = (c['general-nn'] ?? 0) + entries.filter((e) => !e.locations?.length).length // unlocalized entries
     return c
   }, [hits])
   const scoreScale = useMemo(() => seqScale(1), [])
@@ -237,7 +265,7 @@ export default function ModelExplorer() {
         Architecture diagrams of the models in this atlas. Glowing parts host a circuit, manifold, neuron family, feature or
         direction (colored by category). The tiny pictures on the right are miniature versions of those findings — click one
         to expand its full interactive visualization below. Closed models are drawn by relative depth (layer counts are not
-        public); the two <b>General</b> views pool every model by relative depth.
+        public); the three <b>General</b> views pool models by relative depth — <b>General neural network</b> holds every finding in the atlas.
       </p>
       <div className="tabs model-tabs" role="tablist" aria-label="Choose a model">
         {MODELS.map((x) => (
@@ -268,7 +296,9 @@ export default function ModelExplorer() {
               </select>
             </div>
           )}
-          {m.kind === 'transformer' ? (
+          {m.kind === 'network' ? (
+            <NetworkDiagram m={m} color={color} mix={mix} intensity={intensity} focus={focus} onPick={pick} onHover={setHover} pins={pins} expanded={expanded} onExpand={expand} />
+          ) : m.kind === 'transformer' ? (
             <TransformerDiagram m={m} headFill={headFill} color={color} intensity={intensity} focus={focus} onPick={pick} onHover={setHover} pins={pins} expanded={expanded} onExpand={expand} />
           ) : (
             <StageDiagram m={m} color={color} focus={focus} onPick={pick} onHover={setHover} pins={pins} expanded={expanded} onExpand={expand} />
@@ -687,6 +717,108 @@ function TransformerDiagram({
         const [ax, ay] = anchor(p.key)
         return <PinCard key={p.entry.slug} p={p} x={p.px} y={p.py} active={expanded === p.entry.slug} onExpand={onExpand} onHover={onHover} anchorX={ax} anchorY={ay} />
       })}
+    </svg>
+  )
+}
+
+/**
+ * Generic neural network for the "General neural network" view: input layer at the bottom, DEPTH_ROWS hidden layers
+ * (5% of relative depth each), output layer on top. Each layer is a row of neurons linked to nearby neurons of the next
+ * layer; rows that host findings glow in the first finding's category color (opacity = how many findings). Pins sit on
+ * the right as in the transformer views.
+ */
+function NetworkDiagram({ m, color, mix, intensity, focus, onPick, onHover, pins, expanded, onExpand }: DiagramProps & { mix: (key: string) => string[]; intensity: (key: string) => number }) {
+  const n = DEPTH_ROWS
+  const D = 470
+  const top = 50
+  // Stretch the network to the height the pins need (≥ 26 px per layer), so the diagram and its pins line up.
+  const rowH = Math.max(26, (Math.ceil(pins.length / MAX_PIN_COLS) * PIN_STEP - 52) / (n + 2))
+  const yOf = (row: number) => top + (n - row) * rowH + rowH / 2 // row −1 = input, row n = output
+  const bottom = yOf(-1) + rowH + 26
+  const spineX = 40
+  const x0 = 78
+  const x1 = D - 18
+  // Neurons per layer: narrow input/output, wider in the middle (the usual hourglass-free "bulge" picture).
+  const width = (row: number) => (row === -1 ? 7 : row === n ? 5 : Math.round(8 + 3 * Math.sin(((row + 0.5) / n) * Math.PI)))
+  const nx = (row: number, i: number) => {
+    const k = width(row)
+    const span = (x1 - x0) * (0.5 + (0.5 * k) / 11)
+    return (x0 + x1) / 2 - span / 2 + (i * span) / (k - 1)
+  }
+  const keyOf = (row: number) => (row === -1 ? 'embed' : row === n ? 'unembed' : `vlayer:${row}`)
+  const rows = Array.from({ length: n + 2 }, (_, i) => i - 1)
+  const grid = pinGrid(pins.length, top - 34, bottom)
+  const W = D + 30 + grid.cols * (PIN_W + 12)
+  const H = grid.bottom + 10
+  const anchorY = (key: string) => {
+    const [kind, a] = key.split(':')
+    return yOf(kind === 'embed' ? -1 : kind === 'unembed' ? n : Number(a))
+  }
+  const placed = layoutPins(
+    pins.map((p) => ({ ...p, y: anchorY(p.key) })),
+    top - 34,
+    grid.bottom,
+    D + 30,
+    grid.cols,
+  )
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W }} role="img" aria-label={`${m.name} diagram`}>
+      <Defs />
+      <line className="flow" x1={spineX} x2={spineX} y1={yOf(-1)} y2={yOf(n)} stroke="url(#resid-grad)" strokeWidth={3} />
+      {/* connections between consecutive layers: each neuron to the neurons at a similar relative position */}
+      {rows.slice(0, -1).map((r) => {
+        const k1 = width(r)
+        const k2 = width(r + 1)
+        const c = color(keyOf(r + 1)) ?? color(keyOf(r))
+        const segs: [number, number, number, number][] = []
+        for (let i = 0; i < k1; i++)
+          for (let j = 0; j < k2; j++) if (Math.abs(i / (k1 - 1) - j / (k2 - 1)) <= 0.22) segs.push([nx(r, i), yOf(r), nx(r + 1, j), yOf(r + 1)])
+        return (
+          <g key={`e${r}`} stroke={c ?? 'currentColor'} strokeOpacity={c ? 0.35 : 0.12} strokeWidth={1}>
+            {segs.map(([a, b, cc, d], i) => (
+              <line key={i} x1={a} y1={b} x2={cc} y2={d} />
+            ))}
+          </g>
+        )
+      })}
+      {rows.map((r) => {
+        const key = keyOf(r)
+        const c = color(key)
+        const y = yOf(r)
+        return (
+          <g key={key} onClick={() => onPick(key)} onMouseEnter={() => onHover(key)} onMouseLeave={() => onHover(null)} style={{ cursor: 'pointer' }} filter={c ? 'url(#glow)' : undefined}>
+            <rect x={x0 - 14} y={y - rowH / 2 + 2} width={x1 - x0 + 28} height={rowH - 4} rx={10} fill={focus === key ? '#f59e0b22' : 'transparent'} stroke={focus === key ? '#f59e0b' : 'none'} />
+            {Array.from({ length: width(r) }, (_, i) => {
+              // Neuron i takes the color of the finding at the same fraction along the row's category-sorted list,
+              // so a row's colors show the mix of finding types at that depth.
+              const cs = mix(key)
+              const ci = cs.length ? cs[Math.min(cs.length - 1, Math.floor((i * cs.length) / width(r)))] : null
+              return <circle key={i} cx={nx(r, i)} cy={y} r={r === -1 || r === n ? 6.5 : 5.5} fill={ci ?? 'var(--panel-2)'} fillOpacity={ci ? 0.4 + 0.6 * intensity(key) : 1} stroke="currentColor" strokeOpacity={ci ? 0 : 0.25} />
+            })}
+            <circle cx={spineX} cy={y} r={r % 2 === 0 || r === n ? 4 : 2.5} fill={c ?? 'var(--panel-2)'} stroke="url(#resid-grad)" />
+            {r >= 0 && r < n && r % 2 === 0 && (
+              <text x={spineX - 10} y={y + 4} fontSize={10} textAnchor="end" fill="currentColor" opacity={0.7}>
+                {r * 5}%
+              </text>
+            )}
+          </g>
+        )
+      })}
+      <text x={(x0 + x1) / 2} y={yOf(n) - 18} fontSize={11} textAnchor="middle" fill="currentColor" opacity={0.85}>
+        output · next token · class · reconstruction · next frame
+      </text>
+      <text x={(x0 + x1) / 2} y={yOf(-1) + 24} fontSize={11} textAnchor="middle" fill="currentColor" opacity={0.85}>
+        input · tokens · pixels · board moves · DNA · video frames
+      </text>
+      <text x={spineX - 10} y={yOf(n) + 4} fontSize={10} textAnchor="end" fill="currentColor" opacity={0.7}>
+        out
+      </text>
+      <text x={spineX - 10} y={yOf(-1) + 4} fontSize={10} textAnchor="end" fill="currentColor" opacity={0.7}>
+        in
+      </text>
+      {placed.map((p) => (
+        <PinCard key={p.entry.slug} p={p} x={p.px} y={p.py} active={expanded === p.entry.slug} onExpand={onExpand} onHover={onHover} anchorX={x1 + 10} anchorY={anchorY(p.key)} />
+      ))}
     </svg>
   )
 }

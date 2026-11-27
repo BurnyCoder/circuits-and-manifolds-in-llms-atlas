@@ -32,17 +32,18 @@ single-lab. The atlas puts circuits *and* geometry in one place. It labels fidel
 
 **What is new here.**
 1. One browsable map that places circuits, manifolds, neurons, features, steering vectors and lenses at their location
-   inside clickable model diagrams (GPT-2, Qwen3, Othello-GPT, InceptionV1, Claude). Aggregate "General LLM" and
-   "General transformer" views show where in relative depth each kind of mechanism tends to live.
+   inside clickable model diagrams (GPT-2, Qwen3, Othello-GPT, InceptionV1, Claude). Aggregate "General neural network"
+   (every finding from every model on one input → output network), "General LLM" and "General transformer" views show
+   where in relative depth each kind of mechanism tends to live.
 2. Pre-registered-style replication checks of many classic results on open models, with controls and CIs, in one
    codebase where `python -m atlas.run --entries all` regenerates every number.
 3. Small-model tests that the literature lacks. Examples: Fourier/helix probes for addition across Pythia sizes,
    counting manifolds in Qwen3-1.7B, emotion-vector geometry and steering in a 1.7B model, and Goodfire-style neuron
    sparsification on Qwen3.
 
-| Model Explorer: findings pinned inside GPT-2 small | IOI: toggle head classes, real recomputed logit differences |
+| Model Explorer: every finding on one general neural network | IOI: toggle head classes, real recomputed logit differences |
 |---|---|
-| ![Model Explorer showing GPT-2 small with circuit thumbnails pinned to layers](docs/img/explorer-gpt2.jpg) | ![IOI circuit page with clickable head classes and knockout results](docs/img/ioi.jpg) |
+| ![General neural network view: layers colored by the mix of finding types at each depth, with 33 finding thumbnails pinned to their depths](docs/img/explorer-nn.jpg) | ![IOI circuit page with clickable head classes and knockout results](docs/img/ioi.jpg) |
 | **Grokking: progress measures and the three training phases (11 seeds)** | **Linebreaks redraw: live simulation of the rippled counting manifold** |
 | ![Restricted loss falling before test loss and excluded loss rising during circuit formation, with phase bands](docs/img/grokking-progress.jpg) | ![Particle simulation of the rippled manifold and its ringing similarity matrix](docs/img/linebreaks-sim.jpg) |
 
@@ -203,8 +204,9 @@ The literature reviews ([`reports/literature-review.md`](reports/literature-revi
   - limitations, citations with deep links, and related entries.
 - **Model Explorer:** animated, clickable architecture diagrams. Hovering a GPT-2 head shows its measured
   induction / previous-token / duplicate-token scores and real attention patterns. Findings appear as small schematic
-  thumbnails pinned to their layers and expand into the full visualization. Aggregate *General LLM* and *General
-  transformer* views map all findings to relative depth.
+  thumbnails pinned to their layers and expand into the full visualization. The aggregate *General neural network* view
+  (the default) puts every finding of every model on one generic input → output network, with rows colored by the mix
+  of finding types at each depth. *General LLM* and *General transformer* map findings onto a generic transformer.
 - **Replications scoreboard** across all entries; **Methods** glossary; **Sources** list.
 - **Closed-model redraws:**
   - Biology of an LLM (8 case studies);
