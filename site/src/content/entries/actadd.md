@@ -11,6 +11,9 @@ order: 410
 summary: Subtract the activations of "I do not talk about weddings" from "I talk about weddings constantly", add the difference while the model writes — and it talks about weddings.
 viz: actadd
 data: actadd.json
+locations:
+  - { model: gpt2-xl, part: resid, layer: 5, label: "Love − Hate vector added at blocks.6.hook_resid_pre (residual stream after block 5)" }
+  - { model: gpt2-xl, part: resid, layer: 19, label: "weddings vector added at blocks.20.hook_resid_pre (residual stream after block 19)" }
 tags: [steering vectors, activation engineering, contrast pairs]
 related: [refusal-direction, sae-features, emotions]
 citations:

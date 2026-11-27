@@ -74,8 +74,10 @@ flowchart LR
   token attention, 2-D scatter, Plotly 3-D).
 - **Model Explorer:** `site/src/components/ModelExplorer.tsx` draws each model's architecture from `site/src/lib/models.ts`
   and highlights the components named in entries' `locations`. Small schematic thumbnails (`site/src/viz/thumbs.tsx`)
-  expand into the entry's full visualization. The "General LLM" and "General transformer" views map every finding to
-  relative depth.
+  expand into the entry's full visualization. The "General LLM" and "General transformer" views map findings to
+  relative depth on a generic transformer. "General neural network" maps every finding of every model onto one
+  generic input → 20 hidden layers → output network. CNN and pipeline stages map to depth by stage index; entries
+  without a location get a labelled mid-depth pin. Its rows are colored by the mix of finding categories at that depth.
 - **Tests:** `site/tests/content.test.ts` checks that:
   - every entry has the required fields and citation URLs;
   - quotes are ≤15 words and cite a listed source;
