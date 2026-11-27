@@ -4,7 +4,6 @@ title: Can SAEs capture neural geometry?
 category: feature
 collection: goodfire-geometry
 models: [TopK SAEs on synthetic manifolds (trained here)]
-status: pending
 fidelity: recomputed
 evidence: correlational
 order: 610

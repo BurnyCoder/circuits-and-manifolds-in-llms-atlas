@@ -4,7 +4,6 @@ title: Activation addition (steering vectors)
 category: steering
 collection: steering
 models: [GPT-2-XL]
-status: pending
 fidelity: recomputed
 evidence: causal
 order: 410

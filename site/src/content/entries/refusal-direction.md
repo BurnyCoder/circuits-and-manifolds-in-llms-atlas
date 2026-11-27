@@ -4,7 +4,6 @@ title: The refusal direction
 category: steering
 collection: steering
 models: [Qwen2.5-1.5B-Instruct]
-status: pending
 fidelity: recomputed
 evidence: causal
 order: 400
