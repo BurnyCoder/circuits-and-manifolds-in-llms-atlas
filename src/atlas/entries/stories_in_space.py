@@ -90,16 +90,34 @@ def compute(ctx) -> None:
         probe.append({"layer": L, "r2": r2})
         log.info("stories probe L%d: R² %.3f", L, r2)
     best = max(probe, key=lambda p: p["r2"])
-    # Behaviour vs activation geometry: distances between the six emotions' "signature" prefixes.
+    # Behaviour vs activation geometry, representational-similarity style (Kriegeskorte et al. 2008,
+    # https://doi.org/10.3389/neuro.06.004.2008): Spearman correlation between pairwise distances of the prefixes' rating
+    # vectors and pairwise distances of their activations (standardized, top-50 PCs, best layer). Null: the same with
+    # whole stories' rating blocks shuffled between stories of equal length (keeps within-story dependence).
+    from scipy.stats import spearmanr
+
     A = np.stack(X[best["layer"]])
-    top = Y.argmax(1)
-    beh_c = np.stack([Y[top == c].mean(0) if (top == c).any() else np.zeros(6) for c in range(6)])
-    act_c = np.stack([A[top == c].mean(0) if (top == c).any() else np.zeros(A.shape[1]) for c in range(6)])
-    present = [c for c in range(6) if (top == c).sum() >= 3]
-    iu = np.triu_indices(len(present), 1)
-    db = np.linalg.norm(beh_c[present][:, None] - beh_c[present][None], axis=-1)[iu]
-    da = np.linalg.norm(act_c[present][:, None] - act_c[present][None], axis=-1)[iu]
-    r_geom = float(np.corrcoef(db, da)[0, 1]) if len(db) > 2 else float("nan")
+    A = (A - A.mean(0)) / (A.std(0) + 1e-6)
+    A = A @ np.linalg.svd(A, full_matrices=False)[2][:50].T
+    sub = rng.permutation(len(Y))[:600]  # at most 600 prefixes (~180k pairs)
+    iu = np.triu_indices(len(sub), 1)
+
+    def dists(M):
+        return np.linalg.norm(M[sub][:, None] - M[sub][None], axis=-1)[iu]
+
+    da = dists(A)
+    r_geom = float(spearmanr(dists(Y), da).statistic)
+    lengths = {si: (sid == si).sum() for si in range(len(stories))}
+    null = []
+    for _ in range(100):
+        Yp = Y.copy()
+        for L_ in set(lengths.values()):  # shuffle rating blocks among stories with the same number of sentences
+            group = [si for si, n_ in lengths.items() if n_ == L_]
+            for src, dst in zip(group, rng.permutation(group)):
+                Yp[sid == dst] = Y[sid == src]
+        null.append(float(spearmanr(dists(Yp), da).statistic))
+    r_null95 = float(np.quantile(null, 0.95))
+    log.info("stories RSA: Spearman r = %.3f (story-shuffle null 95th pct %.3f) over %d prefixes", r_geom, r_null95, len(sub))
     N = norms()
     va = np.array([N[e] for e in EMO])  # human valence/arousal of the six emotion words
     traj = []
@@ -113,7 +131,8 @@ def compute(ctx) -> None:
         "best_layer": best["layer"],
         "best_r2": best["r2"],
         "r_geom": r_geom,
-        "n_emotions_present": len(present),
+        "r_geom_null95": r_null95,
+        "n_rsa_prefixes": int(len(sub)),
     }
     repl = [
         verdict_row(
@@ -127,8 +146,8 @@ def compute(ctx) -> None:
         verdict_row(
             "Behaviour and activation geometry agree",
             "distance-matrix correlation r = .92 (emotions)",
-            f"r = {r_geom:.2f} over {len(present)} emotions with ≥ 3 dominant prefixes",
-            "r ≥ 0.6",
+            f"RSA Spearman r = {r_geom:.2f} over {len(sub)} prefixes (story-shuffle null 95th percentile {r_null95:.2f})",
+            "r ≥ 0.6 (amendment 2026-11-27: computed over prefixes, not 3–6 emotion centroids)",
             r_geom >= 0.6,
             partial=r_geom >= 0.3,
         ),
