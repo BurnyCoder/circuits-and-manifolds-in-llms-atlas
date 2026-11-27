@@ -51,6 +51,8 @@ describe('atlas entries', () => {
           return
         }
         const path = join(dataDir, e.data)
+        // Entries whose full run has not finished are flagged `status: pending` and may lack their data file.
+        if (e.status === 'pending' && !existsSync(path)) return
         expect(existsSync(path)).toBe(true)
         const summary = JSON.parse(readFileSync(path, 'utf8')).summary
         if (e.extra) {

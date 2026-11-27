@@ -4,6 +4,7 @@ title: Neurons as an interpretable basis (and "already clean")
 category: neuron
 collection: goodfire-neurons
 models: [Qwen3-1.7B]
+status: pending
 fidelity: recomputed
 evidence: causal
 order: 300

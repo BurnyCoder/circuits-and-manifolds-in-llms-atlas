@@ -4,6 +4,7 @@ title: The number helix (trigonometric addition)
 category: manifold
 collection: tegmark
 models: [Pythia-160M, Pythia-410M, Pythia-1B, Pythia-1.4B, Pythia-2.8B]
+status: pending
 fidelity: recomputed
 evidence: mixed
 order: 110

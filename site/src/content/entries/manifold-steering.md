@@ -4,6 +4,7 @@ title: Steering along manifolds
 category: manifold
 collection: goodfire-geometry
 models: [Qwen3-1.7B]
+status: pending
 fidelity: recomputed
 evidence: causal
 order: 630

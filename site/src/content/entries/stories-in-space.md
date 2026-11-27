@@ -4,6 +4,7 @@ title: Meandering on manifolds (stories in emotion space)
 category: manifold
 collection: goodfire-geometry
 models: [Qwen2.5-1.5B-Instruct]
+status: pending
 fidelity: recomputed
 evidence: correlational
 order: 650

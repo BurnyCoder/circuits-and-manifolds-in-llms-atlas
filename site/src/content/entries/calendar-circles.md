@@ -4,6 +4,7 @@ title: Calendar circles (days and months)
 category: manifold
 collection: tegmark
 models: [GPT-2 small, Qwen3-1.7B]
+status: pending
 fidelity: recomputed
 evidence: mixed
 order: 100

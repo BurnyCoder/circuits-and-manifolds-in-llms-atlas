@@ -4,6 +4,7 @@ title: Block-sparse featurizers (multi-dimensional concepts)
 category: feature
 collection: goodfire-geometry
 models: [BSF / TopK SAE (trained here), InceptionV1]
+status: pending
 fidelity: recomputed
 evidence: correlational
 order: 620

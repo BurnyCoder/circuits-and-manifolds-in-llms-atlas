@@ -366,7 +366,11 @@ function ExpandedViz({ entry, onClose }: { entry: Entry; onClose: () => void }) 
       {!Viz ? (
         <p className="viz-note">This entry is a write-up without an interactive visualization yet.</p>
       ) : error ? (
-        <p className="error">{error}</p>
+        entry.status === 'pending' ? (
+          <p className="viz-note">⏳ Results pending: this entry's full run has not finished yet.</p>
+        ) : (
+          <p className="error">{error}</p>
+        )
       ) : entry.data && !data ? (
         <p>Loading data…</p>
       ) : (

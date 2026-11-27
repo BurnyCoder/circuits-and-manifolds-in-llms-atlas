@@ -52,8 +52,16 @@ export default function EntryPage() {
 
       {Viz && (
         <section className="panel viz">
-          {error && <p className="error">Could not load data: {error}</p>}
-          {e.data && !data && !error ? (
+          {error ? (
+            e.status === 'pending' ? (
+              <p className="viz-note">
+                ⏳ <b>Results pending.</b> This entry's full run has not finished yet. Its visualization and numbers appear
+                once <code>python -m atlas.run</code> has produced <code>data/{e.data}</code>.
+              </p>
+            ) : (
+              <p className="error">Could not load data: {error}</p>
+            )
+          ) : e.data && !data ? (
             <p>Loading data…</p>
           ) : (
             <Suspense fallback={<p>Loading visualization…</p>}>

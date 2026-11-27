@@ -76,6 +76,8 @@ export interface EntryMeta {
   extra?: string
   /** Display order within the grid (lower first). */
   order?: number
+  /** "pending": the full run has not finished; the data file may be absent (tests and the page tolerate that). */
+  status?: 'pending'
   quote?: Quote
   citations: Citation[]
   replications?: Replication[]

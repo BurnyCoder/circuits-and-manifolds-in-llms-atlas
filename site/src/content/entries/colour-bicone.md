@@ -4,6 +4,7 @@ title: The color bicone in an image autoencoder
 category: manifold
 collection: other
 models: [FLUX VAE]
+status: pending
 fidelity: recomputed
 evidence: correlational
 order: 140

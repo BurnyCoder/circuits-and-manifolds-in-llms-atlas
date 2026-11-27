@@ -4,6 +4,7 @@ title: Belief-state fractals in the residual stream
 category: manifold
 collection: other
 models: [4-layer transformer (trained here)]
+status: pending
 fidelity: recomputed
 evidence: correlational
 order: 130

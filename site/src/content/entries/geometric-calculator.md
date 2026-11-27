@@ -4,6 +4,7 @@ title: A geometric calculator (base-10 circles)
 category: circuit
 collection: goodfire-geometry
 models: [Llama-3.1-8B (paper), Pythia-410M/1.4B/2.8B (our probes)]
+status: pending
 fidelity: replicated
 evidence: causal
 order: 640

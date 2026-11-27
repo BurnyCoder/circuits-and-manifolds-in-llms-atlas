@@ -4,6 +4,7 @@ title: The character-counting manifold (line breaking)
 category: manifold
 collection: anthropic-tc
 models: [Qwen3-1.7B, GPT-2 small]
+status: pending
 fidelity: replicated
 evidence: correlational
 order: 120
