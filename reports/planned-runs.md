@@ -102,6 +102,8 @@ Laptop (8 GB) unless marked RunPod.
 
 | Date | Entry | Amendment | Reason |
 |---|---|---|---|
+| 2026-11-27 | linebreak-manifold, stories-in-space | Method fix, criteria unchanged. Ridge strength is chosen per layer from {1, 10, …, 10⁵} on held-out *training* documents (grouped), instead of a fixed α. The linebreak analysis drops position 0 of each document. | Smoke test: fixed α = 10 on 2,048 standardized features overfit (negative held-out R² in late layers). The first token's massive activations (attention sink) dominated low-count means (3 PCs = 99.9% of variance). |
+| 2026-11-27 | colour-bicone | Weights from `diffusers/FLUX.1-vae` (ungated, same FLUX.1 VAE config) instead of the gated `black-forest-labs/FLUX.1-schnell`. | The official repository requires accepting terms on the user's account. |
 | 2026-11-27 | number-helix | The patching claim needs ≥ 20 correctly solved prompts in the largest model; otherwise the verdict is **n/a**, not pass/fail. The criterion itself is unchanged. | In the `--quick` smoke test Pythia-410m solved 1 of 59 few-shot `a+b=` prompts (CPU spot check: 23+45 → "53"), so a "pass" on n = 1 would be meaningless. Tokenization was checked: NeoX has single tokens for 0–99. |
 
 ## Later batches (criteria are added here before each batch runs)
