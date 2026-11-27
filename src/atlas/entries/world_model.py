@@ -106,6 +106,7 @@ def compute(ctx) -> None:
     seed_everything(ctx.seed)
     rng = np.random.default_rng(ctx.seed)
     data = rollouts(20 if ctx.quick else 100, rng)
+    log.info("world model: %d rollouts, %d frames rendered in %.0fs", len(data), sum(len(d["acts"]) for d in data), time.time() - t0)
     model = WorldModel().to(ctx.device)
     untrained = WorldModel().to(ctx.device)
     untrained.load_state_dict(model.state_dict())
@@ -127,8 +128,10 @@ def compute(ctx) -> None:
             log.info("world model step %d loss %.5f", step, loss.item())
     (RESULTS / SLUG).mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), RESULTS / SLUG / "mountain_car_world_model.pt")
+    log.info("world model: trained %d steps (%.0fs elapsed)", steps, time.time() - t0)
 
     allf = np.concatenate([d["frames"] for d in data])
+    rid = np.concatenate([np.full(len(d["acts"]), i) for i, d in enumerate(data)])  # rollout id of every frame
     pos = np.concatenate([d["pos"] for d in data])
     vel = np.concatenate([d["vel"] for d in data])
 
@@ -140,12 +143,28 @@ def compute(ctx) -> None:
             out.append(m.encode(x).cpu().numpy())
         return np.concatenate(out)
 
+    @torch.no_grad()
+    def gru_states(m):
+        """GRU state after each frame of each rollout (the model's memory, which can carry velocity)."""
+        out = []
+        for d in data:
+            fr = torch.tensor(d["frames"], device=ctx.device).permute(0, 3, 1, 2).float() / 255
+            z = m.encode(fr)[None]
+            h, _ = m.gru(torch.cat([z, m.act(torch.tensor(d["acts"], device=ctx.device))[None]], -1))
+            out.append(h[0].cpu().numpy())
+        return np.concatenate(out)
+
     Z, Zu = latents(model), latents(untrained)
-    tr = rng.random(len(Z)) < 0.8
+    Hs, Hu = gru_states(model), gru_states(untrained)
+    # Split by rollout: neighbouring frames of one rollout are near-duplicates, so a per-frame split would leak.
+    tr = rid % 5 != 0
     probes = {
         "position (trained)": ridge_r2(Z[tr], pos[tr, None], Z[~tr], pos[~tr, None]),
         "velocity (trained)": ridge_r2(Z[tr], vel[tr, None], Z[~tr], vel[~tr, None]),
         "position (untrained encoder)": ridge_r2(Zu[tr], pos[tr, None], Zu[~tr], pos[~tr, None]),
+        # Extra (not a pre-stated verdict): one frame cannot show velocity; the recurrent state can.
+        "velocity from GRU state (trained)": ridge_r2(Hs[tr], vel[tr, None], Hs[~tr], vel[~tr, None]),
+        "velocity from GRU state (untrained)": ridge_r2(Hu[tr], vel[tr, None], Hu[~tr], vel[~tr, None]),
     }
     log.info("world model probes: %s", probes)
     # Manifold: smoothing spline (per latent coordinate) through 100 position-bin means.
@@ -194,6 +213,8 @@ def compute(ctx) -> None:
         "r2_position": probes["position (trained)"],
         "r2_velocity": probes["velocity (trained)"],
         "r2_position_untrained": probes["position (untrained encoder)"],
+        "r2_velocity_gru": probes["velocity from GRU state (trained)"],
+        "r2_velocity_gru_untrained": probes["velocity from GRU state (untrained)"],
         "r_arc": r_arc,
         "r_chord": r_chord,
         "void_manifold": void(man),

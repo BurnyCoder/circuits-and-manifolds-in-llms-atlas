@@ -6,7 +6,8 @@ Llama-3.1-8B (layer 28, 64-d PCA) they fit a periodic cubic spline through the a
 answers and steer from one day to another either along the spline or along the straight chord. Along the manifold the
 output distribution moves through the intermediate days and stays near the behaviour manifold (Bhattacharyya energy
 E_BC 0.34 vs 0.93 for linear on weekdays; isometry r .99 vs .89).
-Here: day-arithmetic prompts Qwen3-1.7B solves ("If today is {D}, then two days later it is"; calendar_circles.day_prompts;
+Here (layers 22/24/26 of 28, where an endpoint check shows the answer-day subspace controls the output): day-arithmetic
+prompts Qwen3-1.7B solves ("If today is {D}, then two days later it is"; calendar_circles.day_prompts;
 the original "N days from D" template was answered correctly only 0-57% of the time), last-token activations at a middle
 layer, the 6-d subspace spanned by the answer-day centroids (instead of the paper's 64-d PCA, which needs many more
 prompts), periodic spline (scipy CubicSpline, bc_type='periodic') through the 7 centroids of *correctly answered*
@@ -31,7 +32,7 @@ from .calendar_circles import DAYS, day_prompts
 log = get_logger()
 SLUG = "manifold-steering"
 MODEL = "Qwen/Qwen3-1.7B"
-LAYERS = [12, 16, 20]
+LAYERS = [22, 24, 26]  # ~79–93% depth; the answer-day subspace is causal only from layer 22 on (endpoint check, amendment)
 K = 13  # points per path
 
 
