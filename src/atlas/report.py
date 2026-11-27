@@ -72,6 +72,37 @@ def scoreboard_table(res: dict[str, dict], from_dir: Path = ROOT) -> str:
     return "\n".join(lines)
 
 
+def headline_table(res: dict[str, dict]) -> str:
+    """One row per entry: its first (headline) claim, the published value, ours, and the verdict."""
+    lines = ["| Entry | Headline claim | Published | Ours | Verdict |", "|---|---|---|---|---|"]
+    for slug, r in res.items():
+        row = r["replication"][0]
+        lines.append(f"| {slug} | " + " | ".join(_cell(row.get(k, "")) for k in ("claim", "published", "ours"))
+                     + f" | {VERDICT_ICON.get(row.get('verdict', 'n/a'), row.get('verdict'))} |")
+    return "\n".join(lines)
+
+
+CONTENT = ROOT / "site" / "src" / "content" / "entries"
+FIDELITY_ICON = {"recomputed": "🟢 recomputed", "replicated": "🔵 open replication", "redrawn": "🟠 redrawn"}
+SITE_URL = "https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/"
+
+
+def catalogue_table() -> str:
+    """Every atlas entry (from the site's Markdown frontmatter): title, category, models, fidelity, evidence."""
+    import yaml  # PyYAML, a transitive dependency of transformers / huggingface_hub
+
+    metas = []
+    for f in CONTENT.glob("*.md"):
+        front = f.read_text(encoding="utf-8").split("---")[1]
+        metas.append(yaml.safe_load(front))
+    metas.sort(key=lambda m: m.get("order", 999))
+    lines = ["| Entry | Category | Models | Data | Evidence |", "|---|---|---|---|---|"]
+    for m in metas:
+        lines.append(f"| [{_cell(m['title'])}]({SITE_URL}{m['slug']}) | {m['category']} | {_cell(', '.join(m['models']))} | "
+                     f"{FIDELITY_ICON.get(m['fidelity'], m['fidelity'])} | {m['evidence']} |")
+    return "\n".join(lines)
+
+
 def replication_table(rows: list[dict]) -> str:
     """Published claim vs our measurement vs the pre-stated criterion (from reports/planned-runs.md) vs verdict."""
     lines = ["| Claim | Published | Ours | Pre-stated criterion | Verdict |", "|---|---|---|---|---|"]
@@ -126,7 +157,8 @@ def main() -> None:
     res = load_results()
     changed = []
     for f in SCOREBOARD_FILES:
-        if update_file(f, {"scoreboard": scoreboard_table(res, f.parent)}):
+        tables = {"scoreboard": scoreboard_table(res, f.parent), "headlines": headline_table(res), "catalogue": catalogue_table()}
+        if update_file(f, tables):
             changed.append(f)
     for slug, r in res.items():
         f = ensure_experiment_file(slug)
