@@ -42,7 +42,8 @@ md.use({
 })
 
 /** Format a number for prose: integers as-is, otherwise 3 significant digits (e.g. 0.0123, 3.56, 87.4). */
-export function fmt(v: number | string, mode?: string): string {
+export function fmt(v: number | string | null, mode?: string): string {
+  if (v === null || (typeof v === 'number' && !Number.isFinite(v))) return 'n/a' // NaN/inf are exported as null
   if (typeof v === 'string') return v
   if (mode === 'pct') return `${(v * 100).toFixed(1)}%`
   if (mode === 'int') return Math.round(v).toLocaleString('en-US')

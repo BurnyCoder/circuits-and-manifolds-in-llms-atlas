@@ -9,6 +9,10 @@ describe('fmt', () => {
     expect(fmt(2100, 'int')).toBe('2,100')
     expect(fmt('6/11')).toBe('6/11')
   })
+  it('renders missing values (null from NaN in the pipeline) as n/a instead of crashing', () => {
+    expect(fmt(null)).toBe('n/a')
+    expect(fmt(null, 'pct')).toBe('n/a')
+  })
   it('uses scientific notation with a superscript exponent for large values', () => {
     expect(fmt(789449.3381, 'sci')).toBe('7.9 × 10⁵')
     expect(fmt(12.61, 'sci')).toBe('12.6') // small values fall back to the default format
