@@ -46,11 +46,17 @@ export function fmt(v: number | string, mode?: string): string {
   if (typeof v === 'string') return v
   if (mode === 'pct') return `${(v * 100).toFixed(1)}%`
   if (mode === 'int') return Math.round(v).toLocaleString('en-US')
+  if (mode === 'sci' && Math.abs(v) >= 1000) {
+    // Scientific notation with superscript exponent, e.g. 789449 -> "7.9 × 10⁵".
+    const e = Math.floor(Math.log10(Math.abs(v)))
+    const sup = String(e).replace(/[0-9-]/g, (c) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(c)] ?? '⁻')
+    return `${(v / 10 ** e).toFixed(1)} × 10${sup}`
+  }
   if (Number.isInteger(v)) return v.toLocaleString('en-US')
   return Math.abs(v) >= 100 ? v.toFixed(1) : Number(v.toPrecision(3)).toString()
 }
 
-/** Replace {{key}} / {{key|pct}} with values; unknown keys render as a visible "[missing:key]" so tests catch them. */
+/** Replace {{key}} / {{key|pct}} / {{key|int}} / {{key|sci}} with values; unknown keys render as a visible "[missing:key]" so tests catch them. */
 export function fillTemplates(src: string, summary: Record<string, number | string> | undefined): string {
   return src.replace(/\{\{\s*([\w.-]+)\s*(?:\|\s*(\w+))?\s*\}\}/g, (_, key: string, mode?: string) => {
     const v = summary?.[key]

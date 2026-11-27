@@ -39,7 +39,7 @@ const P = 113
 
 export default function Grokking({ data }: VizProps) {
   const d = data as unknown as D
-  const [tab, setTab] = useState<'curves' | 'spectrum' | 'circles' | 'neurons' | 'ablate' | 'runs'>('curves')
+  const [tab, setTab] = useState<'curves' | 'spectrum' | 'circles' | 'neurons' | 'ablate' | 'runs' | 'progress'>('curves')
   const [seed, setSeed] = useState(0)
   const [snap, setSnap] = useState(d.snaps.length - 1)
   const keys = Object.keys(d.circles)
@@ -62,6 +62,7 @@ export default function Grokking({ data }: VizProps) {
           ['neurons', '4 · Periodic neurons'],
           ['ablate', '5 · Ablate the frequencies'],
           ['runs', '6 · 22 runs, 11 seeds'],
+          ['progress', '7 · Progress measures & phases'],
         ]}
         value={tab}
         onChange={setTab}
@@ -186,6 +187,7 @@ export default function Grokking({ data }: VizProps) {
         </>
       )}
       {tab === 'runs' && <Runs />}
+      {tab === 'progress' && <Progress />}
       {tab === 'ablate' && (
         <>
           <HowTo>
@@ -200,6 +202,138 @@ export default function Grokking({ data }: VizProps) {
         </>
       )}
     </div>
+  )
+}
+
+interface Prog {
+  t1: number
+  t2: number | null
+  t3: number | null
+  t_grok: number | null
+  t_restricted_drop: number | null
+  t_test_drop: number | null
+  h1: boolean
+  h2_ratio: number | null
+  h2: boolean
+  curves: Record<'step' | 'loss_train' | 'loss_test' | 'restricted_loss' | 'excluded_loss' | 'gini_we' | 'ssw_total', number[]>
+}
+
+/**
+ * Nanda et al.'s progress measures on the companion project's 11 weight-decay seeds: train / test / restricted / excluded
+ * loss with the three phases (memorization → circuit formation → cleanup) as bands, plus Fourier sparsity (Gini of W_E)
+ * and the total sum of squared weights. Phase boundaries t1, t2, t3 are the companion's (analysis/phases.json).
+ */
+function Progress() {
+  const { data, error } = useData('grokking-runs.json')
+  const [sel, setSel] = useState('wd1_s0')
+  if (error) return <p className="error">{error}</p>
+  if (!data) return <p>Loading progress measures…</p>
+  const runs = (data as unknown as { runs: (Run22 & { progress?: Prog })[] }).runs.filter((r) => r.progress)
+  const r = runs.find((x) => x.id === sel) ?? runs[0]
+  const p = r.progress as Prog
+  // Show steps up to 1.5 × t3 (everything after is flat), so the early phases are not squeezed by the 40k-step tail.
+  const xmax = p.t3 ? Math.round(1.5 * p.t3) : Infinity
+  const keep = p.curves.step.map((s, i) => (s <= xmax ? i : -1)).filter((i) => i >= 0)
+  const c = Object.fromEntries(Object.entries(p.curves).map(([k, v]) => [k, keep.map((i) => v[i])])) as Prog['curves']
+  const x = c.step.map((s) => Math.max(s, 1))
+  const end = c.step[c.step.length - 1]
+  const bands = [
+    { x0: 1, x1: p.t1, label: '1', color: '#2563eb' },
+    ...(p.t2 ? [{ x0: p.t1, x1: p.t2, label: '2', color: '#f59e0b' }] : []),
+    ...(p.t2 && p.t3 ? [{ x0: p.t2, x1: p.t3, label: '3', color: '#16a34a' }] : []),
+  ]
+  const sswMax = Math.max(...c.ssw_total)
+  return (
+    <>
+      <HowTo>
+        Nanda et al. (2023, §5) explain grokking with <b>progress measures</b>. The <i>restricted loss</i> keeps only the key
+        Fourier frequencies of the logits. The <i>excluded loss</i> removes them and is measured on the training pairs. While
+        train and test loss look flat (circuit formation), the restricted loss already falls and the excluded loss rises: the
+        Fourier circuit is being built before test accuracy moves. Then weight decay cleans up the memorization (cleanup).
+        Data: per-checkpoint metrics of the companion project's runs (401 checkpoints each); tests re-implemented here.
+      </HowTo>
+      <div className="viz-controls">
+        {runs.map((x) => (
+          <button key={x.id} className={`chip${x.id === r.id ? ' on' : ''}`} onClick={() => setSel(x.id)}>
+            {x.id.replace('wd1_', 'seed ')}
+          </button>
+        ))}
+      </div>
+      <LineChart
+        series={[
+          { name: 'train loss', x, y: c.loss_train, color: '#2563eb' },
+          { name: 'test loss', x, y: c.loss_test, color: '#dc2626' },
+          { name: 'restricted loss (key frequencies only)', x, y: c.restricted_loss, color: '#16a34a', width: 2.2 },
+          { name: 'excluded loss (key frequencies removed, train)', x, y: c.excluded_loss, color: '#9333ea', dash: '5 3', width: 2.2 },
+        ]}
+        yLog
+        bands={bands}
+        xLabel={`optimizer step (seed ${r.id.replace('wd1_s', '')}; shown up to ${end} of 40,000)`}
+        yLabel="cross-entropy (log scale)"
+        height={320}
+      />
+      <div className="viz-controls">
+        <span className="tag" style={{ background: '#2563eb33' }}>1 · memorization (0 → t1)</span>
+        <span className="tag" style={{ background: '#f59e0b33' }}>2 · circuit formation (t1 → t2)</span>
+        <span className="tag" style={{ background: '#16a34a33' }}>3 · cleanup (t2 → t3)</span>
+      </div>
+      <LineChart
+        series={[
+          { name: 'Gini of W_E Fourier norms (sparsity)', x, y: c.gini_we, color: '#0ea5e9' },
+          { name: 'sum of squared weights ÷ max', x, y: c.ssw_total.map((v) => v / sswMax), color: '#64748b', dash: '4 3' },
+        ]}
+        yDomain={[0, 1]}
+        bands={bands}
+        xLabel="optimizer step"
+        yLabel="Gini / relative weight norm"
+        height={200}
+      />
+      <Kpis
+        items={[
+          [`restricted loss −90% at step`, String(p.t_restricted_drop ?? 'never')],
+          [`test loss −90% at step`, String(p.t_test_drop ?? 'never')],
+          [`excluded loss at t2 ÷ at t1`, p.h2_ratio == null ? '—' : `${d3.format('.3~s')(p.h2_ratio)}×`],
+          ['phases t1 / t2 / t3', `${p.t1} / ${p.t2 ?? '—'} / ${p.t3 ?? '—'}`],
+        ]}
+      />
+      <div className="table-wrap">
+        <table className="data">
+          <thead>
+            <tr>
+              <th>seed</th>
+              <th>t1 (memorized)</th>
+              <th>t2 (generalizing)</th>
+              <th>t3 (clean)</th>
+              <th>restricted −90%</th>
+              <th>test −90%</th>
+              <th>lead (steps)</th>
+              <th>excluded t2 ÷ t1</th>
+              <th>H1</th>
+              <th>H2</th>
+            </tr>
+          </thead>
+          <tbody>
+            {runs.map((x) => {
+              const q = x.progress as Prog
+              return (
+                <tr key={x.id} onClick={() => setSel(x.id)} style={{ cursor: 'pointer', fontWeight: x.id === r.id ? 700 : 400 }}>
+                  <td>{x.id}</td>
+                  <td>{q.t1}</td>
+                  <td>{q.t2 ?? '—'}</td>
+                  <td>{q.t3 ?? '—'}</td>
+                  <td>{q.t_restricted_drop ?? 'never'}</td>
+                  <td>{q.t_test_drop ?? 'never'}</td>
+                  <td>{q.t_restricted_drop != null && q.t_test_drop != null ? q.t_test_drop - q.t_restricted_drop : '—'}</td>
+                  <td>{q.h2_ratio == null ? '—' : `${d3.format('.3~s')(q.h2_ratio)}×`}</td>
+                  <td>{q.h1 ? '✅' : '❌'}</td>
+                  <td>{q.h2 ? '✅' : '❌'}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
 

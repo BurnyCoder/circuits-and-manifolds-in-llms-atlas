@@ -17,11 +17,11 @@ from `results/<slug>/replication.json`. Do not edit it by hand.
 | [curve-detectors](curve-detectors/experiment.md) | InceptionV1 (Lucid weights via Lucent) | 3 | 3 | 0 | 0 | 279 | 2026-11-27 18:30 UTC |
 | [greater-than](greater-than/experiment.md) | gpt2 | 3 | 3 | 0 | 0 | 98 | 2026-11-27 17:57 UTC |
 | [grokking](grokking/experiment.md) | 1L transformer (trained here) | 5 | 5 | 0 | 0 | 1585 | 2026-11-27 18:23 UTC |
-| [grokking-runs](grokking-runs/experiment.md) | BurnyCoder/grokking-modular-addition-runs | 3 | 3 | 0 | 0 | 30 | 2026-11-27 17:34 UTC |
+| [grokking-runs](grokking-runs/experiment.md) | BurnyCoder/grokking-modular-addition-runs | 5 | 5 | 0 | 0 | 131 | 2026-11-27 19:07 UTC |
 | [induction-heads](induction-heads/experiment.md) | attn-only-2l, gpt2, EleutherAI/pythia-160m | 4 | 4 | 0 | 0 | 1096 | 2026-11-27 17:47 UTC |
 | [ioi](ioi/experiment.md) | gpt2 | 5 | 5 | 0 | 0 | 120 | 2026-11-27 17:49 UTC |
 | [othello-gpt](othello-gpt/experiment.md) | othello-gpt | 3 | 3 | 0 | 0 | 133 | 2026-11-27 18:26 UTC |
-| **Total (9 entries)** | | **31** | **31** | **0** | **0** | | |
+| **Total (9 entries)** | | **33** | **33** | **0** | **0** | | |
 <!-- /table:scoreboard -->
 
 ## Networks used

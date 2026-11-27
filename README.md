@@ -43,8 +43,8 @@ single-lab. The atlas puts circuits *and* geometry in one place. It labels fidel
 | Model Explorer: findings pinned inside GPT-2 small | IOI: toggle head classes, real recomputed logit differences |
 |---|---|
 | ![Model Explorer showing GPT-2 small with circuit thumbnails pinned to layers](docs/img/explorer-gpt2.jpg) | ![IOI circuit page with clickable head classes and knockout results](docs/img/ioi.jpg) |
-| **Grokking (trained here): memorize, then generalize** | **Linebreaks redraw: live simulation of the rippled counting manifold** |
-| ![Grokking train/test loss curves for three seeds and a no-weight-decay control](docs/img/grokking.jpg) | ![Particle simulation of the rippled manifold and its ringing similarity matrix](docs/img/linebreaks-sim.jpg) |
+| **Grokking: progress measures and the three training phases (11 seeds)** | **Linebreaks redraw: live simulation of the rippled counting manifold** |
+| ![Restricted loss falling before test loss and excluded loss rising during circuit formation, with phase bands](docs/img/grokking-progress.jpg) | ![Particle simulation of the rippled manifold and its ringing similarity matrix](docs/img/linebreaks-sim.jpg) |
 
 ## Results so far
 
@@ -75,11 +75,11 @@ Scoreboard of all pre-stated claims:
 | [curve-detectors](reports/experiments/curve-detectors/experiment.md) | InceptionV1 (Lucid weights via Lucent) | 3 | 3 | 0 | 0 | 279 | 2026-11-27 18:30 UTC |
 | [greater-than](reports/experiments/greater-than/experiment.md) | gpt2 | 3 | 3 | 0 | 0 | 98 | 2026-11-27 17:57 UTC |
 | [grokking](reports/experiments/grokking/experiment.md) | 1L transformer (trained here) | 5 | 5 | 0 | 0 | 1585 | 2026-11-27 18:23 UTC |
-| [grokking-runs](reports/experiments/grokking-runs/experiment.md) | BurnyCoder/grokking-modular-addition-runs | 3 | 3 | 0 | 0 | 30 | 2026-11-27 17:34 UTC |
+| [grokking-runs](reports/experiments/grokking-runs/experiment.md) | BurnyCoder/grokking-modular-addition-runs | 5 | 5 | 0 | 0 | 131 | 2026-11-27 19:07 UTC |
 | [induction-heads](reports/experiments/induction-heads/experiment.md) | attn-only-2l, gpt2, EleutherAI/pythia-160m | 4 | 4 | 0 | 0 | 1096 | 2026-11-27 17:47 UTC |
 | [ioi](reports/experiments/ioi/experiment.md) | gpt2 | 5 | 5 | 0 | 0 | 120 | 2026-11-27 17:49 UTC |
 | [othello-gpt](reports/experiments/othello-gpt/experiment.md) | othello-gpt | 3 | 3 | 0 | 0 | 133 | 2026-11-27 18:26 UTC |
-| **Total (9 entries)** | | **31** | **31** | **0** | **0** | | |
+| **Total (9 entries)** | | **33** | **33** | **0** | **0** | | |
 <!-- /table:scoreboard -->
 
 **In plainer language: where our numbers matched, beat or fell short of the papers.** Every recomputed claim so far
