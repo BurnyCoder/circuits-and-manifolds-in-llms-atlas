@@ -18,7 +18,11 @@ from .common.env import device, setup
 ENTRIES = [
     "induction_heads",
     "ioi",
+    "copy_suppression",
+    "greater_than",
     "grokking",
+    "othello_gpt",
+    "curve_detectors",
 ]
 
 

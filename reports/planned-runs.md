@@ -30,6 +30,23 @@ Laptop (8 GB) unless marked RunPod.
 | grokking | same | Key frequencies causally necessary | Fig. 6 | removing key freqs from W_E → test acc < 20%; removing same number of random freqs → > 90% | 10 random draws |
 | grokking | same, wd = 0, seed 0 | Weight decay needed for grokking in this setup | §5.3 | wd=0 final test acc < 50% | — |
 
+## Batch 2 — circuits (local GPU; criteria written after the code-level smoke test, before full runs)
+
+| Entry | Model / data | Claim | Published value (source) | Pass criterion | Controls / baselines |
+|---|---|---|---|---|---|
+| copy-suppression | GPT-2 small L10H7; 5,000 token ids (300–5,299), effective embedding W_E + layer-0 (self-attn approx.) + MLP0 | OV circuit suppresses the attended token | 84.70% diag in 10 most negative; 98.86% bottom 5% (column ranking; McDougall et al. 2023) | row-wise top-10 fraction > 50% and > 5× the median other L10–11 head | 23 other heads in layers 10–11 |
+| copy-suppression | same | QK attends to predicted tokens | 95.72% diagonal-max | > 50% (20–50% = partial) | — |
+| copy-suppression | 8 hand-written prompts | Lowers the copied token's logit on natural prompts | Table 1 examples | negative direct effect on ≥ 75% of prompts | zero-ablation of L10H7 |
+| greater-than | GPT-2 small; 12 nouns × 97 start years 1702–1798 (single-token YY), corrupted start year 1701 | GPT-2 predicts years > YY | PD 81.7% (Hanna et al. 2023) | PD > 50% | corrupted prompts |
+| greater-than | same | Heads 5.1/5.5/6.9/7.10/8.8/8.11/9.1 + MLPs 8–11 carry it | circuit keeps 89.5% | patching heads+MLPs drops PD < 30% of full **and** circuit-only (all 137 other heads patched, MLPs clean) keeps ≥ 60% (first condition only = partial) | — |
+| greater-than | same | Random heads are not the circuit | (ours) | median PD with 7 random heads patched > circuit-heads-patched PD + 10 points | 30 random 7-head sets |
+| othello-gpt | TL othello-gpt; 3,000 train / 500 test synthetic random full games (our engine, Li et al. rules) | Predicts legal moves | 0.01% illegal (Li et al. 2023) | < 1% illegal top-1 | — |
+| othello-gpt | same; probes on resid_post of every layer, AdamW 6 epochs | Board is linear relative to the mover | mine/theirs ≈ 99.5% from L4; black/white ≈ 75% (Nanda et al. 2023) | best mine/theirs > 95% and ≥ 10 points above black/white, random-init and shuffled-label probes | random-init model; shuffled labels; absolute-color probe |
+| othello-gpt | 150 flips that change the legal set; intervention at the best of layers 3–5 (mirror along the square's mine−theirs probe direction) | Editing the representation changes predicted moves | flip error 0.10 vs 2.72 null | error < 50% of null and < random-direction error (< null only = partial) | no intervention; random unit direction with same displacement |
+| curve-detectors | Lucent InceptionV1 mixed3b neurons 379, 406, 385, 343, 342, 388, 324, 340, 330, 349; arcs r ∈ {15, 30, 60, 110}px × 72 orientations + straight lines | Orientation-tuned | radial tuning curves (Cammarata et al. 2020) | median selectivity (1 − circular variance) ≥ 20 random mixed3b neurons' median + 0.2 | 20 random non-curve neurons |
+| curve-detectors | same | Prefer curves to lines | synthetic curves ≫ lines | ≥ 8/10 neurons: best curve > 1.5× best straight line (≥ 5 = partial) | straight lines |
+| curve-detectors | same | Tile all orientations | joint tuning curves cover 360° | largest gap between preferred orientations ≤ 90° | — |
+
 ## Later batches (criteria are added here before each batch runs)
 
 | Batch | Entries | Models | Where |

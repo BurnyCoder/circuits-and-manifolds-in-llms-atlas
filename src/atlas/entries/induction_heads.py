@@ -161,7 +161,7 @@ def pythia_phase_change(ctx) -> dict:
     # Natural text for the ICL score: WikiText-103 test split (https://huggingface.co/datasets/Salesforce/wikitext).
     text = "\n".join(load_dataset("Salesforce/wikitext", "wikitext-103-raw-v1", split="test")["text"])
     ids = tokzr(text[:2_000_000], return_tensors="pt").input_ids[0]
-    n_seq, ctx_len = (8 if ctx.quick else 32), 512
+    n_seq, ctx_len = (8 if ctx.quick else 128), 512
     nat = ids[: n_seq * ctx_len].view(n_seq, ctx_len).to(ctx.device)
     L = 25
     rep = repeated_tokens(16, L, 1000, 20000, tokzr.bos_token_id or 0, seed=ctx.seed).to(ctx.device)
@@ -177,8 +177,10 @@ def pythia_phase_change(ctx) -> dict:
         rep_loss = -lp.gather(-1, rep[:, 1:, None])[..., 0]
         logits = m(nat).logits[:, :-1].float().log_softmax(-1)
         nll = -logits.gather(-1, nat[:, 1:, None])[..., 0]  # [n_seq, ctx_len-1]; index t predicts token t+1
-        # Olsson et al.: ICL score = loss at the 500th token minus loss at the 50th token (averaged over sequences).
-        icl = (nll[:, 498] - nll[:, 48]).mean().item()
+        # Olsson et al.: ICL score = loss at the 500th token minus loss at the 50th token (averaged over contexts).
+        # With far fewer contexts than the paper, single positions are noisy, so we average 11-token windows centred
+        # on tokens 50 and 500 (indices 494..504 and 44..54 predict tokens 496..506 / 46..56) — a documented deviation.
+        icl = (nll[:, 494:505].mean(-1) - nll[:, 44:55].mean(-1)).mean().item()
         rows.append(
             {
                 "step": step,
