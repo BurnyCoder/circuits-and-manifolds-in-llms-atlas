@@ -47,6 +47,25 @@ Laptop (8 GB) unless marked RunPod.
 | curve-detectors | same | Prefer curves to lines | synthetic curves ≫ lines | ≥ 8/10 neurons: best curve > 1.5× best straight line (≥ 5 = partial) | straight lines |
 | curve-detectors | same | Tile all orientations | joint tuning curves cover 360° | largest gap between preferred orientations ≤ 90° | — |
 
+## Batch 3 — geometry (criteria written before any batch-3 run)
+
+| Entry | Model / data | Claim | Published value (source) | Pass criterion | Controls / baselines |
+|---|---|---|---|---|---|
+| calendar-circles | GPT-2 small resid_pre L7; 16 templates × 7 days / 12 months; template means removed | Days and months are in cyclic order | circles in GPT-2 L7 (Engels et al. 2024, Fig. 1) | cyclic-order permutation p < 0.05 for both, and ≤ 10% of 40 random-word sets reach p < 0.05 (only one of days/months = partial) | random word sets of size 7 and 12 |
+| calendar-circles | GPT-2 SAE `gpt2-small-res-jb` L7, top ≤ 24 latents by class-mean activation | SAE latents reconstruct the circle | Fig. 1 (SAE clusters) | cyclic order ≥ 0.7 for days and months | — |
+| calendar-circles | Qwen3-1.7B, 42 prompts "Let's do some day of the week math. {N} days from {D} is"; layers 2–20 | The circle is causally used | circular-probe patching works in Mistral 7B / Llama 3 8B (§5) | some layer ≥ 50% success with random-plane control ≤ 20% at that layer (success > random + 20 points = partial). Layer selection across 7 layers is exploratory and reported in full | random 2-D plane, same displacement |
+| number-helix | Pythia 160M/410M/1B/1.4B/2.8B; numbers 0–99 after 3 few-shot prefixes | Embeddings periodic with T = 2, 5, 10 | GPT-J Fourier peaks 2, 5, 10 (Kantamneni & Tegmark 2025); 2, 2.5, 5, 10 (Zhou et al. 2024) | ≥ 2 of {2, 5, 10} among the top-4 periods of Pythia-2.8B (±5%) | — |
+| number-helix | same, 80/20 split over a | Numbers lie on a helix (T = 2, 5, 10, 100) | helix fits GPT-J / Pythia-6.9B / Llama-3.1-8B | Pythia-2.8B best-layer held-out R² ≥ 0.5 and ≥ 0.2 above a shuffled-a helix (≥ 0.1 = partial) | shuffled helix; linear-only; circles-only |
+| number-helix | same; few-shot a+b= with a+b < 100, correct prompts only | Helix patching recovers most of the full-layer effect | helix 7.21 vs full 8.34 (86%), PCA 6.13 (GPT-J) | helix ≥ 50% of full-layer recovery and ≥ linear-only (> linear-only = partial) | full layer, PCA-9, linear-only, circles-only |
+| linebreak-manifold | Qwen3-1.7B, 400 WikiText-103 paragraphs wrapped at 40–150 chars; GPT-2 small control | Count is linearly decodable | Haiku R² 0.985; Qwen3-8B 0.852 (T-Tech) | best held-out R² ≥ 0.7 and ≥ 0.5 above shuffled labels | shuffled labels; GPT-2 small |
+| linebreak-manifold | same | Low-dimensional curved manifold | Haiku: 6 PCs = 95% | 6 PCs ≥ 80% of variance of per-count means | — |
+| linebreak-manifold | same | Count present in the first layers | Haiku R² 0.985 after layer 1 (not replicated by T-Tech) | best R² in layers 0–2 ≥ 0.9 × best overall | — |
+| linebreak-manifold | same | Model breaks lines like the text | Haiku newline prob 0.79 in example | P(newline) AUC for true breaks ≥ 0.9 | GPT-2 small |
+| belief-fractal | 4-layer transformer (d 64, 1 head, LN) trained here on Mess3 (x = 0.05, α = 0.85), 30k steps × 512 seqs of 10 tokens | Beliefs linear in the final residual stream | MSE ≈ 4e-4 (Shai et al. 2024) | held-out R² ≥ 0.9 and ≥ 0.3 above random init (≥ 0.2 = partial) | random-init model |
+| belief-fractal | same | Near-optimal prediction | trained near entropy rate | excess loss < 10% of the uniform-to-optimal gap | — |
+| colour-bicone | FLUX.1-schnell VAE; 400 HSV-uniform solid colors, 128 px | Colors occupy a 3-D subspace | ≈ 100% in 3 PCs (Pach et al. 2026) | ≥ 95% | random-noise images |
+| colour-bicone | same | HSL-like axes | PC1 = lightness, angle = hue, radius = saturation | corr(PC1, L), circular corr(angle, hue), corr(radius, chroma) all ≥ 0.8 (first two only = partial) | — |
+
 ## Later batches (criteria are added here before each batch runs)
 
 | Batch | Entries | Models | Where |
