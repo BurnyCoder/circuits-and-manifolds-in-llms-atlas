@@ -62,6 +62,8 @@ def compute(ctx) -> None:
     model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.bfloat16).to(ctx.device).eval()
     N = norms()
     emos = [e for e in EMOTIONS if e in N][: (12 if ctx.quick else 80)]
+    # The dose sweep and the preference test need these four; keep them even in --quick mode (first-12 subset).
+    emos += [e for e in ("afraid", "calm", "blissful", "hostile") if e in N and e not in emos]
     topics = TOPICS[:3] if ctx.quick else TOPICS
     reps = 1 if ctx.quick else 2
 
@@ -75,15 +77,18 @@ def compute(ctx) -> None:
             torch.manual_seed(seed + i)
             b = tok([chat(p) for p in prompts[i : i + 48]], return_tensors="pt", padding=True, add_special_tokens=False).to(ctx.device)
             o = model.generate(**b, max_new_tokens=n_new, do_sample=True, temperature=0.9, top_p=0.95, pad_token_id=tok.eos_token_id)
-            outs += tok.batch_decode(o[:, b.input_ids.shape[1] :], skip_special_tokens=True)
+            batch = tok.batch_decode(o[:, b.input_ids.shape[1] :], skip_special_tokens=True)
+            # Every prompt and output goes to the timestamped log in full, as it is produced.
+            for q, ans in zip(prompts[i : i + 48], batch):
+                log.info("generate | prompt: %s | output: %s", q, ans.replace("\n", " "))
+            outs += batch
+            log.info("emotions: generated %d/%d texts", len(outs), len(prompts))
         return outs
 
     jobs = [(e, t) for e in emos for t in topics for _ in range(reps)]
     stories = write([f"Write a short one-paragraph story (about 100 words) about {t}, in which the main character feels {e}. Do not use the word '{e}'." for e, t in jobs], seed=ctx.seed)
     keep = [(e, s) for (e, _), s in zip(jobs, stories) if e not in s.lower() and len(s) > 200]
     neutral = write([f"Write a short, purely factual one-paragraph description (about 100 words) of {t}, with no emotions or feelings." for t in topics for _ in range(10 if not ctx.quick else 2)], seed=ctx.seed + 1)
-    for (e, t), s in list(zip(jobs, stories))[:: max(1, len(jobs) // 40)]:
-        log.info("story [%s | %s]: %s", e, t, s.replace("\n", " "))
     log.info("emotions: %d/%d stories kept (emotion word absent), %d neutral", len(keep), len(jobs), len(neutral))
 
     @torch.no_grad()

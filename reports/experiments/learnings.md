@@ -64,3 +64,16 @@ What we tried, what went wrong, why, and how it was fixed. Newest last. Per-entr
 - **Pages never deployed.** The first Actions run failed because data files were not committed yet, and the content
   test requires them. Entries awaiting full runs are now flagged `status: pending`. The page shows a notice and the
   test skips only those entries.
+- **VRAM spill makes runs 10× slower without an error.** GPT-2 XL in fp32 (6.4 GB) plus activations filled the 8 GB GPU,
+  and Windows silently spilled to shared memory: the ActAdd smoke test took 54 min. Loading in bfloat16 and batching
+  samples with the KV cache fixes it. The steering hook now fires on the prompt pass only, which is token-identical to
+  recomputing the steered positions every step (checked with greedy decoding).
+- **Tokenizers decide which probes are possible.** Qwen3 splits numbers into digits, so "21" and "42" are not single
+  tokens ("42" and "49" share the first token "4"). The J-lens arithmetic example therefore cannot be scored by token
+  rank in this model and stays as a picture only.
+- **Simplified interventions can understate an effect.** Exchanging projections on two non-orthogonal unit directions
+  is weaker than the paper's coefficient swap in a sparse non-negative J-space decomposition. Both are now reported
+  (dated amendment) rather than replacing the pre-stated one.
+- **Log what the models say.** Story generation logged only a sample, so every prompt and output is now logged in full.
+  The one deliberate exception is refusal-ablated completions of harmful prompts: only the prompt and the refusal flag
+  are logged.

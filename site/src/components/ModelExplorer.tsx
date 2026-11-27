@@ -435,24 +435,34 @@ const PIN_W = 96
 const PIN_H = 64
 const PIN_GAP = 22
 
-/** Lay out pins in columns to the right, each as close as possible to its anchor's y without overlapping. */
+const PIN_STEP = PIN_H + PIN_GAP
+const MAX_PIN_COLS = 3
+
+/** Columns and total height needed so that `n` pins fit in [top, bottom] (height grows when 3 columns are not enough). */
+function pinGrid(n: number, top: number, bottom: number): { cols: number; bottom: number } {
+  const slots = Math.max(1, Math.floor((bottom - top) / PIN_STEP))
+  const cols = Math.min(MAX_PIN_COLS, Math.max(1, Math.ceil(n / slots)))
+  return { cols, bottom: Math.max(bottom, top + Math.ceil(n / cols) * PIN_STEP) }
+}
+
+/**
+ * Lay out pins in `cols` columns to the right of the diagram, each as close as possible to its anchor's y, never
+ * overlapping and never leaving [top, bottom]. Pins (sorted by anchor y) are dealt round-robin into the columns so every
+ * column spans the full height; within a column a forward pass removes overlaps and a backward pass pulls pins back
+ * above `bottom` (classic 1-D label placement). Requires ceil(n / cols) · PIN_STEP ≤ bottom − top (see pinGrid).
+ */
 function layoutPins<T extends Pin & { y: number }>(pins: T[], top: number, bottom: number, x0: number, cols: number) {
   const sorted = [...pins].sort((a, b) => a.y - b.y)
-  const colY: number[] = Array(cols).fill(top)
-  return sorted.map((p) => {
-    const want = Math.min(Math.max(p.y - PIN_H / 2, top), bottom - PIN_H)
-    let best = 0
-    let bestY = Infinity
-    for (let c = 0; c < cols; c++) {
-      const y = Math.max(colY[c], want)
-      if (Math.abs(y - want) < Math.abs(bestY - want)) {
-        best = c
-        bestY = y
-      }
-    }
-    colY[best] = bestY + PIN_H + PIN_GAP
-    return { ...p, px: x0 + best * (PIN_W + 12), py: bestY }
-  })
+  const out: (T & { px: number; py: number })[] = []
+  for (let c = 0; c < cols; c++) {
+    const col = sorted.filter((_, i) => i % cols === c)
+    // A card is PIN_STEP tall (thumbnail + title strip), so its top may go no lower than bottom − PIN_STEP.
+    const ys = col.map((p) => Math.min(Math.max(p.y - PIN_H / 2, top), bottom - PIN_STEP))
+    for (let i = 1; i < ys.length; i++) ys[i] = Math.max(ys[i], ys[i - 1] + PIN_STEP) // push down to remove overlaps
+    for (let i = ys.length - 1; i >= 0; i--) ys[i] = Math.min(ys[i], i === ys.length - 1 ? bottom - PIN_STEP : ys[i + 1] - PIN_STEP) // pull up into range
+    col.forEach((p, i) => out.push({ ...p, px: x0 + c * (PIN_W + 12), py: ys[i] }))
+  }
+  return out
 }
 
 function PinCard({ p, x, y, active, onExpand, onHover, anchorX, anchorY }: { p: Pin; x: number; y: number; active: boolean; onExpand: (s: string) => void; onHover: (k: string | null) => void; anchorX: number; anchorY: number }) {
@@ -525,8 +535,10 @@ function TransformerDiagram({
   const attnW = m.attnOnly ? D - attnX - 10 : 250
   const mlpX = attnX + attnW + 12
   const mlpW = D - mlpX - 10
-  const cols = pins.length > Math.floor((bottom - top) / (PIN_H + PIN_GAP)) ? 2 : 1
+  const grid = pinGrid(pins.length, top - 30, bottom)
+  const cols = grid.cols
   const W = D + 30 + cols * (PIN_W + 12)
+  const H = grid.bottom + 10 // taller than the diagram when the pins need more room
   const isOn = (key: string) => color(key) !== null
   const op = (key: string) => (isOn(key) ? 0.25 + 0.75 * intensity(key) : 1)
   const ring = (key: string) => (focus === key ? { stroke: '#f59e0b', strokeWidth: 2.5 } : {})
@@ -553,7 +565,7 @@ function TransformerDiagram({
   const placed = layoutPins(
     pins.map((p) => ({ ...p, y: anchor(p.key)[1] })),
     top - 30,
-    bottom,
+    grid.bottom,
     D + 30,
     cols,
   )
@@ -561,7 +573,7 @@ function TransformerDiagram({
   const neuronDots = 9
   const tokW = (D - attnX - 10) / tokens.length
   return (
-    <svg viewBox={`0 0 ${W} ${bottom + 10}`} style={{ width: '100%', maxWidth: W }} role="img" aria-label={`${m.name} architecture`}>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W }} role="img" aria-label={`${m.name} architecture`}>
       <Defs />
       <rect x={attnX} y={6} width={D - attnX - 10} height={24} rx={12} fill="url(#resid-grad)" opacity={0.18} />
       <text x={(attnX + D) / 2} y={22} textAnchor="middle" fontSize={12} fill="currentColor">
@@ -688,7 +700,8 @@ function StageDiagram({ m, color, focus, onPick, onHover, pins, expanded, onExpa
   const maxC = Math.max(...stages.map((s) => s.channels))
   const cy = 110
   const pinTop = 236
-  const H = pinTop + (pins.length ? PIN_H + PIN_GAP + 10 : 10)
+  const perRow = Math.floor((W - 20) / (PIN_W + 14)) // pins wrap into rows instead of running off the right edge
+  const H = pinTop + Math.ceil(pins.length / perRow) * PIN_STEP + 10
   const xOf = (name: string) => 10 + stages.findIndex((s) => s.name === name) * (bw + gap) + bw / 2
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: W }} role="img" aria-label={`${m.name} architecture`}>
@@ -716,7 +729,7 @@ function StageDiagram({ m, color, focus, onPick, onHover, pins, expanded, onExpa
         input → output (box height ∝ √width of the layer)
       </text>
       {pins.map((p, i) => (
-        <PinCard key={p.entry.slug} p={p} x={10 + i * (PIN_W + 14)} y={pinTop} active={expanded === p.entry.slug} onExpand={onExpand} onHover={onHover} anchorX={xOf(p.key.split(':')[1])} anchorY={cy + 40} />
+        <PinCard key={p.entry.slug} p={p} x={10 + (i % perRow) * (PIN_W + 14)} y={pinTop + Math.floor(i / perRow) * PIN_STEP} active={expanded === p.entry.slug} onExpand={onExpand} onHover={onHover} anchorX={xOf(p.key.split(':')[1])} anchorY={cy + 40} />
       ))}
     </svg>
   )

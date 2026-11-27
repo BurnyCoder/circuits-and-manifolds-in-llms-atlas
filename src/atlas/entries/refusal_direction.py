@@ -124,33 +124,40 @@ def compute(ctx) -> None:
     log.info("refusal: base log-odds harmful %.2f harmless %.2f; selected layer %d (bypass %.2f, induce %.2f)", base_h, base_s, L, best["bypass"], best["induce"])
 
     @torch.no_grad()
-    def generate(prompts, n_new=40):
+    def generate(prompts, n_new=40, condition="", log_text=True):
+        """Greedy completions; every prompt and output is logged in full, except completions of harmful prompts with the
+        refusal direction ablated (log_text=False): for those only the prompt and the refusal flag are logged, so no
+        harmful text is written anywhere (safety exception to the log-everything rule)."""
         texts = []
         for i in range(0, len(prompts), 16):
             b = tok(fmt(prompts[i : i + 16]), return_tensors="pt", padding=True, add_special_tokens=False).to(ctx.device)
             out = model.generate(**b, max_new_tokens=n_new, do_sample=False, pad_token_id=tok.eos_token_id)
-            texts += tok.batch_decode(out[:, b.input_ids.shape[1] :], skip_special_tokens=True)
+            batch = tok.batch_decode(out[:, b.input_ids.shape[1] :], skip_special_tokens=True)
+            for q, ans in zip(prompts[i : i + 16], batch):
+                shown = ans.replace("\n", " ") if log_text else "[withheld: refusal direction ablated on a harmful prompt]"
+                log.info("generate [%s] | prompt: %s | refused: %s | output: %s", condition, q, refused(ans), shown)
+            texts += batch
         return texts
 
     g = torch.Generator().manual_seed(ctx.seed)
     rand = torch.randn(r.shape, generator=g).to(ctx.device, torch.bfloat16)
     rand = rand / rand.norm() * r.norm()
     res = {}
-    res["harmful · baseline"] = [refused(t) for t in generate(harm_te)]
+    res["harmful · baseline"] = [refused(t) for t in generate(harm_te, condition="harmful · baseline")]
     hooks.ablate(r / r.norm())
-    res["harmful · refusal direction ablated"] = [refused(t) for t in generate(harm_te)]  # texts discarded (safety)
+    res["harmful · refusal direction ablated"] = [refused(t) for t in generate(harm_te, condition="harmful · ablated", log_text=False)]  # texts discarded (safety)
     hooks.clear()
     hooks.ablate(rand / rand.norm())
-    res["harmful · random direction ablated"] = [refused(t) for t in generate(harm_te)]
+    res["harmful · random direction ablated"] = [refused(t) for t in generate(harm_te, condition="harmful · random ablated")]
     hooks.clear()
-    safe_base = generate(safe_te)
+    safe_base = generate(safe_te, condition="harmless · baseline")
     res["harmless · baseline"] = [refused(t) for t in safe_base]
     hooks.add(L, r)
-    safe_add = generate(safe_te)
+    safe_add = generate(safe_te, condition="harmless · refusal added")
     res["harmless · refusal direction added"] = [refused(t) for t in safe_add]
     hooks.clear()
     hooks.add(L, rand)
-    res["harmless · random direction added"] = [refused(t) for t in generate(safe_te)]
+    res["harmless · random direction added"] = [refused(t) for t in generate(safe_te, condition="harmless · random added")]
     hooks.clear()
     rates = {k: float(np.mean(v)) for k, v in res.items()}
     for k, v in rates.items():

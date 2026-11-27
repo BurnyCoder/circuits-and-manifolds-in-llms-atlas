@@ -27,8 +27,29 @@ PERIODS = np.arange(2, 151)
 BASE10 = [2, 5, 10, 20, 50, 100]
 
 
-def probe_r2(X: np.ndarray, s: np.ndarray, tr: np.ndarray, alpha: float = 10.0) -> np.ndarray:
-    """Held-out R² of ridge probes X -> [sin, cos](2π s / T) for every period T (averaged over sin and cos)."""
+ALPHAS = [1e-1, 1e0, 1e1, 1e2, 1e3, 1e4, 1e5]
+
+
+def probe_r2(X: np.ndarray, s: np.ndarray, tr: np.ndarray, alpha: float | None = None) -> np.ndarray:
+    """Held-out R² of ridge probes X -> [sin, cos](2π s / T) for every period T (averaged over sin and cos).
+
+    alpha=None: ridge strength chosen *per period* from ALPHAS on an inner split of the training rows (every 5th), as
+    sklearn's RidgeCV(alpha_per_target=True); the test rows are never used for the choice. (One alpha for all periods,
+    picked by mean R², fails: most periods are unpredictable and reward maximal shrinkage, which also flattens the
+    real circles.)"""
+    if alpha is None:
+        idx = np.where(tr)[0]
+        inner = np.zeros(len(s), bool)
+        inner[idx[::5]] = True
+        keep = tr  # inner split uses training rows only: fit on tr & ~inner, validate on inner
+        val = np.stack([_probe(X[keep], s[keep], (tr & ~inner)[keep], a) for a in ALPHAS])  # [n_alpha, n_periods]
+        test = np.stack([_probe(X, s, tr, a) for a in ALPHAS])
+        return test[val.argmax(0), np.arange(len(PERIODS))]
+    return _probe(X, s, tr, alpha)
+
+
+def _probe(X: np.ndarray, s: np.ndarray, tr: np.ndarray, alpha: float) -> np.ndarray:
+    """Held-out (rows ~tr) R² for every period with a fixed ridge strength; features standardized on rows tr."""
     mu, sd = X[tr].mean(0), X[tr].std(0) + 1e-6
     A = (X - mu) / sd
     G = A[tr].T @ A[tr] + alpha * np.eye(A.shape[1])
@@ -41,6 +62,14 @@ def probe_r2(X: np.ndarray, s: np.ndarray, tr: np.ndarray, alpha: float = 10.0) 
         r2 = 1 - ((Y[~tr] - pred) ** 2).sum(0) / ((Y[~tr] - Y[~tr].mean(0)) ** 2).sum(0)
         out.append(float(r2.mean()))
     return np.array(out)
+
+
+def peak_scores(r2: np.ndarray) -> np.ndarray:
+    """How much each period stands out from its neighbours: R²(T) − mean R²(T±1) (edge periods use one neighbour).
+    Smooth trends (e.g. long periods acting as a monotone magnitude code) score ~0; isolated peaks score high."""
+    left = np.r_[r2[1], r2[:-1]]
+    right = np.r_[r2[1:], r2[-2]]
+    return r2 - (left + right) / 2
 
 
 def compute(ctx) -> None:
@@ -73,7 +102,9 @@ def compute(ctx) -> None:
         for L in layers:
             r2 = probe_r2(np.concatenate(H[L]), s, tr)
             top = PERIODS[np.argsort(-r2)[:8]].tolist()
-            per_layer.append({"layer": L, "r2": r2, "top": top})
+            top_peak = PERIODS[np.argsort(-peak_scores(r2))[:8]].tolist()
+            per_layer.append({"layer": L, "r2": r2, "top": top, "top_peak": top_peak})
+            log.info("%s L%d: top periods by peak score %s", name, L, top_peak)
             log.info("%s L%d: top periods %s (R² %s)", name, L, top[:6], np.round(np.sort(r2)[::-1][:6], 3))
         best = max(per_layer, key=lambda x: sum(x["r2"][PERIODS == T][0] for T in (2, 5, 10)))
         res.append({"name": name, "n_layers": nl, "layers": per_layer, "best_layer": best["layer"], "top": best["top"]})
@@ -82,6 +113,7 @@ def compute(ctx) -> None:
     big = res[-1]
     best = next(x for x in big["layers"] if x["layer"] == big["best_layer"])
     hits = [T for T in BASE10 if T in best["top"][:8]]
+    hits_peak = [T for T in BASE10 if T in best["top_peak"][:8]]
     r2_at = {T: float(best["r2"][PERIODS == T][0]) for T in BASE10}
     neigh = {T: float(np.mean([best["r2"][PERIODS == u][0] for u in (T - 1, T + 1) if u in PERIODS])) for T in (5, 10, 20)}
     summary = {
@@ -89,6 +121,8 @@ def compute(ctx) -> None:
         "layer": big["best_layer"],
         "top_periods": ", ".join(map(str, best["top"][:8])),
         "n_base10_in_top8": len(hits),
+        "top_peak_periods": ", ".join(map(str, best["top_peak"][:8])),
+        "n_base10_in_top8_peaks": len(hits_peak),
         "r2_T10": r2_at[10],
         "r2_T10_neighbours": neigh[10],
         "r2_T5": r2_at[5],
@@ -102,6 +136,14 @@ def compute(ctx) -> None:
             "≥ 3 base-10 periods in the top 8 and R²(T=10) ≥ neighbours + 0.1",
             len(hits) >= 3 and r2_at[10] >= neigh[10] + 0.1,
             partial=len(hits) >= 2,
+        ),
+        verdict_row(
+            "Base-10 periods stand out as peaks (amendment: peak score, removes the long-period magnitude trend)",
+            "Fourier probes peak at T ∈ {2, 5, 10, 20, 50, 100} in Llama-3.1-8B (Feucht et al.)",
+            f"{summary['model']} layer {big['best_layer']}: top-8 periods by R²(T) − mean R²(T±1): {summary['top_peak_periods']} ({len(hits_peak)} of the base-10 set)",
+            "≥ 3 base-10 periods among the top-8 peaks and R²(T=10) ≥ neighbours + 0.1 (same thresholds)",
+            len(hits_peak) >= 3 and r2_at[10] >= neigh[10] + 0.1,
+            partial=len(hits_peak) >= 2,
         ),
     ]
     write_entry(SLUG, {"models": res, "periods": PERIODS, "base10": BASE10}, summary, repl, models=MODELS, runtime_s=time.time() - t0, ndigits=3)

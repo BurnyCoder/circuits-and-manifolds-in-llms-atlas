@@ -9,9 +9,12 @@ swapping J-lens coordinates (France ↔ China) changes downstream answers.
 We use the pre-fitted Qwen3-1.7B lens from Neuronpedia (HF neuronpedia/jacobian-lens, fitted with Anthropic's
 jacobian-lens library, Apache-2.0, on 466 WikiText prompts; target = final block), and report:
 - slice grids (layer × position top tokens) for J-lens vs logit lens on multi-hop / arithmetic prompts;
-- the best rank of the unspoken intermediate token (Texas, France, 21, 42) at the last position, J-lens vs logit lens;
-- coordinate swaps: exchange the J-lens coordinates of country A and B at the country token in a middle layer and check
-  whether the answer switches to B's (capital/language), vs a random-direction swap control.
+- the best rank of the unspoken intermediate token (Texas, France) at the last position, J-lens vs logit lens (the
+  arithmetic prompt is shown in the grids only: Qwen3 splits "21"/"42" into digit tokens);
+- coordinate swaps at the country token in a middle layer: (a) pre-stated simple swap = exchange the projections on the
+  two unit J-lens directions J_ℓᵀ W_U[t]; (b) paper-style swap = decompose the activation into a non-negative combination
+  of the J-lens vectors of its top-25 J-lens tokens plus A and B (scipy NNLS) and exchange A's and B's coefficients;
+  success = B's answer (capital/language) in the top 5; controls: a random direction / random vector of matched norm.
 Note a published failed replication on GPT-2 small (J-lens worse than logit lens) and that selectivity did not
 reproduce ≤ 9B (avalur/JLens).
 """
@@ -36,6 +39,10 @@ PROMPTS = {
     "arith": ("Calculate: (4+17)*2+7 =", ["21", "42"], "49"),
     "eiffel": ("The Eiffel Tower is in the city of", [" France"], " Paris"),
 }
+# Qwen3 tokenizes numbers digit by digit ("21" -> "2", "1"; "42" and "49" both start with "4"), so multi-digit
+# intermediates are not single tokens: the arithmetic prompt stays in the slice grids but not in the rank metric.
+RANK_CASES = [k for k in PROMPTS if k != "arith"]
+N_DICT = 25  # J-space: sparse non-negative combination of up to ~25 J-lens vectors (Gurnee et al. 2026)
 SWAPS = [
     ("The capital of France is", " France", " China", " Paris", " Beijing"),
     ("The capital of Germany is", " Germany", " Japan", " Berlin", " Tokyo"),
@@ -99,7 +106,7 @@ def compute(ctx) -> None:
                 lp = readout(hs[L][0], L, lens)  # [T, V]
                 top = lp.topk(3, -1)
                 grid[lens].append([[(tok.decode([int(i)]), float(p.exp())) for i, p in zip(top.indices[t], top.values[t])] for t in range(len(toks))])
-                for w in inter + [ans]:
+                for w in (inter + [ans]) if key in RANK_CASES else []:
                     r = int((lp[-1] > lp[-1, tid(w)]).sum()) + 1
                     rk[lens].setdefault(w, []).append(r)
         grids[key] = {"text": text, "tokens": toks, "layers": layers, "grid": grid, "intermediates": inter, "answer": ans}
@@ -112,11 +119,26 @@ def compute(ctx) -> None:
         d = J[layer].T @ W_U[tid(token)]
         return d / d.norm()
 
+    from scipy.optimize import nnls
+
+    def nnls_delta(h: torch.Tensor, layer: int, a: str, b: str, rand: torch.Tensor | None = None) -> torch.Tensor:
+        """Paper-style swap: write h's J-space part as a non-negative combination of the J-lens vectors J_ℓᵀ W_U[t]
+        of its top-25 J-lens tokens plus a and b (scipy NNLS), then exchange the coefficients of a and b.
+        With ``rand``, b's vector is replaced by a random vector of the same norm (control)."""
+        top = readout(h[None], layer, "jlens")[0].topk(N_DICT).indices.tolist()
+        toks_ = list(dict.fromkeys(top + [tid(a), tid(b)]))
+        V = torch.stack([J[layer].T @ W_U[t] for t in toks_], 1)  # [d, K]
+        ia, ib = toks_.index(tid(a)), toks_.index(tid(b))
+        if rand is not None:
+            V[:, ib] = rand * V[:, ib].norm()
+        beta, _ = nnls(V.double().cpu().numpy(), h.double().cpu().numpy())
+        return float(beta[ib] - beta[ia]) * V[:, ia] + float(beta[ia] - beta[ib]) * V[:, ib]
+
     g = torch.Generator(device=ctx.device).manual_seed(ctx.seed)
     swap_layers = [L for L in layers if 0.3 * nl <= L <= 0.7 * nl][::2]
     swap = []
     for L in swap_layers:
-        succ, succ_r, base_ok = [], [], []
+        succ, succ_r, base_ok, succ_n, succ_nr = [], [], [], [], []
         for text, a, b, ans_a, ans_b in SWAPS:
             ids = tok(text, return_tensors="pt", add_special_tokens=False).input_ids.to(ctx.device)
             pos = [i for i, t in enumerate(ids[0].tolist()) if t == tid(a)][-1]
@@ -124,12 +146,15 @@ def compute(ctx) -> None:
             rnd = torch.randn(da.shape, generator=g, device=ctx.device)
             rnd = rnd / rnd.norm()
 
-            def run(d1, d2):
+            def run(d1, d2, mode="coord"):
                 def hook(m, i, o):
                     hs = o[0] if isinstance(o, tuple) else o
                     h = hs[0, pos].float()
-                    c1, c2 = h @ d1, h @ d2
-                    hs[0, pos] = (h + (c2 - c1) * d1 + (c1 - c2) * d2).to(hs.dtype)  # exchange the two coordinates
+                    if mode == "coord":
+                        c1, c2 = h @ d1, h @ d2
+                        hs[0, pos] = (h + (c2 - c1) * d1 + (c1 - c2) * d2).to(hs.dtype)  # exchange the two coordinates
+                    else:  # mode == "nnls": d1 = (a, b), d2 = optional random vector
+                        hs[0, pos] = (h + nnls_delta(h, L, d1[0], d1[1], d2)).to(hs.dtype)
                     return o
 
                 hk = model.model.layers[L - 1].register_forward_hook(hook) if d1 is not None else None
@@ -144,12 +169,17 @@ def compute(ctx) -> None:
             top5 = run(da, db).topk(5).indices.tolist()
             succ.append(tid(ans_b) in top5)
             succ_r.append(tid(ans_b) in run(da, rnd).topk(5).indices.tolist())
-        swap.append({"layer": L, "top5_success": float(np.mean(succ)), "random_top5": float(np.mean(succ_r)), "baseline_correct": float(np.mean(base_ok)), "n": len(SWAPS)})
+            succ_n.append(tid(ans_b) in run((a, b), None, "nnls").topk(5).indices.tolist())
+            succ_nr.append(tid(ans_b) in run((a, b), rnd, "nnls").topk(5).indices.tolist())
+        swap.append({"layer": L, "top5_success": float(np.mean(succ)), "random_top5": float(np.mean(succ_r)), "baseline_correct": float(np.mean(base_ok)), "n": len(SWAPS),
+                     "nnls_top5": float(np.mean(succ_n)), "nnls_random_top5": float(np.mean(succ_nr))})
+        log.info("J-lens NNLS swap at layer %d: target in top-5 %.2f (random vector %.2f)", L, swap[-1]["nnls_top5"], swap[-1]["nnls_random_top5"])
         log.info("J-lens swap at layer %d: target answer in top-5 %.2f (random direction %.2f; baseline correct %.2f)", L, swap[-1]["top5_success"], swap[-1]["random_top5"], swap[-1]["baseline_correct"])
 
-    inter_j = [min(ranks[k]["jlens"][w]) for k in ranks for w in PROMPTS[k][1]]
-    inter_l = [min(ranks[k]["logit"][w]) for k in ranks for w in PROMPTS[k][1]]
+    inter_j = [min(ranks[k]["jlens"][w]) for k in RANK_CASES for w in PROMPTS[k][1]]
+    inter_l = [min(ranks[k]["logit"][w]) for k in RANK_CASES for w in PROMPTS[k][1]]
     best_swap = max(swap, key=lambda s: s["top5_success"])
+    best_nnls = max(swap, key=lambda s: s["nnls_top5"])
     summary = {
         "n_layers_lens": len(layers),
         "inter_median_rank_j": float(np.median(inter_j)),
@@ -161,6 +191,9 @@ def compute(ctx) -> None:
         "swap_top5": best_swap["top5_success"],
         "swap_random": best_swap["random_top5"],
         "swap_n": best_swap["n"],
+        "nnls_layer": best_nnls["layer"],
+        "nnls_top5": best_nnls["nnls_top5"],
+        "nnls_random": best_nnls["nnls_random_top5"],
     }
     repl = [
         verdict_row(
@@ -179,6 +212,14 @@ def compute(ctx) -> None:
             "≥ 50% and ≥ 30 points above the random-direction swap",
             best_swap["top5_success"] >= 0.5 and best_swap["top5_success"] - best_swap["random_top5"] >= 0.3,
             partial=best_swap["top5_success"] - best_swap["random_top5"] >= 0.2,
+        ),
+        verdict_row(
+            "Swapping J-space coefficients (paper-style sparse NNLS decomposition) swaps the concept",
+            "J-space component swap: 59% top-5 success vs 5% for the non-J component (Claude)",
+            f"layer {best_nnls['layer']}: target answer in top-5 for {best_nnls['nnls_top5'] * 100:.0f}% of {best_nnls['n']} prompts (random vector {best_nnls['nnls_random_top5'] * 100:.0f}%)",
+            "≥ 50% and ≥ 30 points above the random-vector swap (amendment 2026-11-27, same thresholds)",
+            best_nnls["nnls_top5"] >= 0.5 and best_nnls["nnls_top5"] - best_nnls["nnls_random_top5"] >= 0.3,
+            partial=best_nnls["nnls_top5"] - best_nnls["nnls_random_top5"] >= 0.2,
         ),
     ]
     write_entry(SLUG, {"grids": grids, "ranks": ranks, "swap": swap, "n_layers": nl}, summary, repl, models=[MODEL, "neuronpedia/jacobian-lens"], runtime_s=time.time() - t0, ndigits=3)

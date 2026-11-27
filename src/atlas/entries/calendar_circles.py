@@ -9,7 +9,7 @@ Recomputes Engels, Michaud, Liao, Gurnee, Tegmark, "Not All Language Model Featu
 - SAE view (GPT-2 small, layer 7, SAELens ``gpt2-small-res-jb`` — the Bloom 2024 SAEs the paper uses): reconstructing
   day-token activations from the SAE latents that fire most on days gives the circle; we also show how individual
   latents tile it (each prefers a few neighbouring days), the "capture vs. dilution" question of Bhalla et al. 2026.
-- Causal test (Qwen3-1.7B, day arithmetic "Let's do some day of the week math. Two days from Monday is"): patching
+- Causal test (Qwen3-1.7B, day arithmetic it solves, "If today is Monday, then two days later it is"): patching
   the 2-D circle component at the day token to another day's position shifts the model's answer by the same amount
   (paper §5 uses circular probes on Mistral/Llama); control: the same patch in a random 2-D subspace.
 """
@@ -49,7 +49,16 @@ TEMPLATES = [
     "Prices usually rise in{X}.",
     "We first met in{X}.",
 ]
-NUMWORDS = ["One", "Two", "Three", "Four", "Five", "Six"]
+# Day-arithmetic prompts Qwen3-1.7B actually solves. CPU check 2026-11-27: "the day after" 7/7, "two days later" 6/7;
+# Engels et al.'s "Let's do some day of the week math. N days from D is" scored 0-57% per N, so centroids built from
+# the correct answer did not reflect what the model represents. Prefixes add paraphrase variety for averaging.
+DAY_TASK = {1: "If today is{d}, then the day after is", 2: "If today is{d}, then two days later it is", 3: "If today is{d}, then three days later it is"}
+DAY_PREFIXES = ["", "Quick calendar question. ", "Think about the days of the week. "]
+
+
+def day_prompts() -> list[tuple[int, int, str]]:
+    """(k, start day d, prompt) for every offset k in DAY_TASK, start day and prefix; the answer day is (d + k) % 7."""
+    return [(k, d, pre + DAY_TASK[k].format(d=DAYS[d])) for pre in DAY_PREFIXES for k in DAY_TASK for d in range(7)]
 
 
 def _positions(tok, texts: list[str], word: str) -> list[int]:
@@ -178,9 +187,9 @@ def qwen_part(ctx) -> dict:
             geo.setdefault(nm, []).append({"layer": L, "score": st["score"], "p": st["p"], "var": st["var"], "points": st["points"], "means": st["means"], "_st": st, "_X": (X, y, g)})
         log.info("Qwen3 L%d: days order %.2f, months order %.2f", L, geo["days"][-1]["score"], geo["months"][-1]["score"])
 
-    # Causal test: "Let's do some day of the week math. {N} days from {D} is" -> answer day.
+    # Causal test on day arithmetic the model solves ("If today is Monday, then two days later it is" -> answer day).
     day_ids = [tok(w, add_special_tokens=False).input_ids[0] for w in DAYS]
-    prompts = [(k, d, f"Let's do some day of the week math. {NUMWORDS[k - 1]} days from{DAYS[d]} is") for k in range(1, 7) for d in range(7)]
+    prompts = day_prompts()
 
     @torch.no_grad()
     def answer(text, hook_layer=None, pos=None, delta=None):
@@ -221,7 +230,7 @@ def qwen_part(ctx) -> dict:
                 continue
             j = int(rng.integers(1, 7))  # shift the start day by j
             target = (d + j + k) % 7
-            pos = len(tok(text[: text.index(DAYS[d])], add_special_tokens=False).input_ids)
+            pos = len(tok(text[: text.index(DAYS[d])], add_special_tokens=False).input_ids)  # index of the start-day token
             for P, M, acc_list in ((P2, m_circle, succ), (R, m_rand, succ_rand)):
                 delta = P.T @ (M[(d + j) % 7] - M[d])  # move along the plane from day d's mean to day d+j's mean
                 acc_list.append(answer(text, L, pos, torch.tensor(delta, device=ctx.device)) == target)
