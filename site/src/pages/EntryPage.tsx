@@ -1,0 +1,155 @@
+// Entry page: header, interactive visualization, prose (with {{templates}} filled from data), quote, our
+// replication verdicts, replications by others, citations, related entries.
+import { Suspense, useMemo } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { CategoryTag, FidelityBadge } from '../components/Badges'
+import { entryBySlug } from '../lib/content'
+import { useData } from '../lib/data'
+import { CATEGORY, COLLECTIONS, EVIDENCE } from '../lib/labels'
+import { renderMarkdown } from '../lib/markdown'
+import { vizRegistry } from '../viz/registry'
+
+export default function EntryPage() {
+  const { slug = '' } = useParams()
+  const e = entryBySlug[slug]
+  const { data, error } = useData(e?.data)
+  const html = useMemo(() => (e ? renderMarkdown(e.body, e.data ? data?.summary : undefined) : ''), [e, data])
+  if (!e) return <p>Unknown entry “{slug}”. <Link to="/">Back to the atlas</Link></p>
+
+  const Viz = e.viz ? vizRegistry[e.viz] : undefined
+  const cite = (id: string) => e.citations.find((c) => c.id === id)
+  const q = e.quote
+  const qc = q ? cite(q.source) : undefined
+
+  return (
+    <article style={{ ['--cat-color' as string]: CATEGORY[e.category].color }}>
+      <p className="viz-note">
+        <Link to="/">← Atlas</Link> · {COLLECTIONS[e.collection] ?? e.collection}
+      </p>
+      <header className="entry-head">
+        <div className="meta" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <CategoryTag c={e.category} />
+          <FidelityBadge f={e.fidelity} />
+          <span className="tag">evidence: {EVIDENCE[e.evidence]}</span>
+          {e.models.map((m) => (
+            <span className="tag" key={m}>
+              {m}
+            </span>
+          ))}
+        </div>
+        <h1>{e.title}</h1>
+        <p className="summary">{e.summary}</p>
+      </header>
+
+      {Viz && (
+        <section className="panel viz">
+          {error && <p className="error">Could not load data: {error}</p>}
+          {e.data && !data && !error ? (
+            <p>Loading data…</p>
+          ) : (
+            <Suspense fallback={<p>Loading visualization…</p>}>
+              <Viz data={data} entry={e} />
+            </Suspense>
+          )}
+        </section>
+      )}
+
+      {q && (
+        <blockquote className="quote">
+          “{q.text}”
+          <cite>
+            — {qc ? <a href={qc.url} target="_blank" rel="noopener">{qc.authors} ({qc.year}), {qc.title}</a> : q.source}
+            {q.where ? `, ${q.where}` : ''}
+          </cite>
+        </blockquote>
+      )}
+
+      <section className="prose" dangerouslySetInnerHTML={{ __html: html }} />
+
+      {data?.replication && data.replication.length > 0 && (
+        <section className="panel">
+          <h2>Our replication: published vs. recomputed</h2>
+          <div className="table-wrap">
+            <table className="data">
+              <thead>
+                <tr>
+                  <th>Claim</th>
+                  <th>Published</th>
+                  <th>Ours</th>
+                  <th>Pass criterion</th>
+                  <th>Verdict</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.replication.map((r, i) => (
+                  <tr key={i}>
+                    <td>{r.claim}</td>
+                    <td>{r.published}</td>
+                    <td>{r.ours}</td>
+                    <td>{r.criterion}</td>
+                    <td className={`outcome ${r.verdict}`}>{r.verdict}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {e.replications && e.replications.length > 0 && (
+        <section className="panel">
+          <h2>Replications and follow-ups by others</h2>
+          <ul className="repl-list">
+            {e.replications.map((r) => (
+              <li key={r.url + r.who}>
+                <span className={`outcome ${r.outcome}`}>
+                  {{ replicated: '✓ replicated', partial: '◐ partial', failed: '✗ did not replicate', ours: '● this atlas' }[r.outcome]}
+                </span>
+                <a href={r.url} target="_blank" rel="noopener">
+                  {r.who}
+                </a>{' '}
+                · <i>{r.model}</i> — {r.note}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <div className="two-col">
+        <section className="panel">
+          <h2>Sources</h2>
+          <ol className="cite-list">
+            {e.citations.map((c) => (
+              <li key={c.id} id={`cite-${c.id}`}>
+                {c.authors} ({c.year}). <a href={c.url} target="_blank" rel="noopener">{c.title}</a>
+                {c.venue ? `. ${c.venue}` : ''}
+                {c.where ? ` — ${c.where}` : ''}
+              </li>
+            ))}
+          </ol>
+        </section>
+        {e.related && e.related.length > 0 && (
+          <section className="panel">
+            <h2>Related entries</h2>
+            <ul className="cite-list">
+              {e.related
+                .filter((s) => entryBySlug[s])
+                .map((s) => (
+                  <li key={s}>
+                    <Link to={`/entry/${s}`}>{entryBySlug[s].title}</Link> — {entryBySlug[s].summary}
+                  </li>
+                ))}
+            </ul>
+          </section>
+        )}
+      </div>
+      {data?.meta && (
+        <p className="viz-note">
+          Data generated {data.meta.generated}
+          {data.meta.git_commit ? ` at commit ${data.meta.git_commit.slice(0, 7)}` : ''} by{' '}
+          <code>src/atlas/entries/{e.slug.replace(/-/g, '_')}.py</code>.
+        </p>
+      )}
+    </article>
+  )
+}
