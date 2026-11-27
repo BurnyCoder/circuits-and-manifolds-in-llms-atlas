@@ -49,29 +49,33 @@ def steering_vector(model, plus: str, minus: str, layer: int) -> torch.Tensor:
 def generate(model, prompt: str, vec: torch.Tensor | None, coef: float, layer: int, n: int, seed: int) -> list[str]:
     """n sampled completions (temperature 1, top-p 0.3, frequency penalty 1 — the paper's sampling settings).
 
-    Without a KV cache every step re-runs the full sequence, so the hook adds coef·vec to the first positions each time,
-    which is exactly ActAdd's "add to the first n_pos residual positions".
+    All n samples run as one batch with the KV cache. The hook adds coef·vec to the first n_pos residual positions on
+    the prompt pass only (ActAdd's "add to the first positions"); later steps read those steered positions from the
+    cache, which equals recomputing them every step because the addition is deterministic.
     """
+    state = {"applied": False}
 
     def hook(x, hook):
-        x[:, : vec.shape[0]] += coef * vec
+        if not state["applied"]:  # the first forward pass is the full prompt; later passes see one new token each
+            x[:, : vec.shape[0]] += coef * vec.to(x.dtype)
+            state["applied"] = True
         return x
 
     hooks = [(f"blocks.{layer}.hook_resid_pre", hook)] if (vec is not None and coef != 0) else []
-    outs = []
-    for k in range(n):
-        torch.manual_seed(seed + k)
-        with model.hooks(fwd_hooks=hooks):
-            o = model.generate(prompt, max_new_tokens=40, temperature=1.0, top_p=0.3, freq_penalty=1.0, verbose=False, use_past_kv_cache=False)
-        outs.append(o[len(prompt) :])
-    return outs
+    toks = model.to_tokens(prompt).repeat(n, 1)
+    torch.manual_seed(seed)
+    with model.hooks(fwd_hooks=hooks):
+        out = model.generate(toks, max_new_tokens=40, temperature=1.0, top_p=0.3, freq_penalty=1.0, verbose=False, use_past_kv_cache=True, return_type="tokens")
+    return [model.to_string(row[toks.shape[1] :]).replace("<|endoftext|>", "") for row in out]
 
 
 def compute(ctx) -> None:
     from transformers import pipeline
 
     t0 = time.time()
-    model = hooked("gpt2-xl", device=ctx.device)
+    # bfloat16 halves memory (6.4 → 3.2 GB): in fp32 GPT-2 XL filled the 8 GB GPU and spilled to shared memory (54 min
+    # for the smoke test). bf16 keeps fp32's exponent range, so GPT-2's large residual activations cannot overflow.
+    model = hooked("gpt2-xl", device=ctx.device, dtype=torch.bfloat16)
     sent = pipeline("sentiment-analysis", model="distilbert/distilbert-base-uncased-finetuned-sst-2-english", device=0 if ctx.device == "cuda" else -1)
     n = 3 if ctx.quick else 8
     results = {}
