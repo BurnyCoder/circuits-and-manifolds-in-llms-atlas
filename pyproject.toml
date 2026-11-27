@@ -1,0 +1,69 @@
+[project]
+name = "atlas"
+version = "0.1.0"
+description = "Data pipeline for the Atlas of Circuits & Manifolds: recomputes mechanistic-interpretability findings on open models and exports JSON for the interactive website."
+readme = "README.md"
+authors = [{ name = "Libor \"Burny\" Burian" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    # Core numerics / ML. torch comes from the CUDA 12.8 index below (RTX 50xx Blackwell needs cu128+ wheels:
+    # https://pytorch.org/get-started/locally/).
+    "torch>=2.7",
+    "torchvision>=0.22",
+    "numpy>=1.26",
+    "scipy>=1.13",
+    "scikit-learn>=1.5",
+    "pandas>=2.2",
+    "einops>=0.8",
+    "tqdm>=4.66",
+    "python-dotenv>=1.0",
+    "requests>=2.32",
+    "matplotlib>=3.9",
+    # Interpretability stack. TransformerLens 4.x removed HookedTransformer, and circuit-tracer 0.5.x pins
+    # transformer-lens<4 while SAELens needs >=3 -> pin the 3.x line (https://pypi.org/project/circuit-tracer/,
+    # https://pypi.org/project/sae-lens/).
+    "transformer-lens>=3,<4",
+    "sae-lens>=6.50",
+    "transformers>=4.50",
+    "accelerate>=1.0",
+    "datasets>=3.0",
+    "huggingface-hub>=0.30",
+    # Vision / world-model entries.
+    "torch-lucent>=0.1.8",
+    "diffusers>=0.33",
+    "gymnasium[classic-control]>=1.0",
+    "pillow>=10",
+]
+
+[project.optional-dependencies]
+graphs = ["circuit-tracer>=0.5"]
+cloud = ["runpod>=1.7"]
+
+[project.scripts]
+atlas = "atlas.run:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.uv]
+# Keep Python 3.12 venv in the project (.venv) as the user's CLAUDE.md asks.
+package = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120

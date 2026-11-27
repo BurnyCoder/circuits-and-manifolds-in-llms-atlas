@@ -1,0 +1,32 @@
+# Secrets — never commit (NEURONPEDIA_API_KEY, RUNPOD_API_KEY, HF_TOKEN live here)
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Node / site
+site/node_modules/
+site/dist/
+site/.vite/
+
+# Large or regenerable artifacts
+logs/*.log
+results/**/*.pt
+results/**/*.npy
+results/**/*.npz
+results/**/raw/
+checkpoints/
+*.safetensors
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
