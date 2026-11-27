@@ -1,0 +1,16 @@
+[
+ {
+  "claim": "Blocks capture multi-dimensional concepts that single-direction SAEs fragment",
+  "published": "per-block R\u00b2: BSF 0.93\u20130.97 vs TopK SAE \u2248 0.53 (toy, Fel et al. 2026)",
+  "ours": "median per-concept R\u00b2: BSF 1.00 vs TopK SAE 0.64 (32 sphere concepts in 3-D subspaces of d = 128)",
+  "criterion": "BSF median \u2265 0.8 and \u2265 0.2 above the SAE",
+  "verdict": "pass"
+ },
+ {
+  "claim": "InceptionV1 curve responses form an orientation ring described by a few harmonics",
+  "published": "one b = 16 block covers all orientations; harmonics 1\u20133 explain 59/18/12% (89%)",
+  "ours": "top-16 PCs of mixed3b curve responses: harmonics 1\u20133 explain 28/26/9% (63%; shuffled-orientation null 95th pct 3%)",
+  "criterion": "harmonics 1\u20133 \u2265 50% and above the null's 95th percentile",
+  "verdict": "pass"
+ }
+]

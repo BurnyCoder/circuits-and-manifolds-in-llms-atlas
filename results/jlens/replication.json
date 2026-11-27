@@ -1,0 +1,23 @@
+[
+ {
+  "claim": "The J-lens surfaces unspoken intermediate steps better than the logit lens",
+  "published": "J-lens beats logit / tuned lens; intermediates (21, 42) become readable in middle layers (Claude)",
+  "ours": "best rank of the intermediate token at the last position: median 4 (J-lens) vs 9 (logit lens); top-10 for 3/3 vs 2/3",
+  "criterion": "J-lens median rank lower than the logit lens's and \u2265 half of intermediates reach the top 10",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Swapping J-lens coordinates swaps the concept",
+  "published": "France \u2194 China swaps change capital/language answers; 59% top-5 success for the J-space component (Claude)",
+  "ours": "layer 11: target answer in top-5 for 12% of 8 prompts (random direction 0%)",
+  "criterion": "\u2265 50% and \u2265 30 points above the random-direction swap",
+  "verdict": "fail"
+ },
+ {
+  "claim": "Swapping J-space coefficients (paper-style sparse NNLS decomposition) swaps the concept",
+  "published": "J-space component swap: 59% top-5 success vs 5% for the non-J component (Claude)",
+  "ours": "layer 9: target answer in top-5 for 12% of 8 prompts (random vector 0%)",
+  "criterion": "\u2265 50% and \u2265 30 points above the random-vector swap (amendment 2026-11-27, same thresholds)",
+  "verdict": "fail"
+ }
+]

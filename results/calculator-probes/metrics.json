@@ -1,0 +1,26 @@
+{
+ "meta": {
+  "slug": "calculator-probes",
+  "generated": "2026-11-27 22:50 UTC",
+  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "models": [
+   "EleutherAI/pythia-410m",
+   "EleutherAI/pythia-1.4b",
+   "EleutherAI/pythia-2.8b"
+  ],
+  "runtime_s": 372.112514,
+  "quick": false
+ },
+ "summary": {
+  "model": "pythia-2.8b",
+  "layer": 21,
+  "top_periods": "150, 149, 148, 147, 146, 145, 144, 143",
+  "n_base10_in_top8": 0,
+  "top_peak_periods": "2, 10, 38, 58, 5, 7, 15, 17",
+  "n_base10_in_top8_peaks": 3,
+  "r2_T10": 0.202713,
+  "r2_T10_neighbours": -0.0057,
+  "r2_T5": 0.030588,
+  "r2_T2": 0.395121
+ }
+}

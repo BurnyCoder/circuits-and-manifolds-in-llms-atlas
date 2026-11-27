@@ -1,0 +1,16 @@
+[
+ {
+  "claim": "Solid colors occupy a 3-D subspace of the FLUX VAE latent",
+  "published": "first three PCs explain essentially 100% of variance (Pach et al. 2026, \u00a73)",
+  "ours": "top-3 PCs explain 96.14% over 400 colors (random-noise images: 60.1%)",
+  "criterion": "\u2265 95%",
+  "verdict": "pass"
+ },
+ {
+  "claim": "The subspace is HSL-like: lightness axis, hue angle, saturation radius",
+  "published": "PC1 = lightness; PC2\u2013PC3 angle = hue; radius = saturation (bicone, Fig. 2)",
+  "ours": "corr(PC1, lightness) 0.98; circular corr(angle, hue) 0.99; corr(radius, chroma) 0.93",
+  "criterion": "all three \u2265 0.8",
+  "verdict": "pass"
+ }
+]

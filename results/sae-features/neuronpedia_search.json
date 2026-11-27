@@ -1,0 +1,137 @@
+{
+ "Golden Gate Bridge": {
+  "index": 17608,
+  "label": "references to various bridges and bridge-related contexts",
+  "query": "Golden Gate Bridge",
+  "top5": [
+   [
+    17608,
+    "references to various bridges and bridge-related contexts"
+   ],
+   [
+    23937,
+    "locations related to the Bay Area"
+   ],
+   [
+    10261,
+    " mentions of \"Golden State.\""
+   ],
+   [
+    10261,
+    "references to the term \"Golden State\""
+   ],
+   [
+    9752,
+    "references to San Francisco"
+   ]
+  ]
+ },
+ "Python code": {
+  "index": 4418,
+  "label": "Python code patterns related to Django",
+  "query": "Python code",
+  "top5": [
+   [
+    4418,
+    "Python code patterns related to Django"
+   ],
+   [
+    11882,
+    "references to Python programming language"
+   ],
+   [
+    11882,
+    "references to the programming language Python"
+   ],
+   [
+    5933,
+    "references to the word \"Py\" in various contexts"
+   ],
+   [
+    4553,
+    "computer code snippets"
+   ]
+  ]
+ },
+ "French": {
+  "index": 1063,
+  "label": "French words or phrases",
+  "query": "French language text",
+  "top5": [
+   [
+    1063,
+    "French words or phrases"
+   ],
+   [
+    9006,
+    "French words or phrases"
+   ],
+   [
+    4238,
+    "phrases related to French language and culture"
+   ],
+   [
+    17864,
+    "French words and names"
+   ],
+   [
+    21868,
+    "Phrases in foreign languages (e.g. Latin, French, Spanish), within English text"
+   ]
+  ]
+ },
+ "DNA": {
+  "index": 14693,
+  "label": "references to DNA and its related concepts",
+  "query": "DNA and genetics",
+  "top5": [
+   [
+    14693,
+    "references to DNA and its related concepts"
+   ],
+   [
+    3949,
+    "genes"
+   ],
+   [
+    14693,
+    "mentions of DNA and related concepts"
+   ],
+   [
+    9340,
+    "references to the genome and its associated concepts"
+   ],
+   [
+    13179,
+    "genes and genetic-related terms"
+   ]
+  ]
+ },
+ "Harry Potter": {
+  "index": 4275,
+  "label": "references to the \"Harry Potter\" series and its characters",
+  "query": "Harry Potter",
+  "top5": [
+   [
+    4275,
+    "references to the \"Harry Potter\" series and its characters"
+   ],
+   [
+    4275,
+    "references to the Harry Potter series"
+   ],
+   [
+    10334,
+    " references to specific book series or adaptations"
+   ],
+   [
+    16766,
+    "mentions of the name \"Harry.\""
+   ],
+   [
+    24332,
+    " titles of well-known movie franchises and the characters associated with them"
+   ]
+  ]
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "meta": {
+  "slug": "number-helix",
+  "generated": "2026-11-27 21:45 UTC",
+  "git_commit": "f54feef5b5a6885889da93eebd0bb81e50b44806",
+  "models": [
+   "EleutherAI/pythia-160m",
+   "EleutherAI/pythia-410m",
+   "EleutherAI/pythia-1b",
+   "EleutherAI/pythia-1.4b",
+   "EleutherAI/pythia-2.8b"
+  ],
+  "runtime_s": 2025.68966,
+  "quick": false
+ },
+ "summary": {
+  "largest": "pythia-2.8b",
+  "best_layer": 11,
+  "helix_test_r2": 0.491567,
+  "shuffled_test_r2": -0.091916,
+  "linear_test_r2": 0.24157,
+  "circles_test_r2": 0.4124,
+  "acc_largest": 0.781726,
+  "patch_layer": 1,
+  "patch_helix": 0.769154,
+  "patch_full": 0.99975,
+  "patch_pca9": 0.810822,
+  "patch_linear": 0.046502,
+  "patch_n": 80,
+  "top_periods": "100, 50, 33.3, 2",
+  "n_models": 5
+ }
+}

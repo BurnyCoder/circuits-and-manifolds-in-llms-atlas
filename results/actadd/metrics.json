@@ -1,0 +1,23 @@
+{
+ "meta": {
+  "slug": "actadd",
+  "generated": "2026-11-27 22:38 UTC",
+  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "models": [
+   "gpt2-xl"
+  ],
+  "runtime_s": 456.071483,
+  "quick": false
+ },
+ "summary": {
+  "wedding_base": 0.0,
+  "wedding_c4": 0.75,
+  "wedding_rand_c4": 0.0,
+  "wedding_max": 0.916667,
+  "love_base": 0.541667,
+  "love_c4": 0.416667,
+  "love_rand_c4": 0.416667,
+  "coef_max": 8,
+  "n_per_prompt": 8
+ }
+}

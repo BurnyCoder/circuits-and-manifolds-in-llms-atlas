@@ -1,0 +1,27 @@
+{
+ "meta": {
+  "slug": "linebreak-manifold",
+  "generated": "2026-11-27 21:53 UTC",
+  "git_commit": "f54feef5b5a6885889da93eebd0bb81e50b44806",
+  "models": [
+   "Qwen/Qwen3-1.7B",
+   "gpt2"
+  ],
+  "runtime_s": 463.986554,
+  "quick": false
+ },
+ "summary": {
+  "q_best_layer": 6,
+  "q_best_r2": 0.747208,
+  "q_best_r2_shuffled": -0.004575,
+  "q_early_r2": 0.668107,
+  "q_var6": 0.656134,
+  "q_var3": 0.48852,
+  "q_deg_per_char": 1.933718,
+  "q_period_chars": 186.1699,
+  "q_auc": 0.935895,
+  "g_best_r2": 0.75924,
+  "g_auc": 0.742246,
+  "q_tokens": 86607
+ }
+}

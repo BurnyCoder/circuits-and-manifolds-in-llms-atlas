@@ -1,0 +1,16 @@
+[
+ {
+  "claim": "Belief states are linearly decodable from the final residual stream",
+  "published": "Mess3: linear regression recovers the belief fractal (MSE \u2248 4e-4, paper Fig. 3)",
+  "ours": "held-out R\u00b2 0.975 (MSE 3.99e-03) after 30000 steps vs 0.932 at initialization",
+  "criterion": "R\u00b2 \u2265 0.9 and \u2265 0.3 above the random-init control",
+  "verdict": "fail"
+ },
+ {
+  "claim": "The model approaches the optimal predictor",
+  "published": "trained to near the process's entropy rate",
+  "ours": "final loss 0.8034 nats vs optimal 0.8032 and uniform 1.0986",
+  "criterion": "excess loss < 10% of the uniform-to-optimal gap",
+  "verdict": "pass"
+ }
+]

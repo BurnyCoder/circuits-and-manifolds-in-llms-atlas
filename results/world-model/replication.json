@@ -1,0 +1,16 @@
+[
+ {
+  "claim": "The world model's latents encode the car's state",
+  "published": "linear probes: position R\u00b2 \u2248 0.95, velocity \u2248 0.90 (Wurgaft et al. App. B)",
+  "ours": "position R\u00b2 1.00, velocity 0.06 (untrained encoder: position 0.97)",
+  "criterion": "position R\u00b2 \u2265 0.8 and \u2265 0.2 above the untrained encoder",
+  "verdict": "fail"
+ },
+ {
+  "claim": "Distances along the manifold match distances in the world; straight lines don't",
+  "published": "arc-length r = 0.996 (manifold) vs 0.06 (chord)",
+  "ours": "r = 0.995 along the spline vs 0.248 for straight chords (50 anchors, 1,225 pairs)",
+  "criterion": "manifold r \u2265 0.9 and > chord r",
+  "verdict": "pass"
+ }
+]

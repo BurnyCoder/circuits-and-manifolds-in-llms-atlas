@@ -1,0 +1,23 @@
+{
+ "meta": {
+  "slug": "refusal-direction",
+  "generated": "2026-11-27 22:30 UTC",
+  "git_commit": "3e2e8ed2388279f6d28ad62db5cfe6a1ac4789c2",
+  "models": [
+   "Qwen/Qwen2.5-1.5B-Instruct"
+  ],
+  "runtime_s": 142.283796,
+  "quick": false
+ },
+ "summary": {
+  "layer": 20,
+  "n_layers": 28,
+  "harm_base": 0.859375,
+  "harm_ablate": 0.0,
+  "harm_rand": 0.84375,
+  "safe_base": 0.0625,
+  "safe_add": 0.984375,
+  "safe_rand": 0.0625,
+  "n_test": 64
+ }
+}
