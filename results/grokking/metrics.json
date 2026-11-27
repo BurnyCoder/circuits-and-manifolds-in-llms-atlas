@@ -1,0 +1,27 @@
+{
+ "meta": {
+  "slug": "grokking",
+  "generated": "2026-11-27 18:23 UTC",
+  "git_commit": "aa0bb72e8596a2db8e36924e01714706299c9842",
+  "models": [
+   "1L transformer (trained here)"
+  ],
+  "runtime_s": 1585.323753
+ },
+ "summary": {
+  "epochs": 40000,
+  "seeds": 3,
+  "train99_epoch_s0": 200,
+  "test95_epoch_s0": 7200,
+  "final_test_acc_min": 1.0,
+  "key_freqs_s0": "1, 21, 49",
+  "key_freqs_all": "1, 21, 49 | 16, 17, 30, 55 | 6, 43, 48, 56",
+  "frac_periodic_s0": 0.75,
+  "n_freq_90_max": 4,
+  "abl_clean": 1.0,
+  "abl_key": 0.012306,
+  "abl_rand": 1.0,
+  "wd0_final_test_acc": 0.033001,
+  "wd0_final_train_acc": 1.0
+ }
+}

@@ -1,0 +1,23 @@
+[
+ {
+  "claim": "L10H7's OV circuit suppresses the token it attends to",
+  "published": "84.70% of tokens: diagonal among 10 most negative; 98.86% in bottom 5% (column ranking)",
+  "ours": "66.6% in top-10 most negative; 94.0% in bottom 5% (row ranking, 5000 tokens); other L10\u201311 heads: median 0.0%",
+  "criterion": "> 50% top-10 and > 5\u00d7 the median other head in layers 10\u201311",
+  "verdict": "pass"
+ },
+ {
+  "claim": "L10H7's QK circuit attends to tokens that are being predicted",
+  "published": "95.72% of rows have the diagonal as maximum",
+  "ours": "85.6% diagonal-max over 5000 tokens",
+  "criterion": "> 50% diagonal-max",
+  "verdict": "pass"
+ },
+ {
+  "claim": "On natural prompts L10H7 lowers the logit of a copied token",
+  "published": "worked examples, e.g. 'All's fair in love and' (Table 1)",
+  "ours": "negative direct effect on 8/8 prompts; ablation raises the copied token's probability on 5/8",
+  "criterion": "negative direct effect on \u2265 75% of prompts",
+  "verdict": "pass"
+ }
+]

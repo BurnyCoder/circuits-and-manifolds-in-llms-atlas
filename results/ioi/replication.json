@@ -1,0 +1,37 @@
+[
+ {
+  "claim": "GPT-2 small prefers the indirect object over the subject",
+  "published": "mean logit diff 3.56; IO > S in 99.3% of prompts",
+  "ours": "3.54 [3.37, 3.70] on 320 prompts; IO > S in 99.4%",
+  "criterion": "mean logit diff > 2 and IO > S in > 90% of prompts",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Name movers (9.9, 9.6, 10.0) attend from END to the indirect object",
+  "published": "mean attention to IO 0.59 (\u00a73.1)",
+  "ours": "mean attention to IO 0.60 vs to S 0.09",
+  "criterion": "attention to IO > 2\u00d7 attention to S",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Negative name movers (10.7, 11.10) write against the answer",
+  "published": "negative copy score 98% (\u00a73.4)",
+  "ours": "direct logit attribution -2.11 and -0.92",
+  "criterion": "both heads have negative DLA on logit(IO) \u2212 logit(S)",
+  "verdict": "pass"
+ },
+ {
+  "claim": "The 26-head circuit is faithful",
+  "published": "circuit keeps 87% of the logit difference (\u00a74)",
+  "ours": "circuit-only logit diff 3.29 [3.12, 3.46] = 93% of full model",
+  "criterion": "between 60% and 120% of the full model",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Knocking out the circuit breaks the task; random heads don't",
+  "published": "circuit knockouts collapse performance; random heads matter little (\u00a74)",
+  "ours": "all 7 classes ablated \u2192 -1.27; 26 random heads \u2192 median 2.48",
+  "criterion": "circuit knockout drops logit diff by > 70%, random median drops it by < 40%",
+  "verdict": "pass"
+ }
+]

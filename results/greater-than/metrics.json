@@ -1,0 +1,23 @@
+{
+ "meta": {
+  "slug": "greater-than",
+  "generated": "2026-11-27 17:57 UTC",
+  "git_commit": "d15ed503d764d5bb80df9a846a940bb8230fbbab",
+  "models": [
+   "gpt2"
+  ],
+  "runtime_s": 98.469117
+ },
+ "summary": {
+  "n_prompts": 1164,
+  "n_years": 97,
+  "pd_clean": 0.902217,
+  "pd_corrupt": -0.516477,
+  "pd_heads_patched": -0.534092,
+  "pd_mlps_patched": -0.208946,
+  "pd_all_patched": -0.497471,
+  "pd_circuit_only": 0.833723,
+  "faithful_frac": 0.924082,
+  "rand_pd_median": 0.896398
+ }
+}

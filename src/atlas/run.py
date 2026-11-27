@@ -69,12 +69,34 @@ def main(argv: list[str] | None = None) -> None:
     log = get_logger("run_" + ("all" if a.entries == "all" else "_".join(names))[:60])
     ctx = Ctx(device=a.device or device(), quick=a.quick, seed=a.seed)
     log.info("device=%s quick=%s seed=%s entries=%s", ctx.device, ctx.quick, ctx.seed, names)
+    failed = []
     for name in names:
         t0 = time.time()
         log.info("=== %s: start", name)
-        mod = importlib.import_module(f"atlas.entries.{name}")
-        mod.compute(ctx)
-        log.info("=== %s: done in %.1fs", name, time.time() - t0)
+        try:
+            mod = importlib.import_module(f"atlas.entries.{name}")
+            mod.compute(ctx)
+            log.info("=== %s: done in %.1fs", name, time.time() - t0)
+        except Exception:
+            # Keep going so one smoke-test pass surfaces every broken entry; the traceback goes to the log file.
+            log.exception("=== %s: FAILED after %.1fs", name, time.time() - t0)
+            failed.append(name)
+        finally:
+            free_gpu()
+    log.info("finished: %d ok, %d failed %s", len(names) - len(failed), len(failed), failed)
+    if failed:
+        raise SystemExit(1)
+
+
+def free_gpu() -> None:
+    """Release cached CUDA memory between entries (models are loaded per entry; 8 GB VRAM is tight)."""
+    import gc
+
+    import torch
+
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":

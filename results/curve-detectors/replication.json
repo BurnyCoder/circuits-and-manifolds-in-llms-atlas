@@ -1,0 +1,23 @@
+[
+ {
+  "claim": "Curve neurons are tuned to one orientation",
+  "published": "each curve detector responds to curves in a narrow orientation band (radial tuning curves)",
+  "ours": "median orientation selectivity 0.95 vs 0.10 for 20 random mixed3b neurons",
+  "criterion": "curve median \u2265 control median + 0.2",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Curve neurons prefer curves to straight lines",
+  "published": "near-zero activations are mostly straight lines; synthetic curves reach up to 24\u03c3",
+  "ours": "10/10 neurons respond > 1.5\u00d7 more to their best curve than to any straight line",
+  "criterion": "\u2265 8 of 10",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Together they tile all orientations",
+  "published": "the family covers the full circle (joint tuning curves)",
+  "ours": "largest gap between preferred orientations 65\u00b0",
+  "criterion": "\u2264 90\u00b0",
+  "verdict": "pass"
+ }
+]

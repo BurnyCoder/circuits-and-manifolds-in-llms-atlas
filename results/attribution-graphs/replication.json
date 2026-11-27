@@ -1,0 +1,16 @@
+[
+ {
+  "claim": "Two-hop factual recall goes through an intermediate concept",
+  "published": "Dallas \u2192 Texas \u2192 Austin path plus a direct shortcut (Claude 3.5 Haiku)",
+  "ours": "positive embedding \u2192 intermediate \u2192 answer path in 3/3 public Gemma-2-2B graphs (Dallas, Oakland, Shanghai)",
+  "criterion": "path present in all checked graphs",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Multilingual circuits share language-independent features in the middle",
+  "published": "20 of 27 features shared across English/French/Chinese; language-specific features early and late (Claude)",
+  "ours": "feature overlap (Jaccard of the 3 graphs): early 0.06, middle 0.17, late 0.07",
+  "criterion": "middle-layer overlap higher than both early and late",
+  "verdict": "pass"
+ }
+]

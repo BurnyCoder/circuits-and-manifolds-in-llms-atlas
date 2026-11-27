@@ -1,0 +1,30 @@
+[
+ {
+  "claim": "A 2-layer attention-only model forms induction heads in layer 1",
+  "published": "Induction heads need \u22652 layers (Elhage et al. 2021); score defined by Olsson et al. 2022",
+  "ours": "max layer-1 induction score 0.65 vs 0.033 at random init",
+  "criterion": "trained max score > 0.3 and > 10\u00d7 the random-init score",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Induction heads causally implement in-context copying",
+  "published": "Ablating induction heads removes in-context learning in small attn-only models (Olsson et al., Argument 3)",
+  "ours": "repeat loss 2.68 [2.55, 2.83] \u2192 12.45 [12.33, 12.56] nats when ablated (random-head control 2.64 [2.51, 2.79])",
+  "criterion": "ablation raises repeat loss by > 1 nat and > 3\u00d7 the random-head control's increase",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Induction requires a previous-token head (K-composition)",
+  "published": "Induction head keys read a previous-token head's output (Elhage et al. 2021)",
+  "ours": "ablating prev-token head 0.3 raises repeat loss to 11.22 nats",
+  "criterion": "ablation raises repeat loss by > 1 nat",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Induction heads form abruptly early in training (phase change)",
+  "published": "ICL score jumps in a narrow window at ~2.5\u20135B tokens in Anthropic's models (Olsson et al., Argument 1)",
+  "ours": "Pythia-160M: largest jump in max induction score between 1.07B and 2.10B tokens (0.03 at init \u2192 0.96 final)",
+  "criterion": "largest single-interval jump occurs before 20B tokens and accounts for > 50% of the total rise",
+  "verdict": "pass"
+ }
+]

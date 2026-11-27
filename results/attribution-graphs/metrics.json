@@ -1,0 +1,20 @@
+{
+ "meta": {
+  "slug": "attribution-graphs",
+  "generated": "2026-11-27 18:03 UTC",
+  "git_commit": "d15ed503d764d5bb80df9a846a940bb8230fbbab",
+  "models": [
+   "gemma-2-2b (Neuronpedia public graphs)"
+  ],
+  "runtime_s": 88.006902
+ },
+ "summary": {
+  "n_graphs": 9,
+  "two_hop_found": 3,
+  "two_hop_total": 3,
+  "overlap_early": 0.057634,
+  "overlap_middle": 0.170543,
+  "overlap_late": 0.071895,
+  "error_share_median": 0.244004
+ }
+}
