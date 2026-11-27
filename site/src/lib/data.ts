@@ -6,7 +6,9 @@ const cache = new Map<string, Promise<EntryData>>()
 
 export function loadData(file: string): Promise<EntryData> {
   if (!cache.has(file)) {
-    const p = fetch(`${import.meta.env.BASE_URL}data/${file}`).then((r) => {
+    // cache: 'no-cache' revalidates with the server (ETag) on each page load, so re-generated results show up at once
+    // instead of a stale HTTP-cached copy (https://developer.mozilla.org/en-US/docs/Web/API/Request/cache).
+    const p = fetch(`${import.meta.env.BASE_URL}data/${file}`, { cache: 'no-cache' }).then((r) => {
       if (!r.ok) throw new Error(`data/${file}: HTTP ${r.status}`)
       return r.json() as Promise<EntryData>
     })

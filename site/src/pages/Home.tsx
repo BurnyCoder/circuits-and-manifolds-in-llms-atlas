@@ -1,7 +1,7 @@
 // Home: hero, the interactive Model Map ("where circuits live"), filters, and the grid of entries.
 import { useMemo, useState } from 'react'
 import EntryCard from '../components/EntryCard'
-import ModelMap from '../components/ModelMap'
+import ModelExplorer from '../components/ModelExplorer'
 import { entries } from '../lib/content'
 import { CATEGORY, COLLECTIONS, FIDELITY } from '../lib/labels'
 import type { Category, Fidelity } from '../lib/types'
@@ -48,7 +48,7 @@ export default function Home() {
         </p>
       </section>
 
-      <ModelMap />
+      <ModelExplorer />
 
       <div className="filters" role="group" aria-label="Filters">
         {(Object.keys(CATEGORY) as Category[]).map((c) => (

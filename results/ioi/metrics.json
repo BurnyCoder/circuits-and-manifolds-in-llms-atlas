@@ -1,0 +1,28 @@
+{
+ "meta": {
+  "slug": "ioi",
+  "generated": "2026-11-27 17:49 UTC",
+  "git_commit": "71f2afe9757578e6d47e45a747e12d66cb215392",
+  "models": [
+   "gpt2"
+  ],
+  "runtime_s": 120.315288
+ },
+ "summary": {
+  "n_prompts": 320,
+  "ld_clean": 3.537183,
+  "ld_clean_lo": 3.373421,
+  "ld_clean_hi": 3.701031,
+  "ld_abc": 0.01084,
+  "io_win": 0.99375,
+  "faithful_ld": 3.289322,
+  "faithful_frac": 0.929927,
+  "all_classes_ablated_ld": -1.270267,
+  "rand_ablated_ld_median": 2.475566,
+  "nm_attn_io": 0.598112,
+  "nm_attn_s": 0.090859,
+  "neg_nm_dla_10_7": -2.109669,
+  "neg_nm_dla_11_10": -0.919202,
+  "top_dla_head": "9.9"
+ }
+}

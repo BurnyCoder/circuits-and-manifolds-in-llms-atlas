@@ -1,6 +1,7 @@
 // App shell: header navigation + routes. Pages are small components in src/pages/.
 import { useEffect, useState } from 'react'
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import ModelExplorer from './components/ModelExplorer'
 import Home from './pages/Home'
 import EntryPage from './pages/EntryPage'
 import Scoreboard from './pages/Scoreboard'
@@ -34,7 +35,10 @@ function useTheme(): [Theme, (t: Theme) => void] {
 export default function App() {
   const [theme, setTheme] = useTheme()
   const { pathname } = useLocation()
-  useEffect(() => window.scrollTo(0, 0), [pathname])
+  useEffect(() => {
+    // Braces matter: newer browsers return a Promise from scrollTo, and an effect must return nothing or a cleanup fn.
+    window.scrollTo(0, 0)
+  }, [pathname])
   const next: Record<Theme, Theme> = { system: 'dark', dark: 'light', light: 'system' }
   return (
     <div className="app">
@@ -47,6 +51,7 @@ export default function App() {
           <NavLink to="/" end>
             Atlas
           </NavLink>
+          <NavLink to="/models">Models</NavLink>
           <NavLink to="/replications">Replications</NavLink>
           <NavLink to="/methods">Methods</NavLink>
           <NavLink to="/sources">Sources</NavLink>
@@ -60,6 +65,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/entry/:slug" element={<EntryPage />} />
+          <Route path="/models" element={<ModelExplorer />} />
           <Route path="/replications" element={<Scoreboard />} />
           <Route path="/methods" element={<Methods />} />
           <Route path="/sources" element={<Sources />} />

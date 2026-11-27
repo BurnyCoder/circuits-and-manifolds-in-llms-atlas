@@ -136,8 +136,8 @@ export default function Induction({ data }: VizProps) {
         <>
           <HowTo>
             Pythia-160M was trained on 300B tokens with checkpoints saved along the way. For each checkpoint we measure the
-            strongest induction head and the in-context-learning (ICL) score: loss on the 500th token minus loss on the 50th
-            (more negative = the model uses more context). Both change abruptly early in training (x axis is log-scaled).
+            strongest induction head and the in-context-learning (ICL) score: loss around the 500th token minus loss
+            around the 50th (11-token windows, 128 WikiText contexts; more negative = the model uses more context). Both change abruptly early in training (x axis is log-scaled).
           </HowTo>
           <LineChart
             series={[{ name: 'max induction score (any head)', x: d.pythia.map((r) => Math.max(r.tokens_B, 0.05)), y: d.pythia.map((r) => r.max_induction), color: 'var(--c-circuit)' }]}

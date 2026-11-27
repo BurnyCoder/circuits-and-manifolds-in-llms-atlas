@@ -1,6 +1,7 @@
 // IOI entry: (1) clickable circuit diagram — knock out head classes and read the real logit difference from the
 // precomputed 2^7 combinations, (2) per-head importance maps (direct logit attribution, activation noising),
 // (3) name-mover attention on an example sentence.
+import { median } from 'd3'
 import { useMemo, useState } from 'react'
 import type { VizProps } from '../registry'
 import Heatmap, { Legend } from '../primitives/Heatmap'
@@ -49,8 +50,8 @@ export default function IOI({ data }: VizProps) {
   const full = d.combos[0].ld
   const mask = names.map((n) => (off.has(n) ? 1 : 0))
   const cur = d.combos.find((c) => c.mask.every((v, i) => v === mask[i]))?.ld ?? full
-  const sortedRand = [...d.rand_ablated].sort((a, b) => a - b)
-  const randMed = sortedRand[Math.floor(sortedRand.length / 2)]
+  // d3.median averages the two middle values for even counts (same as np.median in the pipeline).
+  const randMed = median(d.rand_ablated) ?? NaN
   const classOf = useMemo(() => {
     const m: Record<string, string> = {}
     for (const [k, hs] of Object.entries(d.classes)) for (const h of hs) m[h] = k

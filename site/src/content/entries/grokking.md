@@ -10,6 +10,12 @@ order: 30
 summary: A tiny transformer memorizes (a + b) mod 113, then suddenly generalizes by placing numbers on circles and adding angles with trig identities.
 viz: grokking
 data: grokking.json
+extra: grokking-runs.json
+locations:
+  - { model: modadd-1l, part: embed, label: numbers placed on circles at a few key frequencies }
+  - { model: modadd-1l, part: attn, layer: 0, label: attention combines the a and b waves }
+  - { model: modadd-1l, part: mlp, layer: 0, label: periodic neurons compute cos/sin(w(a+b)) }
+  - { model: modadd-1l, part: unembed, label: reads cos(w(a+b-c)) — constructive interference at the answer }
 tags: [grokking, Fourier features, progress measures, weight decay, circles]
 related: [number-helix, calendar-circles, geometric-calculator]
 citations:
@@ -25,6 +31,11 @@ citations:
     year: 2022
     venue: arXiv
     url: https://arxiv.org/abs/2201.02177
+  - id: grokviz
+    title: "Grokking, Visualized: modular addition, step by step (website, code, 22 runs)"
+    authors: Burian
+    year: 2026
+    url: https://github.com/BurnyCoder/visualizing-grokking-modular-addition-in-transformer
   - id: nanda-repo
     title: progress-measures-paper (official code)
     authors: Nanda et al.
@@ -36,6 +47,11 @@ replications:
     model: 1-layer transformer, p = 113, 3 seeds + no-weight-decay control
     outcome: ours
     note: Trained from scratch with the paper's hyper-parameters; Fourier analysis, neuron periodicity and a causal frequency ablation.
+  - who: "Grokking, Visualized — 22 preregistered runs (Burian 2026)"
+    url: https://burnycoder.github.io/visualizing-grokking-modular-addition-in-transformer/
+    model: same 1-layer transformer; 11 seeds + no-weight-decay, random-label and fixed-split controls (Hugging Face BurnyCoder/grokking-modular-addition-runs)
+    outcome: replicated
+    note: Every weight-decay seed groks with its own key frequencies; the seed using the paper's split recovers the paper's exact frequencies; controls never generalize. Includes a 22-chapter explorable explanation and a scrubbable dashboard.
 ---
 
 ## In plain words
@@ -74,6 +90,15 @@ performance while ablating the others slightly *improves* loss.
 - Removing the key frequencies from the embedding drops test accuracy from {{abl_clean|pct}} to {{abl_key|pct}};
   removing the same number of random other frequencies leaves {{abl_rand|pct}}.
 - Without weight decay the model ends at {{wd0_final_train_acc|pct}} train / {{wd0_final_test_acc|pct}} test accuracy.
+
+**Across 22 companion runs** (the "Grokking, Visualized" project's models, same architecture and settings; tab 6):
+{{extra.n_wd1_grokked}} of {{extra.n_wd1}} weight-decay seeds grok, with test accuracy reaching 95% a median
+{{extra.delay_median}}× later than train accuracy reaches 99% (minimum {{extra.delay_min}}×). Each seed settles on
+{{extra.nkey_min}}–{{extra.nkey_max}} key frequencies of its own, with a median {{extra.frac_neurons_median|pct}} of
+neurons dominated by one frequency. None of the {{extra.n_wd0}} no-weight-decay runs exceeds
+{{extra.wd0_max_test|pct}} test accuracy, and the {{extra.n_rand}} random-label runs stay at chance
+({{extra.rand_max_test|pct}} at best). For a 22-chapter, step-by-step explanation of this network, see
+[Grokking, Visualized](https://burnycoder.github.io/visualizing-grokking-modular-addition-in-transformer/).
 
 ## Limitations
 

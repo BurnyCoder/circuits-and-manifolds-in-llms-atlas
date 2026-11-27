@@ -1,0 +1,23 @@
+[
+ {
+  "claim": "GPT-2 small predicts years greater than the start year",
+  "published": "probability difference 81.7%",
+  "ours": "PD = 90.2% [89.7, 90.7] over 1164 prompts",
+  "criterion": "PD > 50%",
+  "verdict": "pass"
+ },
+ {
+  "claim": "The identified heads + MLPs 8\u201311 carry the computation",
+  "published": "patching the circuit with '01' activations destroys PD; circuit alone keeps 89.5% (72.7 of 81.7 points)",
+  "ours": "heads patched \u2192 -53.4%, MLPs 8\u201311 patched \u2192 -20.9%, both \u2192 -49.7%; circuit-only \u2192 83.4% (92% of full)",
+  "criterion": "patching heads+MLPs drops PD below 30% of full, and circuit-only keeps \u2265 60% of full",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Random heads are not the circuit",
+  "published": "(control, ours)",
+  "ours": "patching 7 random heads \u2192 median PD 89.6% (circuit heads \u2192 -53.4%)",
+  "criterion": "random median PD > circuit-heads PD + 10 points",
+  "verdict": "pass"
+ }
+]

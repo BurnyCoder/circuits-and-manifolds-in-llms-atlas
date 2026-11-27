@@ -10,7 +10,33 @@ order: 20
 summary: 26 attention heads in 7 classes let GPT-2 small answer "When Mary and John went to the store, John gave a drink to" → " Mary".
 viz: ioi
 data: ioi.json
-modelMap: { model: gpt2-small, heads: ["9.9", "9.6", "10.0", "10.7", "11.10", "7.3", "7.9", "8.6", "8.10"] }
+locations:
+  - { model: gpt2-small, part: head, layer: 9, head: 9, label: IOI name mover }
+  - { model: gpt2-small, part: head, layer: 9, head: 6, label: IOI name mover }
+  - { model: gpt2-small, part: head, layer: 10, head: 0, label: IOI name mover }
+  - { model: gpt2-small, part: head, layer: 10, head: 7, label: IOI negative name mover }
+  - { model: gpt2-small, part: head, layer: 11, head: 10, label: IOI negative name mover }
+  - { model: gpt2-small, part: head, layer: 7, head: 3, label: IOI S-inhibition }
+  - { model: gpt2-small, part: head, layer: 7, head: 9, label: IOI S-inhibition }
+  - { model: gpt2-small, part: head, layer: 8, head: 6, label: IOI S-inhibition }
+  - { model: gpt2-small, part: head, layer: 8, head: 10, label: IOI S-inhibition }
+  - { model: gpt2-small, part: head, layer: 5, head: 5, label: IOI induction }
+  - { model: gpt2-small, part: head, layer: 6, head: 9, label: IOI induction }
+  - { model: gpt2-small, part: head, layer: 5, head: 8, label: IOI induction }
+  - { model: gpt2-small, part: head, layer: 5, head: 9, label: IOI induction }
+  - { model: gpt2-small, part: head, layer: 0, head: 1, label: IOI duplicate token }
+  - { model: gpt2-small, part: head, layer: 3, head: 0, label: IOI duplicate token }
+  - { model: gpt2-small, part: head, layer: 0, head: 10, label: IOI duplicate token }
+  - { model: gpt2-small, part: head, layer: 2, head: 2, label: IOI previous token }
+  - { model: gpt2-small, part: head, layer: 4, head: 11, label: IOI previous token }
+  - { model: gpt2-small, part: head, layer: 9, head: 0, label: IOI backup name mover }
+  - { model: gpt2-small, part: head, layer: 9, head: 7, label: IOI backup name mover }
+  - { model: gpt2-small, part: head, layer: 10, head: 1, label: IOI backup name mover }
+  - { model: gpt2-small, part: head, layer: 10, head: 2, label: IOI backup name mover }
+  - { model: gpt2-small, part: head, layer: 10, head: 6, label: IOI backup name mover }
+  - { model: gpt2-small, part: head, layer: 10, head: 10, label: IOI backup name mover }
+  - { model: gpt2-small, part: head, layer: 11, head: 2, label: IOI backup name mover }
+  - { model: gpt2-small, part: head, layer: 11, head: 9, label: IOI backup name mover }
 tags: [path patching, name movers, backup heads, self-repair]
 related: [induction-heads, copy-suppression, greater-than]
 quote:

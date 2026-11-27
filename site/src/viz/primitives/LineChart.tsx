@@ -44,6 +44,17 @@ export default function LineChart({ series, width = 640, height = 300, xLog, yLo
       .x((_, i) => xs(s.x[i]))
       .y((v) => ys(v))(s.y) ?? ''
   const fx = fmtX ?? ((v: number) => d3.format('~s')(v))
+  // Log axes: label only 1·10^k (plus 3·10^k when the domain spans < 3 decades) to avoid overlapping tick labels.
+  const logTicks = (s: d3.ScaleContinuousNumeric<number, number>) => {
+    const [a, b] = s.domain()
+    const decades = Math.log10(b / a)
+    return s.ticks(10).filter((t) => {
+      const m = t / 10 ** Math.floor(Math.log10(t) + 1e-9)
+      return Math.abs(m - 1) < 1e-6 || (decades < 3 && Math.abs(m - 3) < 1e-6)
+    })
+  }
+  const xTicks = xLog ? logTicks(xs) : xs.ticks(6)
+  const yTicks = yLog ? logTicks(ys) : ys.ticks(5)
   const nearest = (s: Series, x: number) => {
     let best = 0
     s.x.forEach((v, i) => (Math.abs(v - x) < Math.abs(s.x[best] - x) ? (best = i) : 0))
@@ -69,7 +80,7 @@ export default function LineChart({ series, width = 640, height = 300, xLog, yLo
             </text>
           </g>
         ))}
-        {ys.ticks(5).map((t) => (
+        {yTicks.map((t) => (
           <g key={t}>
             <line x1={m.l} x2={width - m.r} y1={ys(t)} y2={ys(t)} stroke="currentColor" opacity={0.1} />
             <text x={m.l - 6} y={ys(t)} fontSize={11} textAnchor="end" dominantBaseline="middle" fill="currentColor">
@@ -77,7 +88,7 @@ export default function LineChart({ series, width = 640, height = 300, xLog, yLo
             </text>
           </g>
         ))}
-        {(xLog ? xs.ticks(6) : xs.ticks(6)).map((t) => (
+        {xTicks.map((t) => (
           <text key={t} x={xs(t)} y={height - m.b + 16} fontSize={11} textAnchor="middle" fill="currentColor">
             {fx(t)}
           </text>

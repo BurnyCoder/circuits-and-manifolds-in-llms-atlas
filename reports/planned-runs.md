@@ -30,6 +30,74 @@ Laptop (8 GB) unless marked RunPod.
 | grokking | same | Key frequencies causally necessary | Fig. 6 | removing key freqs from W_E → test acc < 20%; removing same number of random freqs → > 90% | 10 random draws |
 | grokking | same, wd = 0, seed 0 | Weight decay needed for grokking in this setup | §5.3 | wd=0 final test acc < 50% | — |
 
+## Batch 2 — circuits (local GPU; criteria written after the code-level smoke test, before full runs)
+
+| Entry | Model / data | Claim | Published value (source) | Pass criterion | Controls / baselines |
+|---|---|---|---|---|---|
+| copy-suppression | GPT-2 small L10H7; 5,000 token ids (300–5,299), effective embedding W_E + layer-0 (self-attn approx.) + MLP0 | OV circuit suppresses the attended token | 84.70% diag in 10 most negative; 98.86% bottom 5% (column ranking; McDougall et al. 2023) | row-wise top-10 fraction > 50% and > 5× the median other L10–11 head | 23 other heads in layers 10–11 |
+| copy-suppression | same | QK attends to predicted tokens | 95.72% diagonal-max | > 50% (20–50% = partial) | — |
+| copy-suppression | 8 hand-written prompts | Lowers the copied token's logit on natural prompts | Table 1 examples | negative direct effect on ≥ 75% of prompts | zero-ablation of L10H7 |
+| greater-than | GPT-2 small; 12 nouns × 97 start years 1702–1798 (single-token YY), corrupted start year 1701 | GPT-2 predicts years > YY | PD 81.7% (Hanna et al. 2023) | PD > 50% | corrupted prompts |
+| greater-than | same | Heads 5.1/5.5/6.9/7.10/8.8/8.11/9.1 + MLPs 8–11 carry it | circuit keeps 89.5% | patching heads+MLPs drops PD < 30% of full **and** circuit-only (all 137 other heads patched, MLPs clean) keeps ≥ 60% (first condition only = partial) | — |
+| greater-than | same | Random heads are not the circuit | (ours) | median PD with 7 random heads patched > circuit-heads-patched PD + 10 points | 30 random 7-head sets |
+| othello-gpt | TL othello-gpt; 3,000 train / 500 test synthetic random full games (our engine, Li et al. rules) | Predicts legal moves | 0.01% illegal (Li et al. 2023) | < 1% illegal top-1 | — |
+| othello-gpt | same; probes on resid_post of every layer, AdamW 6 epochs | Board is linear relative to the mover | mine/theirs ≈ 99.5% from L4; black/white ≈ 75% (Nanda et al. 2023) | best mine/theirs > 95% and ≥ 10 points above black/white, random-init and shuffled-label probes | random-init model; shuffled labels; absolute-color probe |
+| othello-gpt | 150 flips that change the legal set; intervention at the best of layers 3–5 (mirror along the square's mine−theirs probe direction) | Editing the representation changes predicted moves | flip error 0.10 vs 2.72 null | error < 50% of null and < random-direction error (< null only = partial) | no intervention; random unit direction with same displacement |
+| curve-detectors | Lucent InceptionV1 mixed3b neurons 379, 406, 385, 343, 342, 388, 324, 340, 330, 349; arcs r ∈ {15, 30, 60, 110}px × 72 orientations + straight lines | Orientation-tuned | radial tuning curves (Cammarata et al. 2020) | median selectivity (1 − circular variance) ≥ 20 random mixed3b neurons' median + 0.2 | 20 random non-curve neurons |
+| curve-detectors | same | Prefer curves to lines | synthetic curves ≫ lines | ≥ 8/10 neurons: best curve > 1.5× best straight line (≥ 5 = partial) | straight lines |
+| curve-detectors | same | Tile all orientations | joint tuning curves cover 360° | largest gap between preferred orientations ≤ 90° | — |
+
+## Batch 3 — geometry (criteria written before any batch-3 run)
+
+| Entry | Model / data | Claim | Published value (source) | Pass criterion | Controls / baselines |
+|---|---|---|---|---|---|
+| calendar-circles | GPT-2 small resid_pre L7; 16 templates × 7 days / 12 months; template means removed | Days and months are in cyclic order | circles in GPT-2 L7 (Engels et al. 2024, Fig. 1) | cyclic-order permutation p < 0.05 for both, and ≤ 10% of 40 random-word sets reach p < 0.05 (only one of days/months = partial) | random word sets of size 7 and 12 |
+| calendar-circles | GPT-2 SAE `gpt2-small-res-jb` L7, top ≤ 24 latents by class-mean activation | SAE latents reconstruct the circle | Fig. 1 (SAE clusters) | cyclic order ≥ 0.7 for days and months | — |
+| calendar-circles | Qwen3-1.7B, 42 prompts "Let's do some day of the week math. {N} days from {D} is"; layers 2–20 | The circle is causally used | circular-probe patching works in Mistral 7B / Llama 3 8B (§5) | some layer ≥ 50% success with random-plane control ≤ 20% at that layer (success > random + 20 points = partial). Layer selection across 7 layers is exploratory and reported in full | random 2-D plane, same displacement |
+| number-helix | Pythia 160M/410M/1B/1.4B/2.8B; numbers 0–99 after 3 few-shot prefixes | Embeddings periodic with T = 2, 5, 10 | GPT-J Fourier peaks 2, 5, 10 (Kantamneni & Tegmark 2025); 2, 2.5, 5, 10 (Zhou et al. 2024) | ≥ 2 of {2, 5, 10} among the top-4 periods of Pythia-2.8B (±5%) | — |
+| number-helix | same, 80/20 split over a | Numbers lie on a helix (T = 2, 5, 10, 100) | helix fits GPT-J / Pythia-6.9B / Llama-3.1-8B | Pythia-2.8B best-layer held-out R² ≥ 0.5 and ≥ 0.2 above a shuffled-a helix (≥ 0.1 = partial) | shuffled helix; linear-only; circles-only |
+| number-helix | same; few-shot a+b= with a+b < 100, correct prompts only | Helix patching recovers most of the full-layer effect | helix 7.21 vs full 8.34 (86%), PCA 6.13 (GPT-J) | helix ≥ 50% of full-layer recovery and ≥ linear-only (> linear-only = partial) | full layer, PCA-9, linear-only, circles-only |
+| linebreak-manifold | Qwen3-1.7B, 400 WikiText-103 paragraphs wrapped at 40–150 chars; GPT-2 small control | Count is linearly decodable | Haiku R² 0.985; Qwen3-8B 0.852 (T-Tech) | best held-out R² ≥ 0.7 and ≥ 0.5 above shuffled labels | shuffled labels; GPT-2 small |
+| linebreak-manifold | same | Low-dimensional curved manifold | Haiku: 6 PCs = 95% | 6 PCs ≥ 80% of variance of per-count means | — |
+| linebreak-manifold | same | Count present in the first layers | Haiku R² 0.985 after layer 1 (not replicated by T-Tech) | best R² in layers 0–2 ≥ 0.9 × best overall | — |
+| linebreak-manifold | same | Model breaks lines like the text | Haiku newline prob 0.79 in example | P(newline) AUC for true breaks ≥ 0.9 | GPT-2 small |
+| belief-fractal | 4-layer transformer (d 64, 1 head, LN) trained here on Mess3 (x = 0.05, α = 0.85), 30k steps × 512 seqs of 10 tokens | Beliefs linear in the final residual stream | MSE ≈ 4e-4 (Shai et al. 2024) | held-out R² ≥ 0.9 and ≥ 0.3 above random init (≥ 0.2 = partial) | random-init model |
+| belief-fractal | same | Near-optimal prediction | trained near entropy rate | excess loss < 10% of the uniform-to-optimal gap | — |
+| colour-bicone | FLUX.1-schnell VAE; 400 HSV-uniform solid colors, 128 px | Colors occupy a 3-D subspace | ≈ 100% in 3 PCs (Pach et al. 2026) | ≥ 95% | random-noise images |
+| colour-bicone | same | HSL-like axes | PC1 = lightness, angle = hue, radius = saturation | corr(PC1, L), circular corr(angle, hue), corr(radius, chroma) all ≥ 0.8 (first two only = partial) | — |
+
+## Batches 4–5 — Neural Geometry series, features, steering, lenses, neurons, graphs (criteria written before running)
+
+| Entry | Model / data | Claim (published) | Pass criterion (partial) | Controls |
+|---|---|---|---|---|
+| sae-manifolds | TopK SAEs (512 atoms) on 16 synthetic manifolds in d = 128, L0 = 4, k ∈ {3…25} | capture peaks near k = L0 = 4 (Bhalla et al. 2026) | capture fraction peaks at k ∈ {3, 4, 6} | — |
+| sae-manifolds | same | larger k shatters manifolds | shattering at max k ≥ 30 pts above min k (any increase) | — |
+| block-sparse-featurizers | 32 sphere concepts in 3-D subspaces of d = 128, L0 = 4; BSF (64 blocks × 4, top-4) vs TopK SAE (256 latents, k = 16) | BSF 0.93–0.97 vs TopK 0.53 per-block R² (Fel et al. 2026) | BSF median ≥ 0.8 and ≥ 0.2 above SAE (BSF > SAE) | TopK SAE |
+| block-sparse-featurizers | InceptionV1 mixed3b, 288 curve stimuli; top-16 PCs | harmonics 1–3 explain 89% | ≥ 50% and > shuffled-orientation null p95 (> null) | shuffled orientations |
+| attribution-graphs | 9 public Gemma-2-2B Neuronpedia graphs | two-hop path Dallas → Texas → Austin (Lindsey et al. 2025) | path in all 3 capital graphs (in ≥ 1) | — |
+| attribution-graphs | en/fr/zh antonym graphs | shared middle-layer features | middle-layer Jaccard > early and late | — |
+| neuron-basis | Qwen3-1.7B, 48 × 512 WikiText-103 tokens | 92.2% ablatable: +2.9% loss, KL 0.14 (Goodfire, MoE); KL ≈ 0.80 (ericzhou12, Qwen3-1.7B) | top-480 rel. loss < 25%, KL < 1.0, random-480 ≥ 3× worse (random only) | random-480, drop-top-480, band P25–75 |
+| neuron-basis | same | dropping only the top activations is catastrophic | loss increase ≥ 5× that of keeping top-480 | — |
+| neuron-basis | same, grad×act top-1% cells | gate-open quadrants carry causal weight; 71–72% gate-closed | ≥ 80% top cells Q1+Q2 and ≥ 50% of activations Q3+Q4 (≥ 60% top cells) | — |
+| refusal-direction | Qwen2.5-1.5B-Instruct; 128 train / 32 val / 64 test prompts each (Arditi et al. splits) | ablation removes refusal; addition induces it | ablation −50 pts on harmful with random < 15 pts change (−25); addition +50 pts on harmless with random < 15 (+25) | norm-matched random direction |
+| actadd | GPT-2-XL; weddings vector (layer 20), Love−Hate (layer 6); c ∈ {0,1,2,4,8}; 8 samples × 3 prompts | > 90% on-topic weddings (Turner et al.) | c = 4 on-topic ≥ 50% and ≥ 30 pts above unsteered and random (≥ 15) | random vector |
+| actadd | same | Love−Hate makes text positive | ≥ 20 pts positive above baseline and random | random vector |
+| jlens | Qwen3-1.7B + pre-fitted Neuronpedia J-lens; 4 prompts with unspoken intermediates | J-lens surfaces intermediates better than logit lens (Gurnee et al. 2026) | lower median best-rank than logit lens and ≥ half in top-10 (lower median) | logit lens |
+| jlens | 8 country-swap prompts, layers 30–70% depth | swapping J-lens coordinates swaps the concept (59% top-5) | ≥ 50% top-5 and ≥ 30 pts above random swap (≥ 20) | random direction swap |
+| emotions | Qwen3-1.7B, 80 emotions × 12 topics × 2 self-written stories; Warriner norms | PC1 = valence (r 0.81) | |r| ≥ 0.6 and > shuffled-label p95 (> p95) | shuffled labels |
+| emotions | same | PC2 = arousal (r 0.66) | |r| ≥ 0.4 (≥ 0.25) | — |
+| emotions | Tylenol dose sweep 250–16,000 mg | afraid ↑, calm ↓ with dose | afraid slope > 0 and calm slope < 0 | — |
+| emotions | 120 activity pairs, steering 0.5 × residual norm on option A | blissful +212 Elo, hostile −303 | blissful > base > hostile by ≥ 0.05 each, random within 0.05 (ordering only) | random vector |
+| manifold-steering | Qwen3-1.7B weekday arithmetic, layers 12/16/20, 64-d PCA, periodic spline | E_BC 0.34 vs 0.93 (Wurgaft et al. 2026) | manifold E_BC < 0.7 × linear (< linear) | linear chord |
+| manifold-steering | same | manifold paths visit intermediate days | ≥ linear + 15 pts (> linear) | linear chord |
+| calculator-probes | Pythia-410M/1.4B/2.8B, 1,500 "{a}+{b}=" prompts, ridge probes T = 2…150 | base-10 periods prominent (Feucht et al. 2026) | ≥ 3 base-10 periods in top 8 and R²(T=10) ≥ neighbours + 0.1 (≥ 2 in top 8) | neighbouring periods |
+| world-model | mountain-car world model trained here (100 rollouts, 64×64) | position R² ≈ 0.95 | position R² ≥ 0.8 and ≥ 0.2 above untrained encoder | untrained encoder |
+| world-model | same | arc r 0.996 vs chord 0.06 | manifold r ≥ 0.9 and > chord (> chord) | straight chord |
+| stories-in-space | Qwen2.5-1.5B-Instruct, 160 SimpleStories, 6 emotions | probes predict ratings (RMSE 0.09) | held-out R² ≥ 0.5 (≥ 0.3) | — |
+| stories-in-space | same | behaviour–activation distance r = .92 | r ≥ 0.6 (≥ 0.3) | — |
+| sae-features | GPT-2 small res-jb L8; 5 concept features; α ∈ {0…80} | Golden Gate clamping (Templeton et al. 2024) | Golden Gate on-topic ≥ 50% and ≥ 30 pts above base and random (≥ 15) | random direction |
+| sae-features | same | steering generalizes | ≥ 3/5 concepts gain ≥ 30 pts (≥ 2) | random direction |
+
 ## Later batches (criteria are added here before each batch runs)
 
 | Batch | Entries | Models | Where |

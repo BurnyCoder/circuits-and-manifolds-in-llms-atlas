@@ -1,0 +1,23 @@
+[
+ {
+  "claim": "Grokking replicates across seeds (companion project's 11 runs)",
+  "published": "grokking with wd = 1 on a 30% split (Nanda et al. 2023, one run)",
+  "ours": "11/11 seeds reach > 99% test accuracy; test-95% step \u00f7 train-99% step: median 57.2\u00d7 (min 32.2\u00d7)",
+  "criterion": "\u2265 9 of 11 seeds grok, with delay \u2265 3\u00d7 in each",
+  "verdict": "pass"
+ },
+ {
+  "claim": "A handful of key frequencies and single-frequency neurons in every seed",
+  "published": "5 key frequencies; 84.6% of neurons single-frequency",
+  "ours": "key frequencies per seed: 3\u20136; median 81.6% of neurons > 85% FVE",
+  "criterion": "3\u20137 key frequencies in every seed and median single-frequency fraction > 60%",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Controls: no weight decay / random labels don't generalize",
+  "published": "no grokking without regularization; nothing to learn with random labels",
+  "ours": "wd = 0: best final test acc 21.5% over 5 runs; random labels: 0.9% over 3",
+  "criterion": "every wd = 0 run < 50% and every random-label run < 5% test accuracy",
+  "verdict": "pass"
+ }
+]

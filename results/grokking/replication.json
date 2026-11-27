@@ -1,0 +1,37 @@
+[
+ {
+  "claim": "Generalization comes long after memorization (grokking)",
+  "published": "train acc ~100% by ~1.4k epochs; test generalizes at ~10k (Fig. 2, wd=1, 30% split)",
+  "ours": "seed 0: train\u226599% @ 200, test\u226595% @ 7200; seed 1: train\u226599% @ 200, test\u226595% @ 6100; seed 2: train\u226599% @ 200, test\u226595% @ 13500",
+  "criterion": "test-95% epoch \u2265 3\u00d7 train-99% epoch and final test acc > 99%, for every seed",
+  "verdict": "pass"
+ },
+ {
+  "claim": "The embedding is sparse in the Fourier basis",
+  "published": "W_E has ~6 non-negligible frequencies of 56 (\u00a75.1)",
+  "ours": "\u2264 4 frequencies carry 90% of \u2016W_E\u2016\u00b2 (worst seed)",
+  "criterion": "\u2264 10 frequencies carry 90% of the norm in every seed",
+  "verdict": "pass"
+ },
+ {
+  "claim": "A handful of key frequencies; most neurons are single-frequency",
+  "published": "5 key freqs {14, 35, 41, 42, 52} in their seed; 84.6% of neurons > 85% FVE from one frequency",
+  "ours": "key freqs per seed: 1, 21, 49 | 16, 17, 30, 55 | 6, 43, 48, 56; 75.0% of neurons periodic (seed 0)",
+  "criterion": "3\u20137 key frequencies per seed and > 60% periodic neurons (exact frequencies are seed-dependent)",
+  "verdict": "pass"
+ },
+ {
+  "claim": "The key frequencies are causally necessary",
+  "published": "ablating key frequencies destroys performance; other frequencies don't matter (\u00a75.2, Fig. 6)",
+  "ours": "test acc 1.000 \u2192 0.012 (key removed) vs 1.000 (random removed)",
+  "criterion": "key removal \u2192 < 20% acc; random removal \u2192 > 90%",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Weight decay is needed for grokking",
+  "published": "no grokking without regularization in this setup (\u00a75.3 / App.)",
+  "ours": "wd=0: final train 1.000, test 0.033 after 40000 epochs",
+  "criterion": "wd=0 test accuracy stays < 50%",
+  "verdict": "pass"
+ }
+]
