@@ -117,17 +117,48 @@ Scoreboard of all pre-stated claims:
 | **Total (26 entries)** | | **75** | **57** | **3** | **15** | | |
 <!-- /table:scoreboard -->
 
-**In plainer language: where our numbers matched, beat or fell short of the papers.** Every recomputed claim so far
-holds qualitatively, with matched controls behaving as the papers predict (random heads or directions do nothing,
-shuffled labels and random-init models give chance). The quantitative differences are:
+**In plainer language: what held up and what did not.** The tables above are generated from `results/`; this summary
+is qualitative and links each point to an entry report.
 
-- **Close to the paper:** IOI's baseline logit difference and name-mover attention.
-- **Stronger than the paper:** greater-than's probability difference and IOI faithfulness. Our prompts are simpler.
-- **Weaker than the paper:** Othello-GPT board edits and the copy-suppression ablation. Copy suppression's direct
-  effect replicates, but zero-ablation helps the copied token on only some prompts.
-
-Batch 3–5 entries (geometry, Neural Geometry series, features, steering, lenses) are being run. Their rows appear here
-once their full runs finish. Negative results will be listed explicitly.
+- **The classic circuits replicate fully** on the open models they were found in, with controls behaving as predicted
+  (random heads or directions do nothing; shuffled labels and random-init models give chance):
+  - induction heads, IOI, copy suppression, greater-than, grokking (3 seeds here plus 11 companion seeds), Othello-GPT
+    and curve detectors.
+  - IOI's numbers land within sampling error of the paper's.
+  - The Othello-GPT board edit and the copy-suppression ablation are weaker than published, but still pass.
+- **Geometry mostly replicates:**
+  - day/month circles in GPT-2;
+  - the FLUX VAE's colour bicone;
+  - the mountain-car world model's isometric position manifold;
+  - block-sparse featurizers keeping concepts together;
+  - the SAE sparsity sweet spot;
+  - the count of characters since a line break, decodable in Qwen3 and GPT-2.
+- **New small-model evidence:** in Pythia-2.8B, patching only the number helix recovers most of a layer's effect on
+  addition ([number helix](reports/experiments/number-helix/experiment.md)). Base-10 periods stand out as peaks in Fourier
+  probes ([geometric calculator](reports/experiments/calculator-probes/experiment.md)). Both papers only had evidence
+  from 6–8B models.
+- **Steering and directions:** the refusal direction switches refusal on and off; the weddings ActAdd vector and
+  Golden-Gate-style SAE feature steering work in GPT-2; manifold steering passes through intermediate weekdays where
+  straight lines jump.
+- **What did not replicate here (negative results, kept on the site):**
+  - [ActAdd](reports/experiments/actadd/experiment.md): the Love − Hate vector does not shift measured sentiment.
+  - [J-lens](reports/experiments/jlens/experiment.md): concept swaps fail in Qwen3-1.7B with two independent
+    implementations. This matches an open replication that found no selectivity up to 9B.
+  - [Emotions](reports/experiments/emotions/experiment.md): there is no arousal axis, and steering does not move
+    preferences, although valence replicates strongly.
+  - [Stories in space](reports/experiments/stories-in-space/experiment.md): behaviour and activation geometry agree only
+    weakly.
+  - [Linebreak manifold](reports/experiments/linebreak-manifold/experiment.md): the counting curve is not as compact as
+    Claude's and is not an early-layer phenomenon.
+  - [Belief fractal](reports/experiments/belief-fractal/experiment.md) and
+    [world model](reports/experiments/world-model/experiment.md): the probe claims fail against their pre-stated controls
+    because untrained networks already decode most of the signal.
+  - [Neuron basis](reports/experiments/neuron-basis/experiment.md): zeroing 92% of neurons hurts the dense Qwen3 much
+    more than Goodfire's MoE. A gentler selection rule matches the open replication.
+- **Method fixes before full runs** (tokenization traps, attention-sink outliers, overfit probes, task accuracy, wrong
+  feature selection, evaluation protocols) are listed as dated amendments in
+  [`reports/planned-runs.md`](reports/planned-runs.md) and explained in
+  [`reports/experiments/learnings.md`](reports/experiments/learnings.md). No pass threshold was changed after a full run.
 
 ## All entries
 
@@ -304,9 +335,9 @@ results to `results/`, site data to `site/public/data/`.
 
 ## To do
 
-- [ ] Finish full runs of batches 3–5, then write their experiment reports and update this README.
-- [ ] Upload models trained here (modular addition ×3 seeds, Mess3 belief transformer, mountain-car world model) to one
-      Hugging Face collection.
+- [x] Full runs of batches 3–5 with experiment reports.
+- [x] Models trained here (modular addition ×3 seeds, Mess3 belief transformer, mountain-car world model) are in the
+      [Hugging Face collection](https://huggingface.co/collections/BurnyCoder/circuits-and-manifolds-atlas-6b09d298455cc520d1ceaaf6).
 - [ ] Paper-scale runs on a rented GPU (≤ $20): number helix on GPT-J/Pythia-6.9B, geometric calculator and manifold
       steering on an 8B model, emotions/J-lens at 8B.
 - [ ] Fact-check and link-check every citation; NeurIPS-style self-review into `reports/reviews/`.
