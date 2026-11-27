@@ -21,6 +21,7 @@ import { seqScale } from '../viz/primitives/common'
 import { vizRegistry } from '../viz/registry'
 import Thumb from '../viz/thumbs'
 import { CategoryTag, FidelityBadge } from './Badges'
+import VizBoundary from './VizBoundary'
 
 interface MapData {
   scores: { prev: number[][]; induction: number[][]; duplicate: number[][] }
@@ -404,9 +405,11 @@ function ExpandedViz({ entry, onClose }: { entry: Entry; onClose: () => void }) 
       ) : entry.data && !data ? (
         <p>Loading data…</p>
       ) : (
-        <Suspense fallback={<p>Loading visualization…</p>}>
-          <Viz data={data} entry={entry} />
-        </Suspense>
+        <VizBoundary resetKey={entry.slug}>
+          <Suspense fallback={<p>Loading visualization…</p>}>
+            <Viz data={data} entry={entry} />
+          </Suspense>
+        </VizBoundary>
       )}
     </div>
   )

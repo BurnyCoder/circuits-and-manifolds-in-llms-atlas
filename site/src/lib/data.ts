@@ -17,18 +17,23 @@ export function loadData(file: string): Promise<EntryData> {
   return cache.get(file)!
 }
 
-/** React hook: {data, error} for a data file (undefined file -> nothing loaded). */
+/**
+ * React hook: {data, error} for a data file (undefined file -> nothing loaded).
+ * The state remembers which file it belongs to: when the file changes (navigating from one entry page to another), the
+ * previous entry's data is never returned for the new file — otherwise the new visualization renders once with the old
+ * entry's payload and crashes.
+ */
 export function useData(file?: string): { data?: EntryData; error?: string } {
-  const [state, setState] = useState<{ data?: EntryData; error?: string }>({})
+  const [state, setState] = useState<{ file?: string; data?: EntryData; error?: string }>({})
   useEffect(() => {
     if (!file) return
     let alive = true
     loadData(file)
-      .then((data) => alive && setState({ data }))
-      .catch((e: Error) => alive && setState({ error: e.message }))
+      .then((data) => alive && setState({ file, data }))
+      .catch((e: Error) => alive && setState({ file, error: e.message }))
     return () => {
       alive = false
     }
   }, [file])
-  return state
+  return state.file === file ? { data: state.data, error: state.error } : {}
 }
