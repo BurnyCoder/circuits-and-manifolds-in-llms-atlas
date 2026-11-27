@@ -13,7 +13,16 @@ export default function EntryPage() {
   const { slug = '' } = useParams()
   const e = entryBySlug[slug]
   const { data, error } = useData(e?.data)
-  const html = useMemo(() => (e ? renderMarkdown(e.body, e.data ? data?.summary : undefined) : ''), [e, data])
+  const { data: extra } = useData(e?.extra)
+  // Summary for {{templates}}: the entry's own data plus the optional extra file under the "extra." prefix.
+  const summary = useMemo(() => {
+    if (!e?.data || !data) return undefined
+    const s: Record<string, number | string> = { ...data.summary }
+    if (extra) for (const [k, v] of Object.entries(extra.summary)) s[`extra.${k}`] = v
+    return e.extra && !extra ? undefined : s
+  }, [e, data, extra])
+  const replication = [...(data?.replication ?? []), ...(extra?.replication ?? [])]
+  const html = useMemo(() => (e ? renderMarkdown(e.body, summary) : ''), [e, summary])
   if (!e) return <p>Unknown entry “{slug}”. <Link to="/">Back to the atlas</Link></p>
 
   const Viz = e.viz ? vizRegistry[e.viz] : undefined
@@ -66,7 +75,7 @@ export default function EntryPage() {
 
       <section className="prose" dangerouslySetInnerHTML={{ __html: html }} />
 
-      {data?.replication && data.replication.length > 0 && (
+      {replication.length > 0 && (
         <section className="panel">
           <h2>Our replication: published vs. recomputed</h2>
           <div className="table-wrap">
@@ -81,7 +90,7 @@ export default function EntryPage() {
                 </tr>
               </thead>
               <tbody>
-                {data.replication.map((r, i) => (
+                {replication.map((r, i) => (
                   <tr key={i}>
                     <td>{r.claim}</td>
                     <td>{r.published}</td>

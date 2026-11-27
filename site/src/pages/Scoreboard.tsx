@@ -11,9 +11,9 @@ export default function Scoreboard() {
   useEffect(() => {
     Promise.all(
       entries
-        .filter((e) => e.data)
-        .map((e) =>
-          loadData(e.data!)
+        .flatMap((e) => [e.data, e.extra].filter(Boolean).map((f) => ({ e, f: f! })))
+        .map(({ e, f }) =>
+          loadData(f)
             .then((d) => (d.replication ?? []).map((r) => ({ ...r, slug: e.slug, title: e.title })))
             .catch(() => []),
         ),

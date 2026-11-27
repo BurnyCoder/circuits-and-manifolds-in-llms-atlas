@@ -25,13 +25,42 @@ export interface ModelSpec {
   relativeDepth?: boolean
   /** CNN / pipeline stages. */
   stages?: CnnLayer[]
+  /** 'llm' ⊂ 'transformer'; used by the General LLM / General transformer aggregate views. */
+  family?: 'llm' | 'transformer' | 'vision' | 'other'
+  /** Aggregate view: findings of these member families are placed on one generic block by relative depth. */
+  aggregate?: ('llm' | 'transformer')[]
   blurb: string
   source: string
 }
 
 export const MODELS: ModelSpec[] = [
   {
+    id: 'general-llm',
+    name: 'General LLM (all language models)',
+    kind: 'transformer',
+    open: true,
+    params: 'aggregate view',
+    relativeDepth: true,
+    aggregate: ['llm'],
+    blurb:
+      'Every finding from every language model in the atlas (GPT-2, Pythia, Qwen3, Llama, Claude…) placed on one generic decoder-only transformer by relative depth: where in a typical LLM do circuits and manifolds live?',
+    source: 'https://transformer-circuits.pub/2021/framework/index.html',
+  },
+  {
+    id: 'general-transformer',
+    name: 'General transformer (all transformer models)',
+    kind: 'transformer',
+    open: true,
+    params: 'aggregate view',
+    relativeDepth: true,
+    aggregate: ['llm', 'transformer'],
+    blurb:
+      'Language models plus transformers trained on other tasks (Othello moves, modular arithmetic), all mapped onto one generic transformer block stack by relative depth.',
+    source: 'https://arxiv.org/abs/1706.03762',
+  },
+  {
     id: 'gpt2-small',
+    family: 'llm',
     name: 'GPT-2 small',
     kind: 'transformer',
     open: true,
@@ -44,6 +73,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'attn-only-2l',
+    family: 'llm',
     name: 'Attention-only 2-layer',
     kind: 'transformer',
     open: true,
@@ -57,6 +87,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'pythia-160m',
+    family: 'llm',
     name: 'Pythia-160M',
     kind: 'transformer',
     open: true,
@@ -69,6 +100,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'modadd-1l',
+    family: 'transformer',
     name: '1-layer modular-addition transformer',
     kind: 'transformer',
     open: true,
@@ -81,6 +113,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'othello-gpt',
+    family: 'transformer',
     name: 'Othello-GPT',
     kind: 'transformer',
     open: true,
@@ -93,6 +126,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'qwen3-1.7b',
+    family: 'llm',
     name: 'Qwen3-1.7B',
     kind: 'transformer',
     open: true,
@@ -105,6 +139,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'llama-3.1-8b',
+    family: 'llm',
     name: 'Llama-3.1-8B',
     kind: 'transformer',
     open: true,
@@ -117,6 +152,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'claude-3.5-haiku',
+    family: 'llm',
     name: 'Claude 3.5 Haiku (closed)',
     kind: 'transformer',
     open: false,
@@ -127,6 +163,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'claude-sonnet-4.5',
+    family: 'llm',
     name: 'Claude Sonnet 4.5 (closed)',
     kind: 'transformer',
     open: false,
@@ -137,6 +174,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'inceptionv1',
+    family: 'vision',
     name: 'InceptionV1 (GoogLeNet)',
     kind: 'cnn',
     open: true,
@@ -161,6 +199,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'flux-vae',
+    family: 'vision',
     name: 'FLUX VAE',
     kind: 'pipeline',
     open: true,
@@ -177,6 +216,7 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'mountain-car-wm',
+    family: 'other',
     name: 'Mountain-car world model',
     kind: 'pipeline',
     open: true,
@@ -194,13 +234,14 @@ export const MODELS: ModelSpec[] = [
   },
   {
     id: 'evo2',
-    name: 'Evo 2 (DNA model)',
+    family: 'other',
+    name: 'Evo 2 (DNA model, StripedHyena 2)',
     kind: 'transformer',
     open: true,
     params: '1B / 7B / 40B variants',
     layers: 32,
     heads: 0,
-    blurb: 'A genome language model whose layer-24 activations encode the bacterial tree of life as distances on a curved manifold.',
+    blurb: 'A genome model built on StripedHyena 2 (convolution + attention hybrid, not a pure transformer) whose layer-24 activations encode the bacterial tree of life as distances on a curved manifold.',
     source: 'https://www.goodfire.com/research/phylogeny-manifold',
   },
 ]

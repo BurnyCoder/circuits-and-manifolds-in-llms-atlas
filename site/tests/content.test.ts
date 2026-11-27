@@ -53,6 +53,11 @@ describe('atlas entries', () => {
         const path = join(dataDir, e.data)
         expect(existsSync(path)).toBe(true)
         const summary = JSON.parse(readFileSync(path, 'utf8')).summary
+        if (e.extra) {
+          expect(existsSync(join(dataDir, e.extra))).toBe(true)
+          const ex = JSON.parse(readFileSync(join(dataDir, e.extra), 'utf8')).summary
+          for (const [k, v] of Object.entries(ex)) summary[`extra.${k}`] = v
+        }
         expect(fillTemplates(e.body, summary)).not.toContain('[missing:')
       })
     })

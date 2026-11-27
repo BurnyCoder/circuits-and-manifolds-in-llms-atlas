@@ -2,6 +2,7 @@
 // with a scrubber, embedding circles for each key frequency, periodic neuron heatmaps, and the Fourier ablation.
 import * as d3 from 'd3'
 import { useMemo, useState } from 'react'
+import { useData } from '../../lib/data'
 import type { VizProps } from '../registry'
 import Bars from '../primitives/Bars'
 import Heatmap, { Legend } from '../primitives/Heatmap'
@@ -38,7 +39,7 @@ const P = 113
 
 export default function Grokking({ data }: VizProps) {
   const d = data as unknown as D
-  const [tab, setTab] = useState<'curves' | 'spectrum' | 'circles' | 'neurons' | 'ablate'>('curves')
+  const [tab, setTab] = useState<'curves' | 'spectrum' | 'circles' | 'neurons' | 'ablate' | 'runs'>('curves')
   const [seed, setSeed] = useState(0)
   const [snap, setSnap] = useState(d.snaps.length - 1)
   const keys = Object.keys(d.circles)
@@ -60,6 +61,7 @@ export default function Grokking({ data }: VizProps) {
           ['circles', '3 · Numbers on circles'],
           ['neurons', '4 · Periodic neurons'],
           ['ablate', '5 · Ablate the frequencies'],
+          ['runs', '6 · 22 runs, 11 seeds'],
         ]}
         value={tab}
         onChange={setTab}
@@ -183,6 +185,7 @@ export default function Grokking({ data }: VizProps) {
           </div>
         </>
       )}
+      {tab === 'runs' && <Runs />}
       {tab === 'ablate' && (
         <>
           <HowTo>
@@ -197,6 +200,91 @@ export default function Grokking({ data }: VizProps) {
         </>
       )}
     </div>
+  )
+}
+
+interface Run22 {
+  id: string
+  group: string
+  key_freqs: number[]
+  diffuse: boolean
+  frac_neurons_085: number | null
+  test95: number | null
+  train99: number | null
+  final_test_acc: number
+  curve: { step: number[]; test_acc: number[]; train_acc: number[] }
+}
+const GROUP_COLOR: Record<string, string> = { wd1: '#16a34a', split0: '#2563eb', wd0: '#dc2626', rand: '#64748b' }
+const GROUP_LABEL: Record<string, string> = {
+  wd1: 'weight decay 1 (11 seeds)',
+  split0: "paper's split, other inits (3)",
+  wd0: 'no weight decay (5)',
+  rand: 'random labels (3)',
+}
+
+/** Companion project's 22 runs (github.com/BurnyCoder/visualizing-grokking-modular-addition-in-transformer). */
+function Runs() {
+  const { data, error } = useData('grokking-runs.json')
+  if (error) return <p className="error">{error}</p>
+  if (!data) return <p>Loading 22 runs…</p>
+  const runs = (data as unknown as { runs: Run22[] }).runs
+  const groups = [...new Set(runs.map((r) => r.group))]
+  return (
+    <>
+      <HowTo>
+        22 training runs from the companion project{' '}
+        <a href="https://burnycoder.github.io/visualizing-grokking-modular-addition-in-transformer/" target="_blank" rel="noopener">
+          Grokking, Visualized
+        </a>{' '}
+        (models on{' '}
+        <a href={String(data.source)} target="_blank" rel="noopener">
+          Hugging Face
+        </a>
+        ), all with the paper's settings: every weight-decay seed groks, but each picks its <b>own</b> key frequencies; runs
+        without weight decay or with random labels never generalize. Curves show test accuracy.
+      </HowTo>
+      <LineChart
+        series={runs.map((r) => ({ name: r.id, x: r.curve.step.map((s) => Math.max(s, 1)), y: r.curve.test_acc, color: GROUP_COLOR[r.group] ?? '#999', width: 1.4 }))}
+        xLog
+        yDomain={[0, 1]}
+        xLabel="optimizer step (log scale)"
+        yLabel="test accuracy"
+        height={300}
+      />
+      <div className="viz-controls">
+        {groups.map((g) => (
+          <span key={g} className="tag" style={{ background: GROUP_COLOR[g], color: '#fff' }}>
+            {GROUP_LABEL[g] ?? g}
+          </span>
+        ))}
+      </div>
+      <div className="table-wrap">
+        <table className="data">
+          <thead>
+            <tr>
+              <th>run</th>
+              <th>key frequencies</th>
+              <th>single-freq. neurons</th>
+              <th>train ≥ 99% at step</th>
+              <th>test ≥ 95% at step</th>
+              <th>final test acc.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {runs.map((r) => (
+              <tr key={r.id}>
+                <td style={{ color: GROUP_COLOR[r.group] }}>{r.id}</td>
+                <td>{r.diffuse ? <i>none (diffuse spectrum)</i> : r.key_freqs.join(', ')}</td>
+                <td>{r.frac_neurons_085 == null ? '—' : `${(r.frac_neurons_085 * 100).toFixed(0)}%`}</td>
+                <td>{r.train99 ?? '—'}</td>
+                <td>{r.test95 ?? 'never'}</td>
+                <td>{(r.final_test_acc * 100).toFixed(1)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
 

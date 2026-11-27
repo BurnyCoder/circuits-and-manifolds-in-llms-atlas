@@ -21,8 +21,14 @@ ENTRIES = [
     "copy_suppression",
     "greater_than",
     "grokking",
+    "grokking_runs",
     "othello_gpt",
     "curve_detectors",
+    "calendar_circles",
+    "number_helix",
+    "linebreak_manifold",
+    "belief_fractal",
+    "colour_bicone",
 ]
 
 

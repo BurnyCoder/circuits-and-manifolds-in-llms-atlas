@@ -72,6 +72,8 @@ export interface EntryMeta {
   viz?: string
   /** JSON file in public/data/ produced by the Python pipeline. */
   data?: string
+  /** Optional second data file (e.g. companion runs); its summary keys are available as {{extra.key}}. */
+  extra?: string
   /** Display order within the grid (lower first). */
   order?: number
   quote?: Quote
