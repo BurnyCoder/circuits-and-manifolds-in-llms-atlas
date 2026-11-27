@@ -54,17 +54,21 @@ synthetic benchmark.
 
 Each manifold instance is centered, scaled to unit RMS and embedded by a random orthonormal map into $d = 128$; each
 sample sums $L_0 = 4$ random manifolds at random points; a TopK SAE (512 unit-norm atoms) is trained for a sweep of $k$.
-We classify each manifold by its support size $|G|$ (atoms active on ≥ 10% of its points), receptive-field spread (how
-far apart the points an atom fires on are, relative to the manifold) and restricted $R^2$.
+Following the paper's appendix, everything is measured on the superposed inputs, on the rows where a manifold is
+present:
+- **Restricted $R^2$** (the paper's capture score): can $k_i$ decoder atoms rebuild that manifold's contribution?
+- **Support size** (atoms firing on ≥ 10% of its rows).
+- **Receptive-field spread** (how far apart the points an atom fires on are, relative to the manifold).
 
 **What we measured** ({{n_instances}} manifold instances, {{steps}} training steps per SAE):
 
-- The share of manifolds in the capture regime peaks at k = {{k_best_capture}} ({{capture_max|pct}}) and falls to
-  {{capture_at_max_k|pct}} at k = {{k_max}}.
-- Shattering rises from {{shatter_at_min_k|pct}} at the smallest k to {{shatter_at_max_k|pct}} at k = {{k_max}}.
+- Mean restricted $R^2$ peaks at k = {{k_best_r2}} ({{r2_best}}). It is {{r2_min_k}} at the smallest k and {{r2_max_k}} at
+  k = {{k_max}}. At most {{capture_max|pct}} of manifolds get the "capture" label.
+- Shattering goes from {{shatter_at_min_k|pct}} at the smallest k to {{shatter_at_max_k|pct}} at k = {{k_max}}. Dilution goes
+  from {{dilution_at_min_k|pct}} to {{dilution_at_max_k|pct}}.
 
 ## Limitations
 
 - Our regime rule (support size and spread) is a simplification of the paper's Ising-coupling analysis.
-- 16 instances instead of 48; one SAE type (TopK). The paper's LLM experiments (Llama-3.1-8B, five SAE families) are not
+- One SAE type (TopK). The paper's LLM experiments (Llama-3.1-8B, five SAE families) are not
   reproduced — see the calendar-circles entry for how GPT-2's SAE latents tile the day circle.

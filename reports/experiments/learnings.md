@@ -83,3 +83,15 @@ What we tried, what went wrong, why, and how it was fixed. Newest last. Per-entr
   finds the intended features: bridge #17608, DNA, Harry Potter, French, Python/Django. It is cached for reproducibility.
 - **Windows console encoding.** Log lines with "α" raised `'charmap' codec can't encode` on the console handler, so
   terminal output was lost while the file log was fine. `sys.stdout.reconfigure(encoding="utf-8")` fixes it.
+- **Check a verdict cannot pass on degenerate data.** SAE manifolds printed "capture peaks at k = 3: pass" while capture
+  was 0% at every k (argmax of zeros). Peak-type claims now use a metric with real variation (restricted R²).
+- **Evaluate in distribution.** Showing a manifold alone to a TopK SAE always activates k atoms, so "few atoms per
+  manifold" was impossible by construction. The paper evaluates on superposed inputs and attributes rows by ground-truth
+  masks. A thresholded support statistic also needs enough instances (48, not 16) so co-occurring manifolds stay under
+  the threshold.
+- **Re-read the paper before stating a directional claim.** We had pre-stated "larger k shatters". The paper says
+  small k shatters and large k dilutes. The amendment records the error.
+- **Quick mode hides memory blow-ups.** Caching reference log-probs is 0.5 GB in quick mode but ~7 GB in full mode
+  (48 × 512 tokens × 152k vocabulary). The OOM then crashed the runner's cleanup and ended the whole batch. Now the
+  reference is recomputed per sequence, parameters are frozen for gradient × activation, the cleanup is exception-safe,
+  and each remaining entry runs in its own process.
