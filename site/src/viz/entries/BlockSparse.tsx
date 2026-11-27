@@ -14,7 +14,7 @@ interface D {
 export default function BlockSparse({ data }: VizProps) {
   const d = data as unknown as D
   const names = Object.keys(d.toy)
-  const med = (a: number[]) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)]
+  const med = (a: number[]) => d3.median(a) ?? NaN // averages the middle pair for even counts, like np.median
   return (
     <div>
       <HowTo>

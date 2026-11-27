@@ -21,7 +21,6 @@ export default function GreaterThan({ data }: VizProps) {
   const combo = d.combos.find((c) => c.mask.every((v, i) => v === mask[i]))!
   const vmax = useMemo(() => Math.max(...d.combos[0].matrix.flat()), [d])
   const color = useMemo(() => seqScale(vmax, d3.interpolateMagma), [vmax])
-  const sorted = [...d.rand_pd].sort((a, b) => a - b)
   return (
     <div>
       <HowTo>
@@ -55,7 +54,7 @@ export default function GreaterThan({ data }: VizProps) {
         items={[
           ['probability difference P(>YY) − P(≤YY), clean', `${(d.summary.pd_clean * 100).toFixed(1)}%`],
           ['with your patches', `${(combo.pd * 100).toFixed(1)}%`],
-          [`${d.heads.length} random heads patched (median of ${d.rand_pd.length})`, `${(sorted[Math.floor(sorted.length / 2)] * 100).toFixed(1)}%`],
+          [`${d.heads.length} random heads patched (median of ${d.rand_pd.length})`, `${((d3.median(d.rand_pd) ?? NaN) * 100).toFixed(1)}%`],
           ['circuit only (everything else patched)', `${(d.summary.pd_circuit_only * 100).toFixed(1)}%`],
         ]}
       />
