@@ -50,8 +50,8 @@ replications:
   - who: "Grokking, Visualized — 22 preregistered runs (Burian 2026)"
     url: https://burnycoder.github.io/visualizing-grokking-modular-addition-in-transformer/
     model: same 1-layer transformer; 11 seeds + no-weight-decay, random-label and fixed-split controls (Hugging Face BurnyCoder/grokking-modular-addition-runs)
-    outcome: replicated
-    note: Every weight-decay seed groks with its own key frequencies; the seed using the paper's split recovers the paper's exact frequencies; controls never generalize. Includes a 22-chapter explorable explanation and a scrubbable dashboard.
+    outcome: partial
+    note: "Preregistered: 4 of 5 tests supported — grokking needs weight decay, restricted loss falls before test loss, excluded loss rises, Fourier sparsity is learned (11/11 seeds each); the strict key-frequency ablation test is not supported (6/11). Seed 0 starts from the paper's initial weights and ends with the paper's key frequencies. Includes a 22-chapter explorable explanation and a scrubbable dashboard."
 ---
 
 ## In plain words
@@ -100,11 +100,25 @@ neurons dominated by one frequency. None of the {{extra.n_wd0}} no-weight-decay 
 ({{extra.rand_max_test|pct}} at best). For a 22-chapter, step-by-step explanation of this network, see
 [Grokking, Visualized](https://burnycoder.github.io/visualizing-grokking-modular-addition-in-transformer/).
 
+**Progress measures and the three phases** (tab 7; per-checkpoint metrics of the {{extra.n_prog}} weight-decay seeds).
+Nanda et al. split training into *memorization*, *circuit formation* and *cleanup*. They show that two hidden quantities
+move during the long stretch where train and test loss look flat. The *restricted loss*, which keeps only the key
+frequencies of the logits, falls. The *excluded loss*, which removes them, rises on the training data. Re-implementing the
+companion project's preregistered definitions in our own code, the restricted loss reaches 10% of its value at the end of
+memorization {{extra.h1_lead_min}}–{{extra.h1_lead_max}} steps before the test loss does, in {{extra.n_h1}} of
+{{extra.n_prog}} seeds. The excluded loss grows {{extra.h2_ratio_min}}× to {{extra.h2_ratio_max|sci}}× during circuit
+formation, in {{extra.n_h2}} of {{extra.n_prog}} seeds. Our per-seed step counts match the companion's exactly in
+{{extra.agree_companion}} of {{extra.n_prog}} seeds. The companion's other preregistered tests:
+- Fourier sparsity is learned and specific to the Fourier basis: {{extra.comp_h3}} seeds.
+- The *strict* key-frequency test passes in only {{extra.comp_h4}} seeds (supported: {{extra.comp_h4_supported}}).
+  It requires every key frequency to cost ≥ 100× when ablated and the others jointly ≤ 1.5×. In some seeds the
+  weight-norm rule that names the key frequencies admits a weak one or leaves out useful ones.
+
 ## Limitations
 
 - One task, one architecture, one modulus; key frequencies are seed-dependent, so we compare counts and structure, not
   the exact set.
 - Our "periodic neuron" fraction uses a simple 2-D Fourier variance criterion (one frequency's 3×3 block), similar but
   not identical to the paper's procedure.
-- We did not reproduce the paper's restricted/excluded-loss progress measures; the spectrum-over-training view shows
-  the same transition in a simpler way.
+- The progress-measure check re-implements the companion's definitions on its saved metrics. It is a code-level
+  cross-check of a result we had already seen, not a blind replication, and not a recomputation from our own 3 seeds.

@@ -29,6 +29,7 @@ log = get_logger()
 SLUG = "linebreak-manifold"
 WIDTHS = [40, 60, 80, 100, 120, 150]
 MAXC = 150
+ALPHAS = [1e0, 1e1, 1e2, 1e3, 1e4, 1e5]  # ridge grid, chosen per layer on held-out training documents
 
 
 def wrapped_docs(n_docs: int, seed: int) -> list[tuple[str, int]]:
@@ -84,6 +85,10 @@ def analyze(model_name: str, ctx, n_docs: int) -> dict:
         counts = char_counts(text, enc.offset_mapping)
         hs = torch.stack(out.hidden_states)[:, 0].float().cpu().numpy()  # [n_layers+1, T, d]
         keep = np.where((counts >= 1) & (counts <= MAXC))[0]
+        # Drop position 0: the first token acts as an attention sink with "massive activations" (a few dimensions orders of
+        # magnitude larger than elsewhere; Sun et al. 2024, https://arxiv.org/abs/2402.17762). Its small character count would make low-count means and
+        # the PCA dominated by that one outlier direction.
+        keep = keep[keep > 0]
         for t in keep:
             sums[:, counts[t]] += hs[:, t]
             cnt[counts[t]] += 1
@@ -103,8 +108,10 @@ def analyze(model_name: str, ctx, n_docs: int) -> dict:
     shuffled = rng.permutation(labels)
     for L in probe_layers:
         X = np.concatenate(samples[L]).astype(np.float32)
-        r2 = ridge_r2(X[~test_docs], labels[~test_docs, None], X[test_docs], labels[test_docs, None], alpha=10.0)
-        r2s = ridge_r2(X[~test_docs], shuffled[~test_docs, None], X[test_docs], shuffled[test_docs, None], alpha=10.0)
+        # Ridge strength chosen on held-out *training* documents (never the test documents), per layer.
+        tr = ~test_docs
+        r2 = ridge_r2(X[tr], labels[tr, None], X[test_docs], labels[test_docs, None], alpha=ALPHAS, groups=docs_of[tr])
+        r2s = ridge_r2(X[tr], shuffled[tr, None], X[test_docs], shuffled[test_docs, None], alpha=ALPHAS, groups=docs_of[tr])
         probe.append({"layer": L, "r2": r2, "r2_shuffled": r2s})
         log.info("%s L%d count probe R² %.3f (shuffled %.3f)", model_name, L, r2, r2s)
     # Geometry of per-count means at the layer with the best probe (and its neighbours).

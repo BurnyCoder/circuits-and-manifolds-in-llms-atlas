@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from atlas.entries.belief_fractal import beliefs, mess3, sample, simplex_xy
+from atlas.entries.belief_fractal import beliefs, mess3, optimal_loss, sample, simplex_xy
 
 
 def test_mess3_is_stochastic():
@@ -26,3 +26,14 @@ def test_token_frequencies_uniform():
     s = sample(mess3(), 20000, np.random.default_rng(1))
     freq = np.bincount(s.ravel(), minlength=3) / s.size
     assert np.allclose(freq, 1 / 3, atol=0.01)
+
+
+def test_optimal_loss_beats_uniform_and_marginal():
+    """The Bayes-optimal predictor's cross-entropy is below the uniform loss log 3 (tokens carry information about the
+    hidden state), and below predicting each next token from the stationary marginal alone."""
+    T = mess3()
+    seqs = sample(T, 4000, np.random.default_rng(0))
+    h = optimal_loss(T, seqs)
+    marginal = np.bincount(seqs[:, 1:].ravel(), minlength=3) / seqs[:, 1:].size
+    h_marg = float(-np.log(marginal[seqs[:, 1:]]).mean())
+    assert 0 < h < h_marg <= np.log(3) + 1e-9

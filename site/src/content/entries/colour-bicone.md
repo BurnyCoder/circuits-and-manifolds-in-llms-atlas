@@ -32,10 +32,15 @@ citations:
     authors: Black Forest Labs
     year: 2024
     url: https://huggingface.co/black-forest-labs/FLUX.1-schnell
+  - id: flux-vae
+    title: diffusers/FLUX.1-vae (FLUX.1 autoencoder in diffusers format)
+    authors: Hugging Face diffusers team
+    year: 2025
+    url: https://huggingface.co/diffusers/FLUX.1-vae
 replications:
   - who: This atlas
     url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/colour_bicone.py
-    model: FLUX.1-schnell VAE
+    model: FLUX.1 VAE (diffusers/FLUX.1-vae)
     outcome: ours
     note: Solid-color PCA with a random-noise control and correlations of each axis with lightness, hue and chroma.
 ---
@@ -64,6 +69,7 @@ tracks these coordinates through the diffusion process and edits colors in the l
 
 ## Limitations
 
-- We use the VAE shipped with FLUX.1-schnell (Apache-2.0); the paper used FLUX.1-dev's VAE. We only reproduce the
+- We use the FLUX.1 autoencoder from `diffusers/FLUX.1-vae` (ungated; same configuration as the FLUX.1 VAE); the paper
+  used FLUX.1-dev's VAE from the gated official repository. We only reproduce the
   discovery step, not the denoising-trajectory analysis or the color edits.
 - Solid colors are the easiest case; textures and lighting are not tested.

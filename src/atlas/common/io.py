@@ -9,6 +9,7 @@ Python. Global context: the site reads ``site/public/data/<file>.json`` (schema 
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from typing import Any
@@ -73,6 +74,8 @@ def write_entry(
         "git_commit": _git_commit(),
         "models": models or [],
         "runtime_s": runtime_s,
+        # Smoke-test (--quick) outputs are flagged so atlas.report never puts them in result tables.
+        "quick": os.environ.get("ATLAS_QUICK") == "1",
     }
     site = {"meta": meta, "summary": summary, "replication": replication or [], **payload}
     SITE_DATA.mkdir(parents=True, exist_ok=True)

@@ -34,8 +34,8 @@ def load_results() -> dict[str, dict]:
         metrics = json.loads((d / "metrics.json").read_text(encoding="utf-8"))
         rep_file = d / "replication.json"
         rep = json.loads(rep_file.read_text(encoding="utf-8")) if rep_file.exists() else []
-        if not rep:
-            continue
+        if not rep or metrics.get("meta", {}).get("quick"):
+            continue  # no claims, or a --quick smoke-test output
         out[d.name] = {"meta": metrics.get("meta", {}), "summary": metrics.get("summary", {}), "replication": rep}
     return out
 

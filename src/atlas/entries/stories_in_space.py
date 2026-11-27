@@ -75,7 +75,8 @@ def compute(ctx) -> None:
     probe = []
     for L in layers:
         A = np.stack(X[L])
-        r2 = ridge_r2(A[~test], Y[~test], A[test], Y[test], alpha=100.0)
+        # Ridge strength chosen on held-out training stories (grouped by story id), never on the test stories.
+        r2 = ridge_r2(A[~test], Y[~test], A[test], Y[test], alpha=[1e0, 1e1, 1e2, 1e3, 1e4, 1e5], groups=sid[~test])
         probe.append({"layer": L, "r2": r2})
         log.info("stories probe L%d: R² %.3f", L, r2)
     best = max(probe, key=lambda p: p["r2"])

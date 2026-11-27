@@ -98,6 +98,27 @@ Laptop (8 GB) unless marked RunPod.
 | sae-features | GPT-2 small res-jb L8; 5 concept features; α ∈ {0…80} | Golden Gate clamping (Templeton et al. 2024) | Golden Gate on-topic ≥ 50% and ≥ 30 pts above base and random (≥ 15) | random direction |
 | sae-features | same | steering generalizes | ≥ 3/5 concepts gain ≥ 30 pts (≥ 2) | random direction |
 
+## Grokking progress measures from the companion runs (added 2026-11-27, before running)
+
+Not a blind test: the companion project preregistered these hypotheses (its `docs/preregistration.md`, tag `prereg-v1`)
+and we had read its verdict table (11/11 seeds for H1 and H2) before writing this. Our module re-implements its published
+definitions (`docs/operationalizations.md`) independently, from its raw per-checkpoint metrics (`analysis/ckpt_metrics.npz`,
+`analysis/phases.json` on Hugging Face), as a code-level cross-check. The companion's H3–H5 verdicts are quoted from its
+`reports/tables/hypotheses.json` and are not re-tested here.
+
+| Entry | Data | Claim (Nanda et al. 2023, §5) | Our metric (companion definitions) | Pass criterion |
+|---|---|---|---|---|
+| grokking-runs | 11 wd = 1 seeds, 401 checkpoints each | Restricted loss falls before test loss | first checkpoint ≥ t1 where the restricted loss (all pairs) is ≤ 10% of its value at t1, vs the same for test loss | earlier in ≥ 10 of 11 seeds (companion rule: fewer than two failures) |
+| grokking-runs | same | Excluded loss rises during circuit formation | excluded loss (train pairs, key frequencies removed) at t2 ÷ at t1 | > 10× in ≥ 10 of 11 seeds |
+
+## Amendments (dated; each made after a smoke test and before the corresponding full run)
+
+| Date | Entry | Amendment | Reason |
+|---|---|---|---|
+| 2026-11-27 | linebreak-manifold, stories-in-space | Method fix, criteria unchanged. Ridge strength is chosen per layer from {1, 10, …, 10⁵} on held-out *training* documents (grouped), instead of a fixed α. The linebreak analysis drops position 0 of each document. | Smoke test: fixed α = 10 on 2,048 standardized features overfit (negative held-out R² in late layers). The first token's massive activations (attention sink) dominated low-count means (3 PCs = 99.9% of variance). |
+| 2026-11-27 | colour-bicone | Weights from `diffusers/FLUX.1-vae` (ungated, same FLUX.1 VAE config) instead of the gated `black-forest-labs/FLUX.1-schnell`. | The official repository requires accepting terms on the user's account. |
+| 2026-11-27 | number-helix | The patching claim needs ≥ 20 correctly solved prompts in the largest model; otherwise the verdict is **n/a**, not pass/fail. The criterion itself is unchanged. | In the `--quick` smoke test Pythia-410m solved 1 of 59 few-shot `a+b=` prompts (CPU spot check: 23+45 → "53"), so a "pass" on n = 1 would be meaningless. Tokenization was checked: NeoX has single tokens for 0–99. |
+
 ## Later batches (criteria are added here before each batch runs)
 
 | Batch | Entries | Models | Where |

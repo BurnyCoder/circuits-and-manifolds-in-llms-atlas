@@ -35,3 +35,19 @@ def test_circular_stats():
     a = np.linspace(0, 2 * np.pi, 30, endpoint=False)
     assert circular_corr(a, a) > 0.99
     assert best_rotation_flip(-(a + 1.0), a) < 1e-6
+
+
+def test_ridge_alpha_selection_beats_overfit_alpha():
+    """Alpha chosen on an inner grouped validation split of the training rows scores close to the best alpha on the
+    grid (evaluated on the test set) and far above a badly chosen one."""
+    rng = np.random.default_rng(1)
+    n, d = 300, 1000
+    X = rng.normal(size=(n, d))
+    y = X[:, :20].sum(1) + rng.normal(scale=2.0, size=n)  # signal in 20 of 1000 features, noisy
+    groups = np.arange(n) // 10  # "documents" of 10 rows
+    tr, te = groups % 5 != 0, groups % 5 == 0
+    grid = [1e-2, 1e0, 1e2, 1e3, 1e4, 1e5]
+    fixed = {a: ridge_r2(X[tr], y[tr, None], X[te], y[te, None], alpha=a) for a in grid}
+    cv = ridge_r2(X[tr], y[tr, None], X[te], y[te, None], alpha=grid, groups=groups[tr])
+    assert cv >= max(fixed.values()) - 0.05  # the inner split picks a near-best alpha without seeing the test set
+    assert cv > fixed[1e5] + 0.1  # and avoids a badly over-regularized one

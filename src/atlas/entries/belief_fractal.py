@@ -70,9 +70,8 @@ def simplex_xy(b: np.ndarray) -> np.ndarray:
     return np.stack([b[..., 1] + 0.5 * b[..., 2], b[..., 2] * np.sqrt(3) / 2], -1)
 
 
-def entropy_rate(T: np.ndarray, rng, n: int = 20000) -> float:
-    """Mean next-token entropy under the optimal predictor (lower bound on achievable loss), estimated by sampling."""
-    seqs = sample(T, n, rng)
+def optimal_loss(T: np.ndarray, seqs: np.ndarray) -> float:
+    """Cross-entropy of the Bayes-optimal predictor P(next | belief) on ``seqs`` (the floor for any model on them)."""
     b = beliefs(T, seqs)
     p = np.einsum("nti,kij->ntk", b[:, :-1], T).clip(1e-12)  # P(next token | belief)
     p /= p.sum(-1, keepdims=True)
@@ -132,7 +131,12 @@ def compute(ctx) -> None:
             losses.append(loss.item())
     rand = regress(rand_model, eval_seqs, eval_B, ctx.device)
     all_layers = regress(model, eval_seqs, eval_B, ctx.device, layer="all")
-    h_opt = entropy_rate(T, rng)
+    # Paired comparison on the same held-out sequences: model loss vs the exact Bayes-optimal loss (no sampling noise
+    # between the two numbers, unlike comparing training-batch losses with a separately sampled entropy estimate).
+    with torch.no_grad():
+        xe = torch.tensor(eval_seqs, device=ctx.device)
+        eval_loss = torch.nn.functional.cross_entropy(model(xe)[:, :-1].reshape(-1, 3), xe[:, 1:].reshape(-1)).item()
+    h_opt = optimal_loss(T, eval_seqs)
     out = RESULTS / SLUG
     out.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), out / "mess3_transformer.pt")
@@ -142,8 +146,9 @@ def compute(ctx) -> None:
         "final_r2": final["r2"],
         "final_mse": final["mse"],
         "rand_r2": rand["r2"],
+        "rand_mse": rand["mse"],  # post-hoc: MSE ratio random-init / trained (R² saturates because tokens are informative)
         "all_layers_r2": all_layers["r2"],
-        "final_loss": float(np.mean(losses[-10:])),
+        "final_loss": eval_loss,
         "optimal_loss": h_opt,
         "uniform_loss": float(np.log(3)),
     }

@@ -19,5 +19,19 @@
   "ours": "wd = 0: best final test acc 21.5% over 5 runs; random labels: 0.9% over 3",
   "criterion": "every wd = 0 run < 50% and every random-label run < 5% test accuracy",
   "verdict": "pass"
+ },
+ {
+  "claim": "Restricted loss falls before test loss (progress measure; companion H1, cross-check)",
+  "published": "restricted loss drops during circuit formation, before test loss (\u00a75.1, Fig. 7); companion: 11/11 seeds",
+  "ours": "11/11 seeds; restricted loss reaches 10% of its t1 value 700\u20132100 steps before test loss; 11/11 seeds match the companion's per-seed steps exactly",
+  "criterion": "earlier in \u2265 10 of 11 seeds",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Excluded loss rises during circuit formation (progress measure; companion H2, cross-check)",
+  "published": "excluded loss rises while train and test loss barely move (\u00a75.1); companion: 11/11 seeds",
+  "ours": "11/11 seeds; excluded loss at t2 is 12.6\u00d7 to 7.89e+05\u00d7 its value at t1",
+  "criterion": "> 10\u00d7 in \u2265 10 of 11 seeds",
+  "verdict": "pass"
  }
 ]
