@@ -62,6 +62,8 @@ def compute(ctx) -> None:
     model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.bfloat16).to(ctx.device).eval()
     N = norms()
     emos = [e for e in EMOTIONS if e in N][: (12 if ctx.quick else 80)]
+    # The dose sweep and the preference test need these four; keep them even in --quick mode (first-12 subset).
+    emos += [e for e in ("afraid", "calm", "blissful", "hostile") if e in N and e not in emos]
     topics = TOPICS[:3] if ctx.quick else TOPICS
     reps = 1 if ctx.quick else 2
 
