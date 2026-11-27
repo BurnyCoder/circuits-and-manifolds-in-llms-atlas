@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import os
 import time
 from dataclasses import dataclass, field
 
@@ -67,6 +68,8 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
                    help="override an entry setting (read by modules from ctx.extra), e.g. --set helix_models=EleutherAI/gpt-j-6b")
     a = p.parse_args(argv)
+    if a.quick:
+        os.environ["ATLAS_QUICK"] = "1"  # write_entry marks outputs as smoke-test data; atlas.report skips them
     names = ENTRIES if a.entries == "all" else [s.strip() for s in a.entries.split(",") if s.strip()]
     log = get_logger("run_" + ("all" if a.entries == "all" else "_".join(names))[:60])
     ctx = Ctx(device=a.device or device(), quick=a.quick, seed=a.seed, extra=dict(kv.split("=", 1) for kv in a.set))
