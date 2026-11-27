@@ -27,6 +27,7 @@ log = get_logger()
 SLUG = "number-helix"
 PERIODS = (2, 5, 10, 100)
 MODELS = ["EleutherAI/pythia-160m", "EleutherAI/pythia-410m", "EleutherAI/pythia-1b", "EleutherAI/pythia-1.4b", "EleutherAI/pythia-2.8b"]
+MIN_PATCH_N = 20  # minimum correctly solved prompts for a patching verdict (amendment 2026-11-27, before the full run)
 FEWSHOT = ["12+7=19\n31+22=53\n40+8=48\n", "5+11=16\n27+30=57\n63+14=77\n", "8+8=16\n44+21=65\n19+60=79\n"]
 
 
@@ -246,8 +247,11 @@ def compute(ctx) -> None:
             "GPT-J: helix 7.21 vs full 8.34 logit diff (86%); PCA 6.13",
             f"{summary['largest']} layer {best_patch['layer']}: median recovery helix {summary['patch_helix'] * 100:.0f}%, full layer {summary['patch_full'] * 100:.0f}%, "
             f"PCA-9 {summary['patch_pca9'] * 100:.0f}%, linear-only {summary['patch_linear'] * 100:.0f}% (n = {best_patch['n']} correct prompts; accuracy {big['accuracy'] * 100:.0f}%)",
-            "helix ≥ 50% of the full-layer recovery and ≥ linear-only",
-            summary["patch_full"] > 0 and summary["patch_helix"] >= 0.5 * summary["patch_full"] and summary["patch_helix"] >= summary["patch_linear"],
+            f"helix ≥ 50% of the full-layer recovery and ≥ linear-only (needs ≥ {MIN_PATCH_N} correctly solved prompts, else n/a)",
+            # Too few solved prompts -> no verdict (small Pythia models rarely solve a+b; see planned-runs amendment).
+            None
+            if best_patch["n"] < MIN_PATCH_N
+            else summary["patch_full"] > 0 and summary["patch_helix"] >= 0.5 * summary["patch_full"] and summary["patch_helix"] >= summary["patch_linear"],
             partial=summary["patch_helix"] > summary["patch_linear"],
         ),
     ]
