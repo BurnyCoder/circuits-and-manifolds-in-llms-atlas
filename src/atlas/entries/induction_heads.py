@@ -175,8 +175,15 @@ def pythia_phase_change(ctx) -> dict:
         ind = np.stack([head_scores(a.float(), L)["induction"].cpu().numpy() for a in out.attentions])  # [layers, heads]
         lp = out.logits[:, :-1].float().log_softmax(-1)
         rep_loss = -lp.gather(-1, rep[:, 1:, None])[..., 0]
-        logits = m(nat).logits[:, :-1].float().log_softmax(-1)
-        nll = -logits.gather(-1, nat[:, 1:, None])[..., 0]  # [n_seq, ctx_len-1]; index t predicts token t+1
+        # Chunk over sequences: full logits for 128 x 512 x 50k vocab would need ~13 GB.
+        nll = torch.cat(
+            [
+                torch.nn.functional.cross_entropy(
+                    m(c).logits[:, :-1].float().transpose(1, 2), c[:, 1:], reduction="none"
+                )  # [chunk, ctx_len-1]; index t predicts token t+1
+                for c in nat.split(8)
+            ]
+        )
         # Olsson et al.: ICL score = loss at the 500th token minus loss at the 50th token (averaged over contexts).
         # With far fewer contexts than the paper, single positions are noisy, so we average 11-token windows centred
         # on tokens 50 and 500 (indices 494..504 and 44..54 predict tokens 496..506 / 46..56) — a documented deviation.
