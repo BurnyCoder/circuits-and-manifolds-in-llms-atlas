@@ -77,3 +77,9 @@ What we tried, what went wrong, why, and how it was fixed. Newest last. Per-entr
 - **Log what the models say.** Story generation logged only a sample, so every prompt and output is now logged in full.
   The one deliberate exception is refusal-ablated completions of harmful prompts: only the prompt and the refusal flag
   are logged.
+- **Picking SAE features by hand-written probes is fragile.** One focus token picks word-sense features: French " pain"
+  (bread) gave a violence feature. Requiring activation on three probes picked broad features: a place-name feature
+  beat the bridge feature. Neuronpedia's explanation search over auto-interp labels (independent of the steering test)
+  finds the intended features: bridge #17608, DNA, Harry Potter, French, Python/Django. It is cached for reproducibility.
+- **Windows console encoding.** Log lines with "α" raised `'charmap' codec can't encode` on the console handler, so
+  terminal output was lost while the file log was fine. `sys.stdout.reconfigure(encoding="utf-8")` fixes it.

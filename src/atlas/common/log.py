@@ -23,6 +23,10 @@ def get_logger(run_name: str = "atlas") -> logging.Logger:
     log.setLevel(logging.INFO)
     LOGS.mkdir(parents=True, exist_ok=True)
     path = LOGS / f"{datetime.now():%Y%m%d_%H%M%S}_{run_name}.log"
+    # Windows consoles/pipes default to cp1252, which cannot print α, ², arrows or non-Latin text in model outputs
+    # ("'charmap' codec can't encode ..."); force UTF-8 so terminal logs are complete like the file log.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     for h in (logging.StreamHandler(sys.stdout), logging.FileHandler(path, encoding="utf-8")):
         h.setFormatter(logging.Formatter(_FMT, datefmt="%Y-%m-%d %H:%M:%S"))
         log.addHandler(h)

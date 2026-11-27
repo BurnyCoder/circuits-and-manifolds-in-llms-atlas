@@ -5,9 +5,12 @@ and Templeton et al. 2024 ("Scaling Monosemanticity", https://transformer-circui
 SAEs decompose activations into sparse, often interpretable features; clamping the "Golden Gate Bridge" feature made
 Claude 3 Sonnet talk about the bridge. Open SAEs: Bloom 2024 GPT-2 small residual SAEs (SAELens release
 "gpt2-small-res-jb", 24,576 latents per layer).
-Here (layer 8, resid_pre): pick features by their activation on three short probe texts per concept (Golden Gate
-Bridge, Python code, French, DNA, Harry Potter; the feature must fire on all three), relative to its activation on
-unrelated WikiText (specificity), collect top-activating contexts from WikiText-103,
+Here (layer 8, resid_pre): pick each concept's feature (Golden Gate Bridge, Python code, French, DNA, Harry Potter) as
+the top match of Neuronpedia's explanation search over this SAE's auto-interp labels (POST /api/explanation/search;
+labels come from each feature's top-activating examples, independent of our steering test; results cached in
+results/sae-features/neuronpedia_search.json so runs reproduce offline). Fallback when the search is unavailable: the
+feature with the highest weakest-peak activation over three probe texts, relative to its activation on WikiText.
+Then collect top-activating contexts from WikiText-103,
 compute each feature's top logit effects (W_dec · W_U), and steer generation by adding α·W_dec[f] at layer 8 (all
 positions) with a norm-matched random direction as control. Topic adherence = share of completions containing the
 concept's keywords. Neuronpedia dashboards for the same features are linked for comparison.
@@ -38,6 +41,43 @@ CONCEPTS = {
     "DNA": {"probes": ["The DNA sequence was amplified by PCR", "The genome of the bacterium was fully sequenced", "Mutations in this gene change the encoded protein"], "keywords": ["dna", "gene", "genome", "protein", "sequence", "cell"]},
     "Harry Potter": {"probes": ["Harry Potter raised his wand at Hogwarts", "Hermione and Ron followed Harry into the Great Hall", "Dumbledore told Harry Potter about Voldemort"], "keywords": ["harry", "hogwarts", "wizard", "magic", "wand", "potter"]},
 }
+NP_QUERY = {"Golden Gate Bridge": "Golden Gate Bridge", "Python code": "Python code", "French": "French language text", "DNA": "DNA and genetics", "Harry Potter": "Harry Potter"}
+NP_LAYER = f"{LAYER}-res-jb"  # Neuronpedia source id of the gpt2-small-res-jb SAE at this layer
+
+
+def neuronpedia_feature(concept: str) -> tuple[int, str] | None:
+    """(feature index, auto-interp label) of the best explanation-search match on this SAE, cached on disk."""
+    import json
+    import os
+
+    import requests
+
+    from ..common.env import RESULTS
+
+    cache_file = RESULTS / SLUG / "neuronpedia_search.json"
+    cache = json.loads(cache_file.read_text(encoding="utf-8")) if cache_file.exists() else {}
+    if concept not in cache:
+        try:
+            r = requests.post(
+                "https://www.neuronpedia.org/api/explanation/search",
+                headers={"x-api-key": os.environ.get("NEURONPEDIA_API_KEY", ""), "Content-Type": "application/json"},
+                json={"modelId": "gpt2-small", "layers": [NP_LAYER], "query": NP_QUERY[concept]},
+                timeout=60,
+            )
+            r.raise_for_status()
+            hits = [x for x in r.json().get("results", []) if x.get("layer") == NP_LAYER]
+        except Exception as e:  # offline / API change: fall back to activation-based selection
+            log.warning("Neuronpedia search failed for %s: %s", concept, e)
+            return None
+        if not hits:
+            return None
+        cache[concept] = {"index": int(hits[0]["index"]), "label": hits[0].get("description", ""), "query": NP_QUERY[concept],
+                          "top5": [(int(x["index"]), x.get("description", "")) for x in hits[:5]]}
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        cache_file.write_text(json.dumps(cache, indent=1), encoding="utf-8")
+    return cache[concept]["index"], cache[concept]["label"]
+
+
 NEUTRAL = ["My favourite thing to do on weekends is", "Yesterday I went to the store and", "The most important thing in life is"]
 
 
@@ -76,9 +116,14 @@ def compute(ctx) -> None:
     for name, spec in CONCEPTS.items():
         # Peak activation (over non-BOS positions) on each probe; the concept score is the weakest of the three, divided
         # by the feature's typical maximum on WikiText (specificity: features that fire everywhere score low).
-        peaks = torch.stack([feats(t)[1][1:].amax(0) for t in spec["probes"]])  # [3, F]
-        score = peaks.min(0).values / (bg_max.median() + 0.25 * bg_max + 1e-3)
-        fid = int(score.argmax())
+        np_hit = neuronpedia_feature(name)
+        if np_hit is not None:
+            fid, label, how = np_hit[0], np_hit[1], "Neuronpedia explanation search"
+        else:
+            peaks = torch.stack([feats(t)[1][1:].amax(0) for t in spec["probes"]])  # [3, F]
+            score = peaks.min(0).values / (bg_max.median() + 0.25 * bg_max + 1e-3)
+            fid, label, how = int(score.argmax()), "", "activation on probe texts (fallback)"
+        log.info("feature for %s: #%d (%s) chosen by %s", name, fid, label, how)
         toks, f = feats(spec["probes"][0])  # first probe, shown on the site with per-token activations
         strs = model.to_str_tokens(toks)
         # Top-activating WikiText contexts for this feature.
@@ -123,6 +168,8 @@ def compute(ctx) -> None:
                 steer.append({"alpha": alpha, "kind": kind, "on_topic": rate, "examples": comps[:3]})
         results[name] = {
             "feature": fid,
+            "label": label,  # Neuronpedia auto-interp label ("" when the activation fallback was used)
+            "selection": how,
             "probe": spec["probes"][0],
             "probe_tokens": strs,
             "probe_acts": f[:, fid].float().cpu().numpy(),
