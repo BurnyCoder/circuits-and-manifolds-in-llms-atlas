@@ -51,22 +51,28 @@ function useParticles(n: number, dim: number, zone: number, circle: boolean) {
     let it = 0
     const step = () => {
       for (let k = 0; k < 20; k++, it++) {
+        // Gradient descent on L = Σ_{i≠j} (x_i·x_j − K_ij)², with K_ij = 1 for counts within ±zone, else 0: nearby counts
+        // should be similar and distant ones orthogonal (Gurnee et al. 2025, "optimal packing" argument). In few
+        // dimensions the best fit keeps only low Fourier modes of this box kernel, so similarities overshoot below zero
+        // and come back ("ringing", the Gibbs phenomenon) and the curve ripples.
         const F = P.map(() => Array(dim).fill(0))
         for (let i = 0; i < n; i++)
           for (let j = 0; j < n; j++) {
             if (i === j) continue
             const gap = circle ? Math.min(Math.abs(i - j), n - Math.abs(i - j)) : Math.abs(i - j)
-            const sign = gap <= zone ? 1 : -0.15 // attract neighbours within the zone, weakly repel others
-            for (let t = 0; t < dim; t++) F[i][t] += sign * (P[j][t] - P[i][t])
+            let dot = 0
+            for (let t = 0; t < dim; t++) dot += P[i][t] * P[j][t]
+            const r = dot - (gap <= zone ? 1 : 0) // residual of this pair's similarity
+            for (let t = 0; t < dim; t++) F[i][t] -= (4 * r * P[j][t]) / n // −∂L/∂x_i
           }
         P = P.map((p, i) => {
-          const q = p.map((x, t) => x + 0.01 * F[i][t])
+          const q = p.map((x, t) => x + 0.02 * F[i][t])
           const s = Math.hypot(...q)
           return q.map((x) => x / s) // stay on the unit sphere
         })
       }
       setX(P.map((p) => [...p]))
-      if (it < 1200) raf = requestAnimationFrame(step)
+      if (it < 3000) raf = requestAnimationFrame(step)
     }
     raf = requestAnimationFrame(step)
     return () => cancelAnimationFrame(raf)
@@ -119,9 +125,10 @@ export default function LinebreaksClaude(_: VizProps) {
       {tab === 'ripple' && (
         <>
           <HowTo>
-            The paper's toy explanation, running live: 60 points (counts) on a sphere in {dim} dimensions; each pulls its neighbours
-            within ±{zone} and pushes the rest away. The best packing is a curve that <b>ripples</b> — and its similarity matrix
-            “rings”, as in Claude.
+            The paper's packing argument, running live: 60 points (counts) on a sphere in {dim} dimensions try to be similar to
+            counts within ±{zone} and orthogonal to all others. With few dimensions this cannot be met exactly; the best fit is a
+            curve that <b>ripples</b>, and its similarity matrix “rings” (similarity dips below zero, then rises again), as in
+            Claude. Fewer dimensions → stronger ringing.
           </HowTo>
           <div className="viz-controls">
             <label>
