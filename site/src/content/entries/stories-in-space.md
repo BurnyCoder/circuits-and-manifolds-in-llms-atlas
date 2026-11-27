@@ -57,7 +57,7 @@ layout matches how humans place emotions by pleasantness and intensity.
 
 ## How it works (technical)
 
-For each story prefix the behavioural readout is the expected 0–10 rating from the model's digit probabilities, one query
+For each story prefix the behavioural readout is the expected 0–9 rating (single-digit answers) from the model's digit probabilities, one query
 per emotion. Ridge probes map the prefix's final-token activation to the six ratings; in Llama-3.1-8B-Instruct (layer 9)
 the probes reach RMSE 0.09, behaviour and activation distance matrices correlate at r = .92, and the emotions' layout
 matches human valence–arousal ratings (r = .93).

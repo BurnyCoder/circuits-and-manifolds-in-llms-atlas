@@ -7,7 +7,7 @@ after each prefix it is asked to rate six emotions 0–10 (behavioural readout =
 distribution); ridge probes from layer-9 activations predict the ratings (RMSE 0.09 for emotions), behaviour and
 activation geometry agree (distance-matrix r = .92), and the emotion layout matches human valence–arousal (r = .93).
 Here: Qwen2.5-1.5B-Instruct, SimpleStories, six emotions (happy, sad, angry, surprised, afraid, disgusted), per-sentence
-ratings, ridge probes per layer (held-out stories), and 2-D trajectories in a valence–arousal plane built from human
+ratings on a 0–9 scale (single-digit answers: Qwen tokenizes "10" as "1","0"), ridge probes per layer (held-out stories), and 2-D trajectories in a valence–arousal plane built from human
 norms (Warriner et al. 2013).
 """
 
@@ -47,29 +47,39 @@ def compute(ctx) -> None:
             stories.append(sents)
         if len(stories) >= n_st:
             break
-    digits = [tok(str(d), add_special_tokens=False).input_ids[0] for d in range(11)]
+    # Ratings on a 0–9 scale: every answer is one token. (Qwen splits "10" into "1","0", so a 0–10 scale would fold
+    # P(10) into P(1) and skew the expected rating.)
+    digits = [tok(str(d), add_special_tokens=False).input_ids[0] for d in range(10)]
+    assert len(set(digits)) == 10
     nl = model.config.num_hidden_layers
     layers = list(range(2, nl, 3))
     X = {L: [] for L in layers}
     Y, sid, pos_in_story = [], [], []
+    tok.padding_side = "left"
+
+    @torch.no_grad()
+    def forward(texts, hidden=False):
+        """Batched forward with left padding; position ids from the attention mask so padding does not shift positions."""
+        b = tok(texts, return_tensors="pt", padding=True, add_special_tokens=False).to(ctx.device)
+        pos = (b.attention_mask.cumsum(-1) - 1).clamp(min=0)
+        return model(input_ids=b.input_ids, attention_mask=b.attention_mask, position_ids=pos, output_hidden_states=hidden)
+
     for si, sents in enumerate(stories):
-        for t in range(1, len(sents) + 1):
-            prefix = " ".join(sents[:t])
-            ids = tok(prefix, return_tensors="pt", add_special_tokens=False).input_ids.to(ctx.device)
-            with torch.no_grad():
-                hs = model(ids, output_hidden_states=True).hidden_states
-            for L in layers:
-                X[L].append(hs[L][0, -1].float().cpu().numpy())
-            qs = [tok.apply_chat_template([{"role": "user", "content": f"Story so far: \"{prefix}\"\n\nOn a scale from 0 to 10, how {e} does the story feel so far? Answer with a single number."}], add_generation_prompt=True, tokenize=False) for e in EMO]
-            tok.padding_side = "left"
-            b = tok(qs, return_tensors="pt", padding=True, add_special_tokens=False).to(ctx.device)
-            with torch.no_grad():
-                p = model(**b).logits[:, -1, digits].float().softmax(-1).cpu().numpy()  # [6, 11]
-            Y.append(p @ np.arange(11) / 10)  # expected rating in [0, 1]
-            sid.append(si)
-            pos_in_story.append(t / len(sents))
-        if si % 20 == 0:
-            log.info("stories: %d/%d done", si + 1, len(stories))
+        prefixes = [" ".join(sents[:t]) for t in range(1, len(sents) + 1)]
+        hs = forward(prefixes, hidden=True).hidden_states  # all prefixes of the story in one batch
+        for L in layers:
+            X[L] += list(hs[L][:, -1].float().cpu().numpy())
+        qs = [
+            tok.apply_chat_template([{"role": "user", "content": f"Story so far: \"{pre}\"\n\nOn a scale from 0 to 9, how {e} does the story feel so far? Answer with a single digit."}], add_generation_prompt=True, tokenize=False)
+            for pre in prefixes
+            for e in EMO
+        ]
+        p = forward(qs).logits[:, -1, digits].float().softmax(-1).cpu().numpy().reshape(len(prefixes), len(EMO), 10)
+        Y += list(p @ np.arange(10) / 9)  # expected rating in [0, 1] per prefix and emotion
+        sid += [si] * len(prefixes)
+        pos_in_story += [t / len(sents) for t in range(1, len(sents) + 1)]
+        log.info("story %d/%d (%d sentences): final-prefix ratings %s | %s", si + 1, len(stories), len(sents),
+                 {e: round(float(r), 2) for e, r in zip(EMO, Y[-1])}, prefixes[-1])
     Y, sid = np.stack(Y), np.array(sid)
     test = sid % 5 == 0
     probe = []

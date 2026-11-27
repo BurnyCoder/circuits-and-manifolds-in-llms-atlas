@@ -5,8 +5,9 @@ and Templeton et al. 2024 ("Scaling Monosemanticity", https://transformer-circui
 SAEs decompose activations into sparse, often interpretable features; clamping the "Golden Gate Bridge" feature made
 Claude 3 Sonnet talk about the bridge. Open SAEs: Bloom 2024 GPT-2 small residual SAEs (SAELens release
 "gpt2-small-res-jb", 24,576 latents per layer).
-Here (layer 8, resid_pre): pick features by their activation on short concept probes (Golden Gate Bridge, Python code,
-French, DNA, Harry Potter), check specificity on unrelated text, collect top-activating contexts from WikiText-103,
+Here (layer 8, resid_pre): pick features by their activation on three short probe texts per concept (Golden Gate
+Bridge, Python code, French, DNA, Harry Potter; the feature must fire on all three), relative to its activation on
+unrelated WikiText (specificity), collect top-activating contexts from WikiText-103,
 compute each feature's top logit effects (W_dec · W_U), and steer generation by adding α·W_dec[f] at layer 8 (all
 positions) with a norm-matched random direction as control. Topic adherence = share of completions containing the
 concept's keywords. Neuronpedia dashboards for the same features are linked for comparison.
@@ -27,12 +28,15 @@ log = get_logger()
 SLUG = "sae-features"
 LAYER = 8
 HOOK = f"blocks.{LAYER}.hook_resid_pre"
+# Each concept has three probe texts; a feature is chosen by its *weakest* peak activation across them (it must fire on
+# every probe), relative to how strongly it fires on ordinary WikiText. One focus token per concept picked word-sense
+# features in the smoke test (French " pain" = bread was read as English "pain" -> a violence feature).
 CONCEPTS = {
-    "Golden Gate Bridge": {"probe": "We drove across the Golden Gate Bridge into San Francisco", "focus": " Bridge", "keywords": ["golden gate", "bridge", "san francisco"]},
-    "Python code": {"probe": "def main():\n    for i in range(10):\n        print(i)", "focus": " print", "keywords": ["def ", "print", "return", "import", "(", "=="]},
-    "French": {"probe": "Je suis allé au marché avec ma mère et nous avons acheté du pain", "focus": " pain", "keywords": [" le ", " la ", " et ", " de ", " je ", " nous "]},
-    "DNA": {"probe": "The DNA sequence was amplified by PCR and the genome was sequenced", "focus": " genome", "keywords": ["dna", "gene", "genome", "protein", "sequence", "cell"]},
-    "Harry Potter": {"probe": "Harry Potter raised his wand while Hermione and Ron watched at Hogwarts", "focus": " Hogwarts", "keywords": ["harry", "hogwarts", "wizard", "magic", "wand", "potter"]},
+    "Golden Gate Bridge": {"probes": ["We drove across the Golden Gate Bridge into San Francisco", "The Golden Gate Bridge was shrouded in fog this morning", "Tourists walked across the Golden Gate above San Francisco Bay"], "keywords": ["golden gate", "bridge", "san francisco"]},
+    "Python code": {"probes": ["def main():\n    for i in range(10):\n        print(i)", "import numpy as np\nx = np.zeros(3)\nreturn x", "if x == 0:\n    return None\nelse:\n    print(x)"], "keywords": ["def ", "print", "return", "import", "(", "=="]},
+    "French": {"probes": ["Je suis allé au marché avec ma mère", "Nous avons mangé du fromage et bu du vin rouge", "Le chat dort sur la table de la cuisine"], "keywords": [" le ", " la ", " et ", " de ", " je ", " nous "]},
+    "DNA": {"probes": ["The DNA sequence was amplified by PCR", "The genome of the bacterium was fully sequenced", "Mutations in this gene change the encoded protein"], "keywords": ["dna", "gene", "genome", "protein", "sequence", "cell"]},
+    "Harry Potter": {"probes": ["Harry Potter raised his wand at Hogwarts", "Hermione and Ron followed Harry into the Great Hall", "Dumbledore told Harry Potter about Voldemort"], "keywords": ["harry", "hogwarts", "wizard", "magic", "wand", "potter"]},
 }
 NEUTRAL = ["My favourite thing to do on weekends is", "Yesterday I went to the store and", "The most important thing in life is"]
 
@@ -70,13 +74,13 @@ def compute(ctx) -> None:
     results = {}
     g = torch.Generator(device=ctx.device).manual_seed(ctx.seed)
     for name, spec in CONCEPTS.items():
-        toks, f = feats(spec["probe"])
-        strs = model.to_str_tokens(toks)
-        pos = max(i for i, s in enumerate(strs) if s == spec["focus"]) if spec["focus"] in strs else len(strs) - 1
-        act = f[pos]
-        # Specificity score: activation on the concept token relative to the feature's typical maximum on WikiText.
-        score = act / (bg_max.median() + 0.25 * bg_max + 1e-3)
+        # Peak activation (over non-BOS positions) on each probe; the concept score is the weakest of the three, divided
+        # by the feature's typical maximum on WikiText (specificity: features that fire everywhere score low).
+        peaks = torch.stack([feats(t)[1][1:].amax(0) for t in spec["probes"]])  # [3, F]
+        score = peaks.min(0).values / (bg_max.median() + 0.25 * bg_max + 1e-3)
         fid = int(score.argmax())
+        toks, f = feats(spec["probes"][0])  # first probe, shown on the site with per-token activations
+        strs = model.to_str_tokens(toks)
         # Top-activating WikiText contexts for this feature.
         best = []
         for c, fm in store:
@@ -119,7 +123,7 @@ def compute(ctx) -> None:
                 steer.append({"alpha": alpha, "kind": kind, "on_topic": rate, "examples": comps[:3]})
         results[name] = {
             "feature": fid,
-            "probe": spec["probe"],
+            "probe": spec["probes"][0],
             "probe_tokens": strs,
             "probe_acts": f[:, fid].float().cpu().numpy(),
             "contexts": contexts,
