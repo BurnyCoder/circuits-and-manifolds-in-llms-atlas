@@ -15,4 +15,8 @@ export const vizRegistry: Record<string, LazyViz> = {
   induction: lazy(() => import('./entries/Induction')),
   ioi: lazy(() => import('./entries/IOI')),
   grokking: lazy(() => import('./entries/Grokking')),
+  'copy-suppression': lazy(() => import('./entries/CopySuppression')),
+  'greater-than': lazy(() => import('./entries/GreaterThan')),
+  othello: lazy(() => import('./entries/Othello')),
+  'curve-detectors': lazy(() => import('./entries/CurveDetectors')),
 }

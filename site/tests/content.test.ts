@@ -42,7 +42,7 @@ describe('atlas entries', () => {
         expect(e.citations.map((c) => c.id)).toContain(e.quote.source)
       })
       it('viz is registered', () => {
-        if (e.viz) expect(registry).toContain(`${e.viz}:`)
+        if (e.viz) expect(registry).toMatch(new RegExp(`['"]?${e.viz}['"]?\\s*:`))
       })
       it('data file exists and templates resolve', () => {
         const tpl = e.body.match(/\{\{[^}]+\}\}/g) ?? []

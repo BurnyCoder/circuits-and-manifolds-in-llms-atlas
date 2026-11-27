@@ -42,6 +42,22 @@ export interface Quote {
   where?: string
 }
 
+/**
+ * A place inside a model (ids in src/lib/models.ts).
+ * part: head (layer+head) · attn (all heads of a layer) · mlp (layer) · resid (residual stream after `layer`, or a
+ * `layers` range) · embed · unembed · stage (CNN/pipeline stage `name`) · band (closed models: `depth` range in %).
+ */
+export interface Location {
+  model: string
+  part: 'head' | 'attn' | 'mlp' | 'resid' | 'embed' | 'unembed' | 'stage' | 'band'
+  layer?: number
+  head?: number
+  layers?: [number, number]
+  name?: string
+  depth?: [number, number]
+  label: string
+}
+
 export interface EntryMeta {
   slug: string
   title: string
@@ -62,8 +78,8 @@ export interface EntryMeta {
   citations: Citation[]
   replications?: Replication[]
   related?: string[]
-  /** Components of the Model Map this entry highlights, e.g. {model: 'gpt2-small', heads: ['9.9']}. */
-  modelMap?: { model: string; heads?: string[]; layers?: number[]; mlps?: number[] }
+  /** Where in which model the finding lives; drives the clickable Model Explorer (src/components/ModelExplorer). */
+  locations?: Location[]
   tags?: string[]
 }
 

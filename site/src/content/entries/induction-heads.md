@@ -10,7 +10,10 @@ order: 10
 summary: Two attention heads team up to continue repeated patterns — [A][B] … [A] → [B] — and they appear in a sudden phase change early in training.
 viz: induction
 data: induction-heads.json
-modelMap: { model: gpt2-small }
+locations:
+  - { model: attn-only-2l, part: head, layer: 0, head: 3, label: previous-token head (writes 'the token before me') }
+  - { model: attn-only-2l, part: head, layer: 1, head: 6, label: induction head (K-composes with 0.3) }
+  - { model: pythia-160m, part: head, layer: 4, head: 6, label: strongest induction head after training }
 tags: [in-context learning, copying, phase change, K-composition]
 related: [ioi, copy-suppression, greater-than]
 citations:
@@ -77,7 +80,8 @@ the output. Olsson et al. define induction heads behaviourally: on a random toke
 induction head if it attends from each token in the repeat to the token *after* that token's first occurrence
 (prefix matching) and increases that token's logit (copying).
 
-**What we measured.** On repeated random tokens ({{a2_loss_first}} nats loss on the first half, essentially chance),
+**What we measured.** On repeated random tokens ({{a2_loss_first}} nats loss on the first half — worse than uniform
+guessing over the 48k-token vocabulary, 10.8 nats, because a trained model confidently expects real text),
 the 2-layer attention-only model predicts the repeat almost perfectly ({{a2_loss_second}} nats). Its previous-token
 head is {{a2_prev_head}} (score {{a2_prev_score}}), and the induction head(s) {{a2_ind_heads}} reach a score of
 {{a2_ind_max}}, versus {{a2_rand_ind_max}} for the same architecture at random initialization. Zero-ablating the

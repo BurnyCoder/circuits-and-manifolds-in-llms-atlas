@@ -10,6 +10,11 @@ order: 30
 summary: A tiny transformer memorizes (a + b) mod 113, then suddenly generalizes by placing numbers on circles and adding angles with trig identities.
 viz: grokking
 data: grokking.json
+locations:
+  - { model: modadd-1l, part: embed, label: numbers placed on circles at a few key frequencies }
+  - { model: modadd-1l, part: attn, layer: 0, label: attention combines the a and b waves }
+  - { model: modadd-1l, part: mlp, layer: 0, label: periodic neurons compute cos/sin(w(a+b)) }
+  - { model: modadd-1l, part: unembed, label: reads cos(w(a+b-c)) — constructive interference at the answer }
 tags: [grokking, Fourier features, progress measures, weight decay, circles]
 related: [number-helix, calendar-circles, geometric-calculator]
 citations:
