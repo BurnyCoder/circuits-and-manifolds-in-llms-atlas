@@ -6,10 +6,14 @@ activations per token in every layer of Qwen3.6-35B-A3B (92.2% ablated): web-tex
 keeping a random 64 of 512 per expert gives loss 4.214. They also split SwiGLU activations a = SiLU(g)·u into sign
 quadrants (Q1 g>0,u>0; Q2 g>0,u<0; Q3 g<0,u<0; Q4 g<0,u>0) and find the most causally important cells are gate-open
 (Q1/Q2), although 71–72% of all activations are gate-closed (Q3/Q4).
+(Their layer top-320 keeps neurons "by absolute activation strength" and zeroes the rest before the down projection;
+their percentile-band experiments mean-ablate.)
 Here (dense Qwen3-1.7B, 28 layers × 6,144 neurons): per-token top-k over |a| before the down projection in every layer,
 for k from 6,144 down to 64 (k = 480 ≙ 92.2% ablated), loss/KL on held-out WikiText-103; controls: random-k and
 "drop only the top-480"; P25–P75 band mean-ablation; quadrant census and gradient×activation attribution by quadrant.
-Comparable open replication: ericzhou12/neuron-quadrant-interventions (Qwen3-1.7B, KL ≈ 0.80 at 92.2%, different rule).
+Comparable open replication: ericzhou12/neuron-quadrant-interventions (Qwen3-1.7B, KL ≈ 0.80 at 92.2%, with a different
+rule: keep the top-k by distance from each neuron's mean and mean-fill the rest). We also evaluate that rule at k = 480
+(post-hoc comparison, reported separately from the pre-stated verdicts).
 """
 
 from __future__ import annotations
@@ -32,7 +36,7 @@ class Sparsifier:
     """Forward pre-hooks on every MLP's down_proj: transform its input a = SiLU(gate(x)) * up(x) per token."""
 
     def __init__(self, model):
-        self.model, self.mode, self.k, self.band, self.handles = model, None, None, None, []
+        self.model, self.mode, self.k, self.band, self.mu, self.handles = model, None, None, None, None, []
         for li, layer in enumerate(model.model.layers):
             self.handles.append(layer.mlp.down_proj.register_forward_pre_hook(self._hook(li)))
 
@@ -51,6 +55,11 @@ class Sparsifier:
                 r = torch.rand_like(a, dtype=torch.float32)
                 idx = r.topk(self.k, dim=-1).indices
                 return (torch.zeros_like(a).scatter(-1, idx, a.gather(-1, idx)),)
+            if self.mode == "topk_mean":
+                # ericzhou12's rule (post-hoc comparison): keep the k neurons farthest from their mean, mean-fill the rest.
+                mu = self.mu[li].to(a.dtype)
+                idx = (a - mu).abs().topk(self.k, dim=-1).indices
+                return (mu.expand_as(a).clone().scatter(-1, idx, a.gather(-1, idx)),)
             if self.mode == "band":
                 lo, hi, mean = self.band[li]
                 inside = (a >= lo) & (a <= hi)
@@ -119,6 +128,10 @@ def compute(ctx) -> None:
         inside = (A >= q[0]) & (A <= q[1])
         mean = (A * inside).sum(0) / inside.sum(0).clamp_min(1)
         band[li] = (q[0].to(ctx.device, torch.bfloat16), q[1].to(ctx.device, torch.bfloat16), mean.to(ctx.device))
+    sp.mu = {li: torch.cat(chunks).mean(0).to(ctx.device) for li, chunks in store.items()}
+    sp.mode, sp.k = "topk_mean", 480
+    controls["topk_mean_480"] = dict(zip(("loss", "kl"), eval_loss(model, seqs, ref)[:2]))
+    log.info("post-hoc: top-480 by distance from mean, mean-filled (ericzhou12 rule): %s", controls["topk_mean_480"])
     sp.mode, sp.band = "band", band
     controls["band_p25_p75"] = dict(zip(("loss", "kl"), eval_loss(model, seqs, ref)[:2]))
     sp.mode = None
@@ -175,6 +188,8 @@ def compute(ctx) -> None:
         "drop480_loss": controls["drop_topk"]["loss"],
         "band_loss": controls["band_p25_p75"]["loss"],
         "band_kl": controls["band_p25_p75"]["kl"],
+        "k480_meanrule_kl": controls["topk_mean_480"]["kl"],  # post-hoc: ericzhou12's selection rule
+        "k480_meanrule_loss": controls["topk_mean_480"]["loss"],
         "gate_closed_frac": float(all_frac[2] + all_frac[3]),
         "top_attr_gate_open": float(attr_frac[0] + attr_frac[1]),
         "n_tokens": n_seq * (L - 1),
