@@ -1,15 +1,26 @@
 {
  "meta": {
   "slug": "grokking-runs",
-  "generated": "2026-11-27 17:34 UTC",
-  "git_commit": "a64588ac40d00f3c6f92e11aa7a315a61d8a2a26",
+  "generated": "2026-11-27 19:07 UTC",
+  "git_commit": "f8fd27745856eeeba1a4d64bbb49b574fb87c2ad",
   "models": [
    "BurnyCoder/grokking-modular-addition-runs"
   ],
-  "runtime_s": 29.824238
+  "runtime_s": 131.122887
  },
  "summary": {
   "n_runs": 22,
+  "n_h1": 11,
+  "n_h2": 11,
+  "n_prog": 11,
+  "h1_lead_min": 700,
+  "h1_lead_max": 2100,
+  "h2_ratio_min": 12.610611,
+  "h2_ratio_max": 789449.338153,
+  "agree_companion": 11,
+  "comp_h3": "11/11",
+  "comp_h4": "6/11",
+  "comp_h4_supported": "no",
   "n_wd1": 11,
   "n_wd1_grokked": 11,
   "delay_median": 57.214286,
