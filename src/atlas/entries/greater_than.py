@@ -89,40 +89,43 @@ def run_patched(model, tc, cache_x, heads, mlps):
 def compute(ctx) -> None:
     t0 = time.time()
     model = hooked("gpt2", device=ctx.device)
-    tc, tx, yys, years, cont = build(model, ctx.quick)
-    tc, tx = tc.to(ctx.device), tx.to(ctx.device)
-    _, cache_x = model.run_with_cache(tx, names_filter=lambda n: n.endswith("hook_z") or n.endswith("hook_mlp_out"))
-    p_clean = probs_matrix(model(tc), cont)
-    pd_clean = prob_diff(p_clean, yys)
-    pd_corrupt = prob_diff(probs_matrix(model(tx), cont), yys)
-
+    tc_all, tx_all, yys, years, cont = build(model, ctx.quick)
     groups = ["circuit heads"] + [f"MLP {l}" for l in MLPS]
-    combos = []
+    masks = list(itertools.product([0, 1], repeat=len(groups)))
     yy_index = {yy: i for i, yy in enumerate(years)}
-
-    def year_matrix(p):
-        m = np.zeros((len(years), 100))
-        cnt = np.zeros(len(years))
-        for row, yy in zip(p.cpu().numpy(), yys):
-            m[yy_index[yy]] += row
-            cnt[yy_index[yy]] += 1
-        return m / cnt[:, None]
-
-    for mask in itertools.product([0, 1], repeat=len(groups)):
-        heads = HEADS if mask[0] else []
-        mlps = [l for on, l in zip(mask[1:], MLPS) if on]
-        p = probs_matrix(run_patched(model, tc, cache_x, heads, mlps), cont) if (heads or mlps) else p_clean
-        combos.append({"mask": list(mask), "pd": float(prob_diff(p, yys).mean()), "matrix": year_matrix(p)})
+    rng = np.random.default_rng(ctx.seed)
+    rand_sets = [[divmod(int(i), 12) for i in rng.choice(144, len(HEADS), replace=False)] for _ in range(10 if ctx.quick else 30)]
     # Faithfulness: patch every attention head NOT in the circuit (all positions); keep all MLPs clean. MLPs 0–7 are not
     # patched because at the YY position they are part of the token's embedding pathway (patching them deletes the
     # start year itself, the circuit's input) — found in the quick smoke test, see reports/experiments/learnings.md.
     others = [(l, h) for l in range(12) for h in range(12) if (l, h) not in HEADS]
-    pd_circuit_only = prob_diff(probs_matrix(run_patched(model, tc, cache_x, others, []), cont), yys)
-    rng = np.random.default_rng(ctx.seed)
-    rand_pd = []
-    for _ in range(10 if ctx.quick else 30):
-        rs = [divmod(int(i), 12) for i in rng.choice(144, len(HEADS), replace=False)]
-        rand_pd.append(float(prob_diff(probs_matrix(run_patched(model, tc, cache_x, rs, []), cont), yys).mean()))
+    # Accumulators (process prompts in chunks: full logits for ~1,200 prompts would not fit in 8 GB).
+    pd_clean, pd_corrupt, pd_circuit_only = [], [], []
+    combo_pd = [[] for _ in masks]
+    combo_mat = np.zeros((len(masks), len(years), 100))
+    cnt = np.zeros(len(years))
+    rand_pd = [[] for _ in rand_sets]
+    for s in range(0, len(yys), 128):
+        tc, tx, yc = tc_all[s : s + 128].to(ctx.device), tx_all[s : s + 128].to(ctx.device), yys[s : s + 128]
+        _, cache_x = model.run_with_cache(tx, names_filter=lambda n: n.endswith("hook_z") or n.endswith("hook_mlp_out"))
+        p_clean = probs_matrix(model(tc), cont)
+        pd_clean.append(prob_diff(p_clean, yc))
+        pd_corrupt.append(prob_diff(probs_matrix(model(tx), cont), yc))
+        rows = np.array([yy_index[y] for y in yc])
+        np.add.at(cnt, rows, 1)
+        for mi, mask in enumerate(masks):
+            heads = HEADS if mask[0] else []
+            mlps = [l for on, l in zip(mask[1:], MLPS) if on]
+            p = probs_matrix(run_patched(model, tc, cache_x, heads, mlps), cont) if (heads or mlps) else p_clean
+            combo_pd[mi].append(prob_diff(p, yc))
+            np.add.at(combo_mat[mi], rows, p.cpu().numpy())
+        pd_circuit_only.append(prob_diff(probs_matrix(run_patched(model, tc, cache_x, others, []), cont), yc))
+        for ri, rs in enumerate(rand_sets):
+            rand_pd[ri].append(prob_diff(probs_matrix(run_patched(model, tc, cache_x, rs, []), cont), yc))
+        del cache_x
+    pd_clean, pd_corrupt, pd_circuit_only = (np.concatenate(x) for x in (pd_clean, pd_corrupt, pd_circuit_only))
+    combos = [{"mask": list(m), "pd": float(np.concatenate(combo_pd[i]).mean()), "matrix": combo_mat[i] / cnt[:, None]} for i, m in enumerate(masks)]
+    rand_pd = [float(np.concatenate(r).mean()) for r in rand_pd]
 
     full = bootstrap_ci(pd_clean)
     circ = bootstrap_ci(pd_circuit_only)

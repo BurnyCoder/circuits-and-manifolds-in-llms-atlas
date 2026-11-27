@@ -66,6 +66,38 @@ Laptop (8 GB) unless marked RunPod.
 | colour-bicone | FLUX.1-schnell VAE; 400 HSV-uniform solid colors, 128 px | Colors occupy a 3-D subspace | ≈ 100% in 3 PCs (Pach et al. 2026) | ≥ 95% | random-noise images |
 | colour-bicone | same | HSL-like axes | PC1 = lightness, angle = hue, radius = saturation | corr(PC1, L), circular corr(angle, hue), corr(radius, chroma) all ≥ 0.8 (first two only = partial) | — |
 
+## Batches 4–5 — Neural Geometry series, features, steering, lenses, neurons, graphs (criteria written before running)
+
+| Entry | Model / data | Claim (published) | Pass criterion (partial) | Controls |
+|---|---|---|---|---|
+| sae-manifolds | TopK SAEs (512 atoms) on 16 synthetic manifolds in d = 128, L0 = 4, k ∈ {3…25} | capture peaks near k = L0 = 4 (Bhalla et al. 2026) | capture fraction peaks at k ∈ {3, 4, 6} | — |
+| sae-manifolds | same | larger k shatters manifolds | shattering at max k ≥ 30 pts above min k (any increase) | — |
+| block-sparse-featurizers | 32 sphere concepts in 3-D subspaces of d = 128, L0 = 4; BSF (64 blocks × 4, top-4) vs TopK SAE (256 latents, k = 16) | BSF 0.93–0.97 vs TopK 0.53 per-block R² (Fel et al. 2026) | BSF median ≥ 0.8 and ≥ 0.2 above SAE (BSF > SAE) | TopK SAE |
+| block-sparse-featurizers | InceptionV1 mixed3b, 288 curve stimuli; top-16 PCs | harmonics 1–3 explain 89% | ≥ 50% and > shuffled-orientation null p95 (> null) | shuffled orientations |
+| attribution-graphs | 9 public Gemma-2-2B Neuronpedia graphs | two-hop path Dallas → Texas → Austin (Lindsey et al. 2025) | path in all 3 capital graphs (in ≥ 1) | — |
+| attribution-graphs | en/fr/zh antonym graphs | shared middle-layer features | middle-layer Jaccard > early and late | — |
+| neuron-basis | Qwen3-1.7B, 48 × 512 WikiText-103 tokens | 92.2% ablatable: +2.9% loss, KL 0.14 (Goodfire, MoE); KL ≈ 0.80 (ericzhou12, Qwen3-1.7B) | top-480 rel. loss < 25%, KL < 1.0, random-480 ≥ 3× worse (random only) | random-480, drop-top-480, band P25–75 |
+| neuron-basis | same | dropping only the top activations is catastrophic | loss increase ≥ 5× that of keeping top-480 | — |
+| neuron-basis | same, grad×act top-1% cells | gate-open quadrants carry causal weight; 71–72% gate-closed | ≥ 80% top cells Q1+Q2 and ≥ 50% of activations Q3+Q4 (≥ 60% top cells) | — |
+| refusal-direction | Qwen2.5-1.5B-Instruct; 128 train / 32 val / 64 test prompts each (Arditi et al. splits) | ablation removes refusal; addition induces it | ablation −50 pts on harmful with random < 15 pts change (−25); addition +50 pts on harmless with random < 15 (+25) | norm-matched random direction |
+| actadd | GPT-2-XL; weddings vector (layer 20), Love−Hate (layer 6); c ∈ {0,1,2,4,8}; 8 samples × 3 prompts | > 90% on-topic weddings (Turner et al.) | c = 4 on-topic ≥ 50% and ≥ 30 pts above unsteered and random (≥ 15) | random vector |
+| actadd | same | Love−Hate makes text positive | ≥ 20 pts positive above baseline and random | random vector |
+| jlens | Qwen3-1.7B + pre-fitted Neuronpedia J-lens; 4 prompts with unspoken intermediates | J-lens surfaces intermediates better than logit lens (Gurnee et al. 2026) | lower median best-rank than logit lens and ≥ half in top-10 (lower median) | logit lens |
+| jlens | 8 country-swap prompts, layers 30–70% depth | swapping J-lens coordinates swaps the concept (59% top-5) | ≥ 50% top-5 and ≥ 30 pts above random swap (≥ 20) | random direction swap |
+| emotions | Qwen3-1.7B, 80 emotions × 12 topics × 2 self-written stories; Warriner norms | PC1 = valence (r 0.81) | |r| ≥ 0.6 and > shuffled-label p95 (> p95) | shuffled labels |
+| emotions | same | PC2 = arousal (r 0.66) | |r| ≥ 0.4 (≥ 0.25) | — |
+| emotions | Tylenol dose sweep 250–16,000 mg | afraid ↑, calm ↓ with dose | afraid slope > 0 and calm slope < 0 | — |
+| emotions | 120 activity pairs, steering 0.5 × residual norm on option A | blissful +212 Elo, hostile −303 | blissful > base > hostile by ≥ 0.05 each, random within 0.05 (ordering only) | random vector |
+| manifold-steering | Qwen3-1.7B weekday arithmetic, layers 12/16/20, 64-d PCA, periodic spline | E_BC 0.34 vs 0.93 (Wurgaft et al. 2026) | manifold E_BC < 0.7 × linear (< linear) | linear chord |
+| manifold-steering | same | manifold paths visit intermediate days | ≥ linear + 15 pts (> linear) | linear chord |
+| calculator-probes | Pythia-410M/1.4B/2.8B, 1,500 "{a}+{b}=" prompts, ridge probes T = 2…150 | base-10 periods prominent (Feucht et al. 2026) | ≥ 3 base-10 periods in top 8 and R²(T=10) ≥ neighbours + 0.1 (≥ 2 in top 8) | neighbouring periods |
+| world-model | mountain-car world model trained here (100 rollouts, 64×64) | position R² ≈ 0.95 | position R² ≥ 0.8 and ≥ 0.2 above untrained encoder | untrained encoder |
+| world-model | same | arc r 0.996 vs chord 0.06 | manifold r ≥ 0.9 and > chord (> chord) | straight chord |
+| stories-in-space | Qwen2.5-1.5B-Instruct, 160 SimpleStories, 6 emotions | probes predict ratings (RMSE 0.09) | held-out R² ≥ 0.5 (≥ 0.3) | — |
+| stories-in-space | same | behaviour–activation distance r = .92 | r ≥ 0.6 (≥ 0.3) | — |
+| sae-features | GPT-2 small res-jb L8; 5 concept features; α ∈ {0…80} | Golden Gate clamping (Templeton et al. 2024) | Golden Gate on-topic ≥ 50% and ≥ 30 pts above base and random (≥ 15) | random direction |
+| sae-features | same | steering generalizes | ≥ 3/5 concepts gain ≥ 30 pts (≥ 2) | random direction |
+
 ## Later batches (criteria are added here before each batch runs)
 
 | Batch | Entries | Models | Where |

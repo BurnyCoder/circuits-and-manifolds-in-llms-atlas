@@ -29,6 +29,19 @@ ENTRIES = [
     "linebreak_manifold",
     "belief_fractal",
     "colour_bicone",
+    "sae_manifolds",
+    "block_sparse",
+    "attribution_graphs",
+    "neuron_basis",
+    "refusal_direction",
+    "actadd",
+    "jlens",
+    "emotions",
+    "manifold_steering",
+    "calculator_probes",
+    "world_model",
+    "stories_in_space",
+    "sae_features",
 ]
 
 

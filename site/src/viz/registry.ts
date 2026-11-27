@@ -19,4 +19,11 @@ export const vizRegistry: Record<string, LazyViz> = {
   'greater-than': lazy(() => import('./entries/GreaterThan')),
   othello: lazy(() => import('./entries/Othello')),
   'curve-detectors': lazy(() => import('./entries/CurveDetectors')),
+  'calendar-circles': lazy(() => import('./entries/CalendarCircles')),
+  'number-helix': lazy(() => import('./entries/NumberHelix')),
+  linebreak: lazy(() => import('./entries/Linebreak')),
+  'belief-fractal': lazy(() => import('./entries/BeliefFractal')),
+  'colour-bicone': lazy(() => import('./entries/ColourBicone')),
+  'toy-superposition': lazy(() => import('./entries/ToySuperposition')),
+  'attribution-graph': lazy(() => import('./entries/AttributionGraph')),
 }
