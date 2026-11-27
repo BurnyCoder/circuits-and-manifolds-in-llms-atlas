@@ -1,0 +1,22 @@
+{
+ "meta": {
+  "slug": "colour-bicone",
+  "generated": "2026-11-27 22:18 UTC",
+  "git_commit": "f54feef5b5a6885889da93eebd0bb81e50b44806",
+  "models": [
+   "diffusers/FLUX.1-vae (VAE)"
+  ],
+  "runtime_s": 29.760638,
+  "quick": false
+ },
+ "summary": {
+  "n_colors": 400,
+  "var3": 0.961425,
+  "var1": 0.503714,
+  "var_noise3": 0.601373,
+  "r_light": 0.98306,
+  "r_hue": 0.989429,
+  "r_sat": 0.928124,
+  "latent_channels": 16
+ }
+}

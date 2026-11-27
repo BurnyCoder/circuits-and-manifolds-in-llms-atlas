@@ -4,7 +4,6 @@ title: The world inside a world model (mountain car)
 category: manifold
 collection: goodfire-geometry
 models: [mountain-car world model (trained here)]
-status: pending
 fidelity: recomputed
 evidence: mixed
 order: 600

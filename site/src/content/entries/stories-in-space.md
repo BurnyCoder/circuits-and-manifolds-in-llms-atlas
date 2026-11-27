@@ -4,7 +4,6 @@ title: Meandering on manifolds (stories in emotion space)
 category: manifold
 collection: goodfire-geometry
 models: [Qwen2.5-1.5B-Instruct]
-status: pending
 fidelity: recomputed
 evidence: correlational
 order: 650
@@ -57,14 +56,15 @@ layout matches how humans place emotions by pleasantness and intensity.
 
 ## How it works (technical)
 
-For each story prefix the behavioural readout is the expected 0–10 rating from the model's digit probabilities, one query
+For each story prefix the behavioural readout is the expected 0–9 rating (single-digit answers) from the model's digit probabilities, one query
 per emotion. Ridge probes map the prefix's final-token activation to the six ratings; in Llama-3.1-8B-Instruct (layer 9)
 the probes reach RMSE 0.09, behaviour and activation distance matrices correlate at r = .92, and the emotions' layout
 matches human valence–arousal ratings (r = .93).
 
 **What we measured** ({{n_stories}} SimpleStories, {{n_prefixes}} prefixes): held-out-story probe $R^2$ =
-{{best_r2}} at layer {{best_layer}}; behaviour vs activation distances between emotions correlate at r = {{r_geom}}
-({{n_emotions_present}} emotions with enough dominant prefixes).
+{{best_r2}} at layer {{best_layer}}. Representational similarity across {{n_rsa_prefixes}} prefixes: pairwise distances
+between rating vectors and between activations correlate at Spearman r = {{r_geom}}. Shuffling whole stories' ratings
+gives at most {{r_geom_null95}} (95th percentile).
 
 ## Limitations
 

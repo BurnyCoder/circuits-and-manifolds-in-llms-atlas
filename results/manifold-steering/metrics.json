@@ -1,0 +1,21 @@
+{
+ "meta": {
+  "slug": "manifold-steering",
+  "generated": "2026-11-27 22:43 UTC",
+  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "models": [
+   "Qwen/Qwen3-1.7B"
+  ],
+  "runtime_s": 201.02269,
+  "quick": false
+ },
+ "summary": {
+  "layer": 22,
+  "accuracy": 0.68254,
+  "E_manifold": 1.72661,
+  "E_linear": 1.62517,
+  "via_manifold": 0.406593,
+  "via_linear": 0.008242,
+  "n_paths": 28
+ }
+}

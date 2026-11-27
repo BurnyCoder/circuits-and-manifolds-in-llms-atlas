@@ -1,0 +1,28 @@
+{
+ "meta": {
+  "slug": "emotions",
+  "generated": "2026-11-27 23:22 UTC",
+  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "models": [
+   "Qwen/Qwen3-1.7B"
+  ],
+  "runtime_s": 638.824835,
+  "quick": false
+ },
+ "summary": {
+  "n_emotions": 71,
+  "n_stories": 1651,
+  "var_pc1": 0.47746,
+  "var_pc2": 0.088475,
+  "r_valence": 0.943759,
+  "r_arousal": 0.063154,
+  "null_valence_p95": 0.118639,
+  "afraid_slope": 4.736686,
+  "calm_slope": -7.275177,
+  "pref_base": 0.541102,
+  "pref_blissful": 0.545317,
+  "pref_hostile": 0.543841,
+  "pref_random": 0.529033,
+  "layer": 18
+ }
+}

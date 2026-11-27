@@ -1,0 +1,27 @@
+{
+ "meta": {
+  "slug": "sae-manifolds",
+  "generated": "2026-11-27 23:26 UTC",
+  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "models": [
+   "TopK SAEs on synthetic manifolds (trained here)"
+  ],
+  "runtime_s": 214.525239,
+  "quick": false
+ },
+ "summary": {
+  "k_best_r2": 6,
+  "r2_best": 0.532254,
+  "r2_min_k": 0.420685,
+  "r2_max_k": 0.482302,
+  "capture_max": 1.0,
+  "k_best_capture": 3,
+  "shatter_at_min_k": 0.0,
+  "shatter_at_max_k": 0.0,
+  "dilution_at_min_k": 0.0,
+  "dilution_at_max_k": 1.0,
+  "k_max": 25,
+  "n_instances": 48,
+  "steps": 3000
+ }
+}

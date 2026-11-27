@@ -1,0 +1,33 @@
+{
+ "meta": {
+  "slug": "calendar-circles",
+  "generated": "2026-11-27 21:11 UTC",
+  "git_commit": "0f536c80ebb23c3b6d9ad6e7870629520eff5759",
+  "models": [
+   "gpt2",
+   "Qwen/Qwen3-1.7B"
+  ],
+  "runtime_s": 797.644223,
+  "quick": false
+ },
+ "summary": {
+  "g2_days_score": 1.0,
+  "g2_days_p": 0.0026,
+  "g2_months_score": 1.0,
+  "g2_months_p": 0.0,
+  "g2_sae_days_score": 1.0,
+  "g2_sae_months_score": 1.0,
+  "g2_sae_days_n": 24,
+  "ctrl_sig_rate": 0.025,
+  "n_ctrl": 40,
+  "q_days_best_score": 1.0,
+  "q_days_best_layer": 5,
+  "q_months_best_score": 1.0,
+  "q_months_best_layer": 8,
+  "q_acc": 0.68254,
+  "q_causal_best": 0.302326,
+  "q_causal_best_layer": 5,
+  "q_causal_best_rand": 0.0,
+  "q_causal_n": 43
+ }
+}

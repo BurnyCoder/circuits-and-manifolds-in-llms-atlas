@@ -1,0 +1,30 @@
+[
+ {
+  "claim": "Character count since the last newline is linearly decodable",
+  "published": "Haiku: probe R\u00b2 0.985 after layer 1; open models (T-Tech): Qwen3-8B 0.852 at L5, Gemma-2-9B 0.868",
+  "ours": "Qwen3-1.7B: best held-out R\u00b2 0.747 at layer 6 (shuffled labels -0.005); GPT-2 small 0.759",
+  "criterion": "Qwen3-1.7B best R\u00b2 \u2265 0.7 and \u2265 0.5 above the shuffled control",
+  "verdict": "pass"
+ },
+ {
+  "claim": "The counts lie on a low-dimensional curved manifold",
+  "published": "Haiku: top 6 PCs of per-count means hold 95% of variance; helix-like curve with ringing",
+  "ours": "Qwen3-1.7B layer 6: 6 PCs hold 66% (3 PCs 49%); PC1\u20132 angle turns 1.93\u00b0/char",
+  "criterion": "6 PCs \u2265 80% of variance of the per-count means",
+  "verdict": "fail"
+ },
+ {
+  "claim": "The count is represented in the very first layers",
+  "published": "Haiku: R\u00b2 0.985 already after layer 1 (T-Tech: early peak not replicated in open models)",
+  "ours": "Qwen3-1.7B: best R\u00b2 within layers 0\u20132 = 0.668 (best overall 0.747 at layer 6)",
+  "criterion": "early-layer R\u00b2 \u2265 0.9 \u00d7 the best layer's R\u00b2",
+  "verdict": "fail"
+ },
+ {
+  "claim": "The model breaks lines where the text does",
+  "published": "Haiku predicts newlines at the wrap width (newline probability 0.79 in their example)",
+  "ours": "AUC of P(newline) for true line breaks: Qwen3-1.7B 0.936, GPT-2 small 0.742",
+  "criterion": "Qwen3-1.7B AUC \u2265 0.9",
+  "verdict": "pass"
+ }
+]

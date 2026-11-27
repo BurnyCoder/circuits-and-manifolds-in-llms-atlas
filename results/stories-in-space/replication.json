@@ -1,0 +1,16 @@
+[
+ {
+  "claim": "The model's running emotional reading is linearly decodable",
+  "published": "ridge probes predict per-sentence emotion ratings (RMSE 0.09) from layer-9 activations (Llama-3.1-8B-Instruct)",
+  "ours": "held-out-story R\u00b2 0.54 at layer 23 (1681 prefixes from 160 stories)",
+  "criterion": "R\u00b2 \u2265 0.5",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Behaviour and activation geometry agree",
+  "published": "distance-matrix correlation r = .92 (emotions)",
+  "ours": "RSA Spearman r = 0.11 over 600 prefixes (story-shuffle null 95th percentile 0.06)",
+  "criterion": "r \u2265 0.6 (amendment 2026-11-27: computed over prefixes, not 3\u20136 emotion centroids)",
+  "verdict": "fail"
+ }
+]

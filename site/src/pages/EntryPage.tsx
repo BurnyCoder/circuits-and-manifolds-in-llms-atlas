@@ -3,6 +3,7 @@
 import { Suspense, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CategoryTag, FidelityBadge } from '../components/Badges'
+import VizBoundary from '../components/VizBoundary'
 import { entryBySlug } from '../lib/content'
 import { useData } from '../lib/data'
 import { CATEGORY, COLLECTIONS, EVIDENCE } from '../lib/labels'
@@ -64,9 +65,11 @@ export default function EntryPage() {
           ) : e.data && !data ? (
             <p>Loading data…</p>
           ) : (
-            <Suspense fallback={<p>Loading visualization…</p>}>
-              <Viz data={data} entry={e} />
-            </Suspense>
+            <VizBoundary resetKey={e.slug}>
+              <Suspense fallback={<p>Loading visualization…</p>}>
+                <Viz data={data} entry={e} />
+              </Suspense>
+            </VizBoundary>
           )}
         </section>
       )}

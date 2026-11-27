@@ -1,0 +1,23 @@
+[
+ {
+  "claim": "Days and months are arranged in cyclic order (GPT-2 small, layer 7)",
+  "published": "circles for days, months, years in GPT-2 L7 (Fig. 1)",
+  "ours": "days order 1.00 (p = 0.003); months 1.00 (p = 0.0000); random-word control significant in 2% of 40 sets",
+  "criterion": "both p < 0.05 and control false-positive rate \u2264 10%",
+  "verdict": "pass"
+ },
+ {
+  "claim": "SAE latents reconstruct the circle",
+  "published": "SAE-cluster reconstruction shows the circle (Fig. 1)",
+  "ours": "reconstruction from the top 24 day latents: cyclic order 1.00; months 1.00",
+  "criterion": "cyclic order \u2265 0.7 for both",
+  "verdict": "pass"
+ },
+ {
+  "claim": "The circle is causally used for day arithmetic (Qwen3-1.7B)",
+  "published": "circular-probe patching shifts the answer in Mistral 7B / Llama 3 8B (\u00a75)",
+  "ours": "accuracy 68% on 63 prompts; best layer 5: patch success 30% vs 0% for a random 2-D plane (n = 43)",
+  "criterion": "some layer reaches \u2265 50% success with its random-plane control \u2264 20%",
+  "verdict": "partial"
+ }
+]

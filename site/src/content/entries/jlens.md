@@ -4,7 +4,6 @@ title: The Jacobian lens and the global workspace (open model)
 category: lens
 collection: anthropic-tc
 models: [Qwen3-1.7B]
-status: pending
 fidelity: replicated
 evidence: mixed
 order: 500

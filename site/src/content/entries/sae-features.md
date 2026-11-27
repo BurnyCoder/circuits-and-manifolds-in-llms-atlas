@@ -4,7 +4,6 @@ title: SAE features and "Golden Gate" steering (GPT-2)
 category: feature
 collection: anthropic-tc
 models: [GPT-2 small]
-status: pending
 fidelity: recomputed
 evidence: causal
 order: 210

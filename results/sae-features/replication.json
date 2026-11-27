@@ -1,0 +1,16 @@
+[
+ {
+  "claim": "Adding an SAE feature's direction steers generation toward its concept (Golden Gate)",
+  "published": "clamping the Golden Gate Bridge feature makes Claude 3 Sonnet obsessed with the bridge (Templeton et al. 2024)",
+  "ours": "GPT-2 small layer 8, feature #17608: completions mentioning the bridge 0% \u2192 92% at \u03b1 = 40 (random direction 0%)",
+  "criterion": "\u2265 50% on-topic and \u2265 30 points above baseline and random",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Feature steering generalizes across concepts",
+  "published": "many features steer behaviour (feature steering section)",
+  "ours": "3/5 concepts gain \u2265 30 points of on-topic completions at \u03b1 = 40 (median lift 58 points)",
+  "criterion": "\u2265 3 of 5 concepts",
+  "verdict": "pass"
+ }
+]

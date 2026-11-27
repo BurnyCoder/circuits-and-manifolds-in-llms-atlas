@@ -1,0 +1,23 @@
+{
+ "meta": {
+  "slug": "belief-fractal",
+  "generated": "2026-11-27 22:17 UTC",
+  "git_commit": "f54feef5b5a6885889da93eebd0bb81e50b44806",
+  "models": [
+   "4-layer transformer (trained here)"
+  ],
+  "runtime_s": 1462.581029,
+  "quick": false
+ },
+ "summary": {
+  "steps": 30000,
+  "final_r2": 0.975239,
+  "final_mse": 0.003993,
+  "rand_r2": 0.932394,
+  "rand_mse": 0.010903,
+  "all_layers_r2": 0.987856,
+  "final_loss": 0.803387,
+  "optimal_loss": 0.803162,
+  "uniform_loss": 1.098612
+ }
+}

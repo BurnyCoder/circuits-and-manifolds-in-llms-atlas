@@ -70,18 +70,22 @@ class Sparsifier:
 
 
 @torch.no_grad()
-def eval_loss(model, seqs, ref_logp=None):
-    """Mean next-token loss and (optionally) mean KL(ref || model) over sequences."""
-    losses, kls, logps = [], [], []
+def eval_loss(model, seqs, sp=None) -> tuple[float, float]:
+    """Mean next-token loss under the Sparsifier's current mode, and mean KL(intact ‖ sparsified) per token.
+
+    The intact (reference) distribution is recomputed per sequence with the hooks switched off instead of being cached:
+    caching log-probs for 48 × 512 tokens × 152k vocabulary needs ~7 GB and ran the 8 GB GPU out of memory."""
+    losses, kls = [], []
+    mode = sp.mode if sp is not None else None
     for s in seqs:
-        logits = model(s[None]).logits[0, :-1].float()
-        lp = logits.log_softmax(-1)
+        lp = model(s[None]).logits[0, :-1].float().log_softmax(-1)
         losses.append(-lp.gather(-1, s[1:, None])[:, 0].mean().item())
-        if ref_logp is not None:
-            ref = ref_logp[len(logps)]
+        if mode is not None:
+            sp.mode = None
+            ref = model(s[None]).logits[0, :-1].float().log_softmax(-1)
+            sp.mode = mode
             kls.append((ref.exp() * (ref - lp)).sum(-1).mean().item())
-        logps.append(lp.half() if ref_logp is None else None)
-    return float(np.mean(losses)), (float(np.mean(kls)) if kls else 0.0), logps
+    return float(np.mean(losses)), (float(np.mean(kls)) if kls else 0.0)
 
 
 def compute(ctx) -> None:
@@ -91,24 +95,24 @@ def compute(ctx) -> None:
     t0 = time.time()
     tok = AutoTokenizer.from_pretrained(MODEL)
     model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.bfloat16).to(ctx.device).eval()
+    model.requires_grad_(False)  # only activation gradients are needed (grad×act); parameter grads would add ~3.4 GB
     text = "\n\n".join(t for t in load_dataset("Salesforce/wikitext", "wikitext-103-raw-v1", split="test")["text"] if t.strip())
     ids = tok(text[:600_000], return_tensors="pt").input_ids[0]
     n_seq, L = (6, 256) if ctx.quick else (48, 512)
     seqs = [ids[i * L : (i + 1) * L].to(ctx.device) for i in range(n_seq)]
     sp = Sparsifier(model)
 
-    base_loss, _, ref = eval_loss(model, seqs)
-    ref = [r.float() for r in ref]
+    base_loss, _ = eval_loss(model, seqs, sp)  # sp.mode is None: the intact model
     curve = []
     for k in KS[1:] if not ctx.quick else [1536, 480, 128]:
         sp.mode, sp.k = "topk", k
-        loss, kl, _ = eval_loss(model, seqs, ref)
+        loss, kl = eval_loss(model, seqs, sp)
         curve.append({"k": k, "frac_ablated": 1 - k / 6144, "loss": loss, "kl": kl})
         log.info("top-%d per token per layer (%.1f%% ablated): loss %.4f (base %.4f), KL %.4f", k, 100 * (1 - k / 6144), loss, base_loss, kl)
     controls = {}
     for mode in ("random", "drop_topk"):
         sp.mode, sp.k = mode, 480
-        controls[mode] = dict(zip(("loss", "kl"), eval_loss(model, seqs, ref)[:2]))
+        controls[mode] = dict(zip(("loss", "kl"), eval_loss(model, seqs, sp)))
         log.info("control %s-480: %s", mode, controls[mode])
 
     # Band ablation (P25–P75 mean-ablated) with per-neuron statistics from separate calibration text.
@@ -130,10 +134,10 @@ def compute(ctx) -> None:
         band[li] = (q[0].to(ctx.device, torch.bfloat16), q[1].to(ctx.device, torch.bfloat16), mean.to(ctx.device))
     sp.mu = {li: torch.cat(chunks).mean(0).to(ctx.device) for li, chunks in store.items()}
     sp.mode, sp.k = "topk_mean", 480
-    controls["topk_mean_480"] = dict(zip(("loss", "kl"), eval_loss(model, seqs, ref)[:2]))
+    controls["topk_mean_480"] = dict(zip(("loss", "kl"), eval_loss(model, seqs, sp)))
     log.info("post-hoc: top-480 by distance from mean, mean-filled (ericzhou12 rule): %s", controls["topk_mean_480"])
     sp.mode, sp.band = "band", band
-    controls["band_p25_p75"] = dict(zip(("loss", "kl"), eval_loss(model, seqs, ref)[:2]))
+    controls["band_p25_p75"] = dict(zip(("loss", "kl"), eval_loss(model, seqs, sp)))
     sp.mode = None
     log.info("band P25–P75 mean-ablation: %s", controls["band_p25_p75"])
 
@@ -155,9 +159,10 @@ def compute(ctx) -> None:
     attr_q = np.zeros(4)
     mag_q = np.zeros(4)
     for s in seqs[: (2 if ctx.quick else 8)]:
-        model.zero_grad()
         with torch.enable_grad():
-            out = model(s[None])
+            # Start the graph at the input embeddings so activations get gradients while parameters stay frozen.
+            emb = model.model.embed_tokens(s[None]).detach().requires_grad_(True)
+            out = model(inputs_embeds=emb)
             loss = torch.nn.functional.cross_entropy(out.logits[0, :-1].float(), s[1:])
             loss.backward()
         cells = []

@@ -1,0 +1,23 @@
+[
+ {
+  "claim": "Number embeddings are periodic with periods 2, 5, 10",
+  "published": "Fourier peaks at T = 2, 5, 10 in GPT-J (Kantamneni & Tegmark Fig. 2); 2, 2.5, 5, 10 (Zhou et al. 2024)",
+  "ours": "pythia-2.8b: strongest embedding periods 100, 50, 33.3, 2",
+  "criterion": "at least two of {2, 5, 10} among the top-4 periods (\u00b15%)",
+  "verdict": "fail"
+ },
+ {
+  "claim": "Numbers lie on a generalized helix (T = 2, 5, 10, 100)",
+  "published": "helix fits the residual stream of GPT-J / Pythia-6.9B / Llama-3.1-8B",
+  "ours": "pythia-2.8b layer 11: held-out R\u00b2 0.49 vs -0.09 for a shuffled helix, 0.24 linear-only",
+  "criterion": "held-out helix R\u00b2 \u2265 0.5 and \u2265 0.2 above the shuffled control",
+  "verdict": "partial"
+ },
+ {
+  "claim": "Patching along the helix recovers most of the full-layer effect",
+  "published": "GPT-J: helix 7.21 vs full 8.34 logit diff (86%); PCA 6.13",
+  "ours": "pythia-2.8b layer 1: median recovery helix 77%, full layer 100%, PCA-9 81%, linear-only 5% (n = 80 correct prompts; accuracy 78%)",
+  "criterion": "helix \u2265 50% of the full-layer recovery and \u2265 linear-only (needs \u2265 20 correctly solved prompts, else n/a)",
+  "verdict": "pass"
+ }
+]

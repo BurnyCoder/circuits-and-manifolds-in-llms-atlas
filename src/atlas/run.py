@@ -87,7 +87,10 @@ def main(argv: list[str] | None = None) -> None:
             log.exception("=== %s: FAILED after %.1fs", name, time.time() - t0)
             failed.append(name)
         finally:
-            free_gpu()
+            try:
+                free_gpu()
+            except Exception:  # a CUDA error in the entry can resurface here; it must not end the whole run
+                log.exception("free_gpu after %s failed", name)
     log.info("finished: %d ok, %d failed %s", len(names) - len(failed), len(failed), failed)
     if failed:
         raise SystemExit(1)

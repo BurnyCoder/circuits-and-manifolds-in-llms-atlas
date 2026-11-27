@@ -1,0 +1,30 @@
+[
+ {
+  "claim": "The main axis of emotion space is valence",
+  "published": "PC1 26% of variance; r = 0.81 with human valence (Claude Sonnet 4.5)",
+  "ours": "PC1 48% of variance; |r| = 0.94 with human valence (shuffled-label 95th pct 0.12); 71 emotions, 1651 stories",
+  "criterion": "|r| \u2265 0.6 and above the shuffled-label 95th percentile",
+  "verdict": "pass"
+ },
+ {
+  "claim": "The second axis is arousal",
+  "published": "PC2 15%; r = 0.66 with human arousal",
+  "ours": "PC2 9% of variance; |r| = 0.06 with human arousal",
+  "criterion": "|r| \u2265 0.4",
+  "verdict": "fail"
+ },
+ {
+  "claim": "Emotion vectors track danger in the user's situation",
+  "published": "'afraid' rises and 'calm' falls with the Tylenol dose (Fig. 3)",
+  "ours": "slope per decade of dose: afraid +4.74, calm -7.28",
+  "criterion": "afraid slope > 0 and calm slope < 0",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Steering with emotion vectors shifts preferences",
+  "published": "blissful steering on an option raises its Elo (+212), hostile lowers it (\u2212303)",
+  "ours": "P(choose A): baseline 0.54, +blissful on A 0.55, +hostile on A 0.54, random vector 0.53",
+  "criterion": "blissful > baseline > hostile, each by \u2265 0.05, with |random \u2212 baseline| < 0.05",
+  "verdict": "fail"
+ }
+]

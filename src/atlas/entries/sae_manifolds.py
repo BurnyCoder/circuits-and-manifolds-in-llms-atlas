@@ -7,11 +7,17 @@ embedded by a random orthonormal map into d = 128; each sample is the sum of L0 
 points, plus tiny noise; a TopK SAE with 512 unit-norm atoms is trained for a sweep of k. They describe three regimes:
 capture (a manifold gets about as many atoms as its embedding dimension), shattering (many atoms, each covering a small
 patch — local "place cells"), and dilution (many atoms whose responses are spread out/shared).
-Our simplified operationalization (stated on the site): support size |G| = atoms firing on ≥ 10% of a manifold's points
-when it is shown alone; receptive-field spread = median over those atoms of (mean pairwise distance among the points
-an atom fires on) / (mean pairwise distance of the manifold); restricted R² = reconstruction of the manifold from its
-best k_i atoms. Regime: capture if |G| ≤ k_i + 2; else shattering if spread < 0.5; else dilution. 2 variants per type
-(16 instances) instead of the paper's 6 (48).
+Metrics follow the paper's App. E, on in-distribution (superposed) evaluation inputs: for manifold i, the rows where it
+is active and its true contribution M_i there.
+- Restricted R² (the paper's subspace-capture score): greedily pick k_i decoder directions that explain the most residual
+  variance of M_i, keep only those atoms' codes, decode, and compute R² against M_i.
+- Support size |S|: atoms firing on ≥ 10% of the manifold's rows (after discarding each atom's activations below the
+  10th percentile of its nonzero activations) and on ≥ 30 rows.
+- Receptive-field spread: median over support atoms of the mean pairwise distance between the M_i points where the atom
+  fires, normalized by the manifold's own mean pairwise distance.
+Regime label (ours; the paper shows a phase diagram of support size × spread): capture if |S| ≤ k_i + 2, else shattering
+if spread < 0.5, else dilution. 8 types × 6 variants = 48 instances, as in the paper (with 16 instances any other
+manifold co-occurs in ~20% of rows, so the 10% support threshold would count its atoms too).
 """
 
 from __future__ import annotations
@@ -33,11 +39,16 @@ ATOMS = 512
 KS = [3, 4, 6, 8, 10, 14, 20, 25]
 
 
+VARIANTS = 6  # per manifold type, as in the paper (48 instances in total)
+
+
 def manifold_points(kind: str, var: int, n: int, rng) -> tuple[np.ndarray, np.ndarray]:
-    """Sample n points of one manifold instance -> (embedding coords [n, k], intrinsic coords [n, 1 or 2])."""
+    """Sample n points of one manifold instance -> (embedding coords [n, k], intrinsic coords [n, 1 or 2]).
+    `var` ∈ 0..VARIANTS−1 interpolates each type's shape parameters (radius, tube ratio, width, pitch)."""
     u, v = rng.random(n), rng.random(n)
     t, p = 2 * np.pi * u, 2 * np.pi * v
-    r = [0.75, 1.5][var]
+    f = var / (VARIANTS - 1)
+    r = 0.75 + 0.75 * f
     if kind == "circle":
         X = np.c_[r * np.cos(t), r * np.sin(t)]
         I = t[:, None]
@@ -47,19 +58,19 @@ def manifold_points(kind: str, var: int, n: int, rng) -> tuple[np.ndarray, np.nd
         X = r * np.c_[s * np.cos(t), s * np.sin(t), z]
         I = np.c_[t, z]
     elif kind == "torus":
-        R, rr = [(2, 0.5), (3, 1)][var]
+        R, rr = 2 + f, 0.5 + 0.5 * f
         X = np.c_[R * np.cos(t), R * np.sin(t), rr * np.cos(p), rr * np.sin(p)]
         I = np.c_[t, p]
     elif kind == "mobius":
-        w = [0.3, 0.7][var] * (2 * v - 1)
+        w = (0.3 + 0.4 * f) * (2 * v - 1)
         X = np.c_[(1 + w * np.cos(t / 2)) * np.cos(t), (1 + w * np.cos(t / 2)) * np.sin(t), w * np.sin(t / 2)]
         I = np.c_[t, w]
     elif kind == "swissroll":
-        a = (1.5 + 3 * u) * np.pi * [0.8, 1.0][var]
+        a = (1.5 + 3 * u) * np.pi * (0.8 + 0.2 * f)
         X = np.c_[a * np.cos(a), 4 * v, a * np.sin(a)]
         I = np.c_[a, v]
     elif kind == "helix":
-        pitch = [0.15, 0.4][var]
+        pitch = 0.15 + 0.25 * f
         a = 6 * np.pi * u
         X = np.c_[np.cos(a), np.sin(a), pitch * a]
         I = a[:, None]
@@ -108,9 +119,12 @@ class TopKSAE(torch.nn.Module):
         return self.codes(x) @ W + self.b_dec
 
 
-def make_pools(insts, rng, n_pool=20000, device="cpu") -> torch.Tensor:
-    """Pre-sampled points of every instance, [n_inst, n_pool, D], so batches are built by indexing (fast)."""
-    return torch.tensor(np.stack([i.sample(n_pool, rng)[0] for i in insts]), dtype=torch.float32, device=device)
+def make_pools(insts, rng, n_pool=20000, device="cpu") -> tuple[torch.Tensor, np.ndarray]:
+    """Pre-sampled points of every instance: embeddings [n_inst, n_pool, D] (GPU; batches are built by indexing) and
+    intrinsic coordinates [n_inst, n_pool, 2] (CPU; 1-D manifolds padded with zeros)."""
+    X, I = zip(*[i.sample(n_pool, rng) for i in insts])
+    intr = np.stack([np.c_[c, np.zeros((len(c), 2 - c.shape[1]))] if c.shape[1] < 2 else c for c in I])
+    return torch.tensor(np.stack(X), dtype=torch.float32, device=device), intr
 
 
 def train_sae(pools: torch.Tensor, k, steps, device, seed):
@@ -131,90 +145,119 @@ def train_sae(pools: torch.Tensor, k, steps, device, seed):
 
 
 @torch.no_grad()
-def evaluate(sae, inst, device, rng, n=1500):
-    X, I = inst.sample(n, rng)
-    x = torch.tensor(X, dtype=torch.float32, device=device)
-    z = sae.codes(x).cpu().numpy()
-    W = (sae.dec / sae.dec.norm(dim=-1, keepdim=True)).cpu().numpy()
-    active = (z > 0).mean(0)
-    G = np.where(active >= 0.10)[0]
-    # Receptive-field spread of the support atoms.
-    sub = rng.choice(n, 400, replace=False)
-    Ds = np.linalg.norm(X[sub, None] - X[None, sub], axis=-1)
-    base = Ds.mean()
-    spreads = []
-    for a in G:
-        idx = np.where(z[sub, a] > 0)[0]
-        if len(idx) >= 2:
-            spreads.append(Ds[np.ix_(idx, idx)].mean() / base)
-    spread = float(np.median(spreads)) if spreads else 0.0
-    # Restricted R²: greedily add the atoms that most reduce residual variance, up to k_i atoms.
-    chosen = []
-    resid = X.copy()
-    for _ in range(inst.k):
-        best, best_r = None, None
-        for a in G:
-            if a in chosen:
-                continue
-            rec = z[:, chosen + [a]] @ W[chosen + [a]]
-            r = ((X - rec) ** 2).sum()
-            if best_r is None or r < best_r:
-                best, best_r = a, r
-        if best is None:
-            break
-        chosen.append(best)
-        resid = X - z[:, chosen] @ W[chosen]
-    r2 = 1 - (resid**2).sum() / ((X - X.mean(0)) ** 2).sum()
-    regime = "capture" if len(G) <= inst.k + 2 else ("shattering" if spread < 0.5 else "dilution")
-    # Viz sample: intrinsic coordinates + which support atom fires most.
-    show = sub[:200]
-    top_atom = np.where(z[show].max(1) > 0, z[show].argmax(1), -1)
-    return {"support": int(len(G)), "spread": spread, "r2": float(r2), "regime": regime, "intr": I[show], "atom": top_atom, "emb3": (X[show] @ inst.V[:, : min(3, inst.k)])}
+def evaluate_all(sae, insts, pools, intr, device, seed, n_eval=24000) -> list[dict]:
+    """Paper's App. E metrics for every instance, on superposed evaluation inputs (see module docstring)."""
+    g = torch.Generator(device=device).manual_seed(seed)
+    n_inst, n_pool, _ = pools.shape
+    inst_idx = torch.rand(n_eval, n_inst, generator=g, device=device).argsort(1)[:, :L0]  # [n, L0] active manifolds
+    pt_idx = torch.randint(0, n_pool, (n_eval, L0), generator=g, device=device)
+    contrib = pools[inst_idx, pt_idx]  # [n, L0, D] true contributions
+    x = contrib.sum(1) + 1e-5 * torch.randn(n_eval, D, generator=g, device=device)
+    Z = torch.cat([sae.codes(x[i : i + 4096]) for i in range(0, n_eval, 4096)])  # [n, atoms]
+    W = sae.dec / sae.dec.norm(dim=-1, keepdim=True)  # unit decoder atoms [atoms, D]
+    # Per-atom magnitude floor: 10th percentile of each atom's nonzero activations (paper App. E).
+    Zc = Z.cpu().numpy()
+    thr = np.array([np.quantile(c[c > 0], 0.10) if (c > 0).sum() >= 10 else np.inf for c in Zc.T])
+    on = Zc >= thr[None]  # [n, atoms] robust firing
+    inst_np, pt_np = inst_idx.cpu().numpy(), pt_idx.cpu().numpy()
+    rng = np.random.default_rng(seed)
+    rows_out = []
+    for i, inst in enumerate(insts):
+        rows, slot = np.where(inst_np == i)
+        M = contrib[torch.tensor(rows, device=device), torch.tensor(slot, device=device)]  # [n_i, D]
+        Zi = Z[torch.tensor(rows, device=device)]
+        # Restricted R² at n = k_i: greedy decoder directions explaining the residual variance of M_i.
+        resid, chosen = M.clone(), []
+        for _ in range(inst.k):
+            gain = ((resid @ W.T) ** 2).sum(0)
+            if chosen:
+                gain[chosen] = -1
+            j = int(gain.argmax())
+            chosen.append(j)
+            resid = resid - (resid @ W[j])[:, None] * W[j][None]
+        M_hat = Zi[:, chosen] @ W[chosen]
+        r2 = float(1 - ((M - M_hat) ** 2).sum() / ((M - M.mean(0)) ** 2).sum())
+        # Support size and receptive-field spread on the manifold's rows.
+        on_i = on[rows]
+        S = np.where((on_i.mean(0) >= 0.10) & (on_i.sum(0) >= 30))[0]
+        Mn = M.cpu().numpy()
+        sub = rng.choice(len(Mn), min(600, len(Mn)), replace=False)
+        base = np.linalg.norm(Mn[sub, None] - Mn[None, sub], axis=-1).mean()
+        spreads = []
+        for a in S:
+            idx = np.where(on_i[:, a])[0]
+            idx = rng.choice(idx, min(300, len(idx)), replace=False)
+            if len(idx) >= 2:
+                spreads.append(np.linalg.norm(Mn[idx, None] - Mn[None, idx], axis=-1).mean() / base)
+        spread = float(np.median(spreads)) if spreads else 0.0
+        regime = "capture" if len(S) <= inst.k + 2 else ("shattering" if spread < 0.5 else "dilution")
+        # Viz: 200 of the manifold's points, colored by their most active support atom (−1 = none).
+        show = sub[:200]
+        top = np.full(len(show), -1)
+        if len(S):
+            zs = Zc[rows[show]][:, S]
+            top = np.where(zs.max(1) > 0, S[zs.argmax(1)], -1)
+        rows_out.append({
+            "manifold": f"{inst.kind}-{inst.var}", "kind": inst.kind, "k_embed": inst.k, "support": int(len(S)), "spread": spread,
+            "r2": r2, "regime": regime, "intr": intr[i, pt_np[rows[show], slot[show]]],
+            "atom": top, "emb3": (Mn[show] @ inst.V[:, : min(3, inst.k)]),
+        })
+    return rows_out
 
 
 def compute(ctx) -> None:
     t0 = time.time()
     seed_everything(ctx.seed)
     rng = np.random.default_rng(ctx.seed)
-    insts = [Instance(kind, var, rng) for kind in KINDS for var in (0, 1)]
+    insts = [Instance(kind, var, rng) for kind in KINDS for var in range(VARIANTS)]
     steps = 300 if ctx.quick else 3000
     ks = KS[:3] if ctx.quick else KS
     table = []
-    pools = make_pools(insts, rng, device=ctx.device)
+    pools, intr = make_pools(insts, rng, device=ctx.device)
     for k in ks:
         sae = train_sae(pools, k, steps, ctx.device, ctx.seed + k)
-        rows = [{"manifold": f"{i.kind}-{i.var}", "kind": i.kind, "k_embed": i.k, **evaluate(sae, i, ctx.device, rng)} for i in insts]
+        rows = evaluate_all(sae, insts, pools, intr, ctx.device, ctx.seed + 1000 + k)
         frac = {r: float(np.mean([x["regime"] == r for x in rows])) for r in ("capture", "shattering", "dilution")}
         table.append({"k": k, "rows": rows, "frac": frac, "r2_mean": float(np.mean([x["r2"] for x in rows]))})
         log.info("SAE k=%d: regimes %s, mean restricted R² %.3f", k, frac, table[-1]["r2_mean"])
     cap = [t["frac"]["capture"] for t in table]
     shat = [t["frac"]["shattering"] for t in table]
-    k_best = ks[int(np.argmax(cap))]
+    dil = [t["frac"]["dilution"] for t in table]
+    r2s = [t["r2_mean"] for t in table]
+    k_best = ks[int(np.argmax(r2s))]
     summary = {
-        "k_best_capture": k_best,
+        "k_best_r2": k_best,
+        "r2_best": float(max(r2s)),
+        "r2_min_k": r2s[0],
+        "r2_max_k": r2s[-1],
         "capture_max": float(max(cap)),
-        "capture_at_max_k": cap[-1],
+        "k_best_capture": ks[int(np.argmax(cap))] if max(cap) > 0 else -1,
         "shatter_at_min_k": shat[0],
         "shatter_at_max_k": shat[-1],
+        "dilution_at_min_k": dil[0],
+        "dilution_at_max_k": dil[-1],
         "k_max": ks[-1],
         "n_instances": len(insts),
         "steps": steps,
     }
     repl = [
         verdict_row(
-            "SAEs capture manifolds best when k matches the number of active manifolds",
-            "capture peaks near k = 4 = L0 (Bhalla et al. 2026)",
-            f"capture fraction peaks at k = {k_best} ({max(cap) * 100:.0f}% of {len(insts)} manifolds)",
-            "peak at k ∈ {3, 4, 6}",
+            "Subspace capture has a sparsity sweet spot",
+            "restricted R² (k_i atoms reconstruct each manifold from superposed codes) peaks near k = 4 (Bhalla et al. 2026, Fig. 4A)",
+            f"mean restricted R² peaks at k = {k_best} ({max(r2s):.2f}; {r2s[0]:.2f} at k = {ks[0]}, {r2s[-1]:.2f} at k = {ks[-1]}); "
+            f"regime label 'capture' for up to {max(cap) * 100:.0f}% of {len(insts)} manifolds",
+            "restricted-R² peak at k ∈ {3, 4, 6} (amendment 2026-11-27: the paper's capture score; was 'capture fraction')",
             k_best in (3, 4, 6),
+            partial=k_best == 8,
         ),
         verdict_row(
-            "Larger k shatters manifolds into local atoms",
-            "beyond the capture regime, manifolds are tiled by many small receptive fields",
-            f"shattering fraction {shat[0] * 100:.0f}% at k = {ks[0]} → {shat[-1] * 100:.0f}% at k = {ks[-1]}; capture {cap[-1] * 100:.0f}% at k = {ks[-1]}",
-            "shattering at the largest k ≥ 30 points higher than at the smallest k",
-            shat[-1] - shat[0] >= 0.3,
-            partial=shat[-1] > shat[0],
+            "Sparsity moves the SAE from shattering (small k) to dilution (large k)",
+            "low k: shattered across atoms; intermediate k: capture; high k: redundant atoms lose specificity (dilution) (Fig. 4B)",
+            f"shattering {shat[0] * 100:.0f}% at k = {ks[0]} → {shat[-1] * 100:.0f}% at k = {ks[-1]}; dilution {dil[0] * 100:.0f}% → {dil[-1] * 100:.0f}%",
+            "dilution at the largest k ≥ 30 points above the smallest k and shattering higher at the smallest k (amendment: the "
+            "pre-stated claim had the direction reversed relative to the paper)",
+            dil[-1] - dil[0] >= 0.3 and shat[0] > shat[-1],
+            partial=dil[-1] > dil[0] and shat[0] > shat[-1],
         ),
     ]
     write_entry(SLUG, {"ks": ks, "table": table, "kinds": KINDS, "L0": L0, "atoms": ATOMS}, summary, repl, models=["TopK SAEs on synthetic manifolds (trained here)"], runtime_s=time.time() - t0, ndigits=3)
