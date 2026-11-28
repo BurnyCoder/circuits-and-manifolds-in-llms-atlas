@@ -76,6 +76,8 @@ def write_entry(
         "slug": slug,
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "git_commit": _git_commit(),
+        # Set by atlas.run at start: did src/ differ from git_commit when this run began? (None: not run via atlas.run)
+        "src_dirty_at_start": {"1": True, "0": False}.get(os.environ.get("ATLAS_SRC_DIRTY", "")),
         "models": models or [],
         "runtime_s": runtime_s,
         # Smoke-test (--quick) outputs are flagged so atlas.report never puts them in result tables.
