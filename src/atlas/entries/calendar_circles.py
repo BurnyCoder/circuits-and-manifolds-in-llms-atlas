@@ -25,6 +25,7 @@ from ..common.geometry import cyclic_order_pvalue, cyclic_order_score, pca
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
 from ..common.models import hooked
+from ..common.stats import rate_str
 
 log = get_logger()
 SLUG = "calendar-circles"
@@ -296,8 +297,9 @@ def compute(ctx) -> None:
         verdict_row(
             "The circle is causally used for day arithmetic (Qwen3-1.7B)",
             "circular-probe patching shifts the answer in Mistral 7B / Llama 3 8B (§5)",
-            f"accuracy {qw['accuracy'] * 100:.0f}% on {qw['n_prompts']} prompts; best layer {best_q['layer']}: patch success {best_q['success'] * 100:.0f}% "
-            f"vs {best_q['success_random_plane'] * 100:.0f}% for a random 2-D plane (n = {best_q['n']})",
+            f"accuracy {qw['accuracy'] * 100:.0f}% on {qw['n_prompts']} prompts; best layer {best_q['layer']}: patch success "
+            f"{rate_str(round(best_q['success'] * best_q['n']), best_q['n'])} vs {rate_str(round(best_q['success_random_plane'] * best_q['n']), best_q['n'])} "
+            f"for a norm-matched random 2-D plane (n = {best_q['n']}; Wilson 95% CIs)",
             "some layer reaches ≥ 50% success with its random-plane control ≤ 20%",
             best_q["success"] >= 0.5 and best_q["success_random_plane"] <= 0.2,
             partial=best_q["success"] > best_q["success_random_plane"] + 0.2,

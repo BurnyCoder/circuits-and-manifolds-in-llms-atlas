@@ -21,6 +21,7 @@ import torch
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
 from ..common.models import hooked
+from ..common.stats import rate_str
 
 log = get_logger()
 SLUG = "actadd"
@@ -99,13 +100,15 @@ def compute(ctx) -> None:
                 wedding = float(np.mean([any(w in t.lower() for w in WEDDING_WORDS) for t in texts]))
                 s = sent([x["prompt"] + x["completion"] for x in comps], truncation=True)
                 pos = float(np.mean([r["label"] == "POSITIVE" for r in s]))
-                rows.append({"coef": coef, "kind": kind, "wedding_rate": wedding, "positive_rate": pos, "examples": comps[: 2 * len(spec["prompts"])]})
+                rows.append({"coef": coef, "kind": kind, "wedding_rate": wedding, "positive_rate": pos, "n": len(texts), "examples": comps[: 2 * len(spec["prompts"])]})
                 log.info("ActAdd %s c=%s %s: wedding %.2f positive %.2f", name, coef, kind, wedding, pos)
         results[name] = {"layer": L, "plus": spec["plus"], "minus": spec["minus"], "norm": float(vec.norm()), "rows": rows}
     w = results["weddings"]["rows"]
     lv = results["love vs hate"]["rows"]
     get = lambda rows, c, k, f: next((r[f] for r in rows if r["coef"] == c and r["kind"] == k), float("nan"))  # noqa: E731
     cmax = max(r["coef"] for r in w)
+    n_w, n_lv = w[0]["n"], lv[0]["n"]  # completions per (coefficient, vector) cell
+    ci = lambda rate, n: rate_str(round(rate * n), n)  # noqa: E731  rate with Wilson 95% CI
     summary = {
         "wedding_base": get(w, 0, "steering vector", "wedding_rate"),
         "wedding_c4": get(w, 4, "steering vector", "wedding_rate"),
@@ -121,7 +124,7 @@ def compute(ctx) -> None:
         verdict_row(
             "Adding a 'weddings' vector steers the topic",
             "> 90% of completions about weddings vs ~2% unsteered (Turner et al.)",
-            f"wedding words in {summary['wedding_base'] * 100:.0f}% of completions unsteered → {summary['wedding_c4'] * 100:.0f}% at c = 4 (random vector {summary['wedding_rand_c4'] * 100:.0f}%); best {summary['wedding_max'] * 100:.0f}%",
+            f"wedding words in {ci(summary['wedding_base'], n_w)} of completions unsteered → {ci(summary['wedding_c4'], n_w)} at c = 4 (random vector {ci(summary['wedding_rand_c4'], n_w)}); best {summary['wedding_max'] * 100:.0f}% (n = {n_w} per cell; Wilson 95% CIs)",
             "c = 4 rate ≥ 50% and ≥ 30 points above both the unsteered and random-vector rates",
             summary["wedding_c4"] >= 0.5 and summary["wedding_c4"] - max(summary["wedding_base"], summary["wedding_rand_c4"]) >= 0.3,
             partial=summary["wedding_c4"] - max(summary["wedding_base"], summary["wedding_rand_c4"]) >= 0.15,
@@ -129,7 +132,7 @@ def compute(ctx) -> None:
         verdict_row(
             "A 'Love − Hate' vector makes text more positive",
             "Love − Hate at layer 6 turns 'I hate you because' positive (Turner et al.)",
-            f"positive sentiment {summary['love_base'] * 100:.0f}% → {summary['love_c4'] * 100:.0f}% at c = 4 (random vector {summary['love_rand_c4'] * 100:.0f}%)",
+            f"positive sentiment {ci(summary['love_base'], n_lv)} → {ci(summary['love_c4'], n_lv)} at c = 4 (random vector {ci(summary['love_rand_c4'], n_lv)}; n = {n_lv} per cell; Wilson 95% CIs)",
             "≥ 20 points above both baseline and random vector",
             summary["love_c4"] - max(summary["love_base"], summary["love_rand_c4"]) >= 0.2,
         ),

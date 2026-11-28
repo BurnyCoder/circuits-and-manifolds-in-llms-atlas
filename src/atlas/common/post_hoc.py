@@ -54,6 +54,12 @@ POST_HOC: dict[str, dict[str, str]] = {
     "calendar-circles": {
         "The circle is causally": "day-arithmetic templates changed after the smoke test showed this test failing",
     },
+    # Descriptive rows: no criterion was written in planned-runs.md, and the companion project's results were known.
+    "grokking-runs": {
+        "Grokking replicates across seeds": "descriptive row: no pre-stated criterion; companion results known in advance",
+        "A handful of key frequencies": "descriptive row: no pre-stated criterion; companion results known in advance",
+        "Controls: no weight decay": "descriptive row: no pre-stated criterion; companion results known in advance",
+    },
 }
 
 
