@@ -2,7 +2,7 @@
  {
   "claim": "The main axis of emotion space is valence",
   "published": "PC1 26% of variance; r = 0.81 with human valence (Claude Sonnet 4.5)",
-  "ours": "PC1 48% of variance; |r| = 0.94 with human valence (shuffled-label 95th pct 0.12); 71 emotions, 1651 stories",
+  "ours": "PC1 48% of variance; |r| = 0.94 [0.92, 0.96] with human valence (shuffled-label 95th pct 0.12); 71 emotions, 1651 stories",
   "criterion": "|r| \u2265 0.6 and above the shuffled-label 95th percentile",
   "verdict": "pass"
  },
@@ -23,8 +23,15 @@
  {
   "claim": "Steering with emotion vectors shifts preferences",
   "published": "blissful steering on an option raises its Elo (+212), hostile lowers it (\u2212303)",
-  "ours": "P(choose A): baseline 0.54, +blissful on A 0.55, +hostile on A 0.54, random vector 0.53",
+  "ours": "P(choose A): baseline 0.54, +blissful on A 0.55, +hostile on A 0.54, random vector 0.53 (shifts from baseline, 95% CI over 120 pairs: blissful [-0.002, +0.010], hostile [-0.003, +0.008], random [-0.018, -0.006])",
   "criterion": "blissful > baseline > hostile, each by \u2265 0.05, with |random \u2212 baseline| < 0.05",
   "verdict": "fail"
+ },
+ {
+  "claim": "Confirmatory: emotion vectors track danger, not the size of the number",
+  "published": "'afraid' rises and 'calm' falls with the Tylenol dose (Fig. 3)",
+  "ours": "slope of the afraid \u2212 calm projection per decade of dose, mean over 8 templates: Tylenol +6.52 (permutation p 0.0001), sugar +4.57; Tylenol \u2212 sugar p 0.1042",
+  "criterion": "Tylenol slope > 0 with p < 0.05 and Tylenol \u2212 sugar > 0 with p < 0.05; partial if only the first (pre-stated 2026-11-28)",
+  "verdict": "partial"
  }
 ]

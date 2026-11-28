@@ -19,6 +19,33 @@ def bootstrap_ci(x, stat=np.mean, n_boot: int = 2000, alpha: float = 0.05, seed:
     return float(stat(x)), float(lo), float(hi)
 
 
+def group_bootstrap(groups, fn, n_boot: int = 2000, alpha: float = 0.05, seed: int = 0) -> tuple[float, float]:
+    """Percentile CI of ``fn(row_indices)`` when whole groups (documents, stories, prompts) are resampled.
+
+    Rows of one group stay together, so within-group dependence does not shrink the interval (cluster bootstrap,
+    Davison & Hinkley 1997, §3.8). ``fn`` gets an index array that may repeat rows of groups drawn more than once.
+    """
+    groups = np.asarray(groups)
+    uniq = np.unique(groups)
+    rows = {g: np.where(groups == g)[0] for g in uniq}
+    rng = np.random.default_rng(seed)
+    boots = [fn(np.concatenate([rows[g] for g in rng.choice(uniq, len(uniq))])) for _ in range(n_boot)]
+    lo, hi = np.nanquantile(boots, [alpha / 2, 1 - alpha / 2])
+    return float(lo), float(hi)
+
+
+def ci_rule(lo: float, hi: float, threshold: float) -> tuple[bool, bool]:
+    """(passed, partial) for verdict_row under the pre-stated CI rule: pass if the whole 95% CI is ≥ threshold, fail if
+    the whole CI is below it, otherwise partial (inconclusive). See reports/planned-runs.md, review follow-ups."""
+    return lo >= threshold, hi >= threshold
+
+
+def perm_pvalue(observed: float, null) -> float:
+    """One-sided permutation p-value P(null ≥ observed) with the +1 correction (Phipson & Smyth 2010)."""
+    null = np.asarray(null, dtype=float)
+    return float((1 + (null >= observed - 1e-12).sum()) / (1 + len(null)))
+
+
 def wilson_ci(k: int, n: int, z: float = 1.959964) -> tuple[float, float]:
     """95% Wilson score interval for a rate k/n (Wilson 1927; same formula as statsmodels proportion_confint "wilson").
 

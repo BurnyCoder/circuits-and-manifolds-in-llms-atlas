@@ -34,10 +34,10 @@ citations:
     url: https://arxiv.org/abs/2502.00873
 replications:
   - who: This atlas — Fourier probes in small models
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/calculator_probes.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/calculator_probes.py
     model: Pythia-410M / 1.4B / 2.8B
     outcome: ours
-    note: Same probe design (sin/cos of 2π(a+b)/T, T = 2…150) on small models; the paper reports no small-model evidence.
+    note: Same probe design (sin/cos of 2π(a+b)/T, T = 2…150) on small models; the paper reports no small-model evidence. Confirmatory test with a fixed layer, a leak-free pair split, an R² floor and two nulls.
 ---
 
 ## In plain words
@@ -58,6 +58,14 @@ patching addition results into calendar prompts converts the calendar answers.
 **What we measured** (Fourier probes, {{model}}, layer {{layer}}): the eight best-decoded periods are {{top_periods}},
 {{n_base10_in_top8}} of them base-10 periods; $R^2$ at $T = 10$ is {{r2_T10}} vs {{r2_T10_neighbours}} at the
 neighbouring periods 9 and 11 ($T = 5$: {{r2_T5}}, $T = 2$: {{r2_T2}}).
+
+**Confirmatory test** (pre-stated 2026-11-28): layer fixed in advance at ⌊2/3⌋ depth (layer {{conf_layer}}), train and
+test prompts split by unordered pair {a, b} so that "a+b" and "b+a" never straddle the split, and a period counts only
+if its held-out $R^2$ exceeds 0.05. The top-8 such peaks are {{conf_valid_top}}; the base-10 hits are {{conf_hits}}
+($R^2$ at $T = 5$ is {{conf_r2_T5}}, at $T = 10$ {{conf_r2_T10}}). Both nulls are passed (label permutation p =
+{{conf_p_perm}}, random period sets p = {{conf_p_set}}), but two hits make the row partial. With the leak-free split,
+$R^2(T = 10)$ drops well below the row-split value above: some of that signal came from repeated pairs. Smaller models:
+{{conf_other_models}}. The evidence is for parity and a weak mod-10 code, not for a set of base-10 circles.
 
 ## Limitations
 

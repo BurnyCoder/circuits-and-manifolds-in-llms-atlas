@@ -37,7 +37,7 @@ citations:
     url: https://github.com/safety-research/jpp_lens
 replications:
   - who: This atlas (Qwen3-1.7B)
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/jlens.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/jlens.py
     model: Qwen3-1.7B
     outcome: ours
     note: J-lens slice grids, intermediate-token ranks and coordinate swaps on an open model (see the open entry).

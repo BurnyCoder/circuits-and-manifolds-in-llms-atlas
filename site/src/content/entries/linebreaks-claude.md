@@ -33,7 +33,7 @@ replications:
     outcome: partial
     note: Decodable count and a helix with ~155-character period replicate; the very-early-layer peak does not; QK twisting untested.
   - who: This atlas (Qwen3-1.7B)
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/linebreak_manifold.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/linebreak_manifold.py
     model: Qwen3-1.7B
     outcome: ours
     note: See the open-model entry for our probe, manifold and ringing measurements.

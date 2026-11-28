@@ -13,5 +13,12 @@
   "criterion": "\u2265 3 base-10 periods among the top-8 peaks and R\u00b2(T=10) \u2265 neighbours + 0.1 (same thresholds)",
   "verdict": "pass",
   "post_hoc": "peak-score analysis added after the pre-stated ranking failed"
+ },
+ {
+  "claim": "Confirmatory: base-10 periods stand out at a fixed layer with an R\u00b2 floor and nulls",
+  "published": "Fourier probes peak at T \u2208 {2, 5, 10, 20, 50, 100} in Llama-3.1-8B (Feucht et al.)",
+  "ours": "pythia-2.8b layer 21 (\u230a2n/3\u230b), split by unordered pair: top-8 peaks with R\u00b2 > 0.05: 2, 10, 71, 39, 150, 43, 44, 64; base-10 hits 2, 10 (R\u00b2(5) -0.01, R\u00b2(10) 0.09); label-permutation p 0.005, random-period-set p 0.0318. Other models: pythia-410m L16: hits none; pythia-1.4b L16: hits [2]",
+  "criterion": "\u2265 3 hits with both p < 0.05; partial with 2 hits (pre-stated 2026-11-28)",
+  "verdict": "partial"
  }
 ]

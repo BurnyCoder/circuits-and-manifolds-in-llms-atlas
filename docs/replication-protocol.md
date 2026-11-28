@@ -14,9 +14,12 @@ How every 🟢 *recomputed* entry turns a published claim into a verdict.
 3. **Controls.** Every causal claim gets a matched random control: random heads of the same count, random directions
    of the same norm, shuffled labels, or a random-initialised model. Every probe claim gets a random-init or
    shuffled-label baseline.
-4. **Uncertainty.** Counts are reported as k/n. Only induction-heads, IOI and greater-than compute 95% percentile
-   bootstrap CIs (`atlas.common.stats.bootstrap_ci`, 2,000 resamples); the other entries report point estimates, and
-   several verdicts rest on small n (3–12 prompts per cell). Adding CIs everywhere is on the to-do list.
+4. **Uncertainty.** Rates carry Wilson 95% intervals (`atlas.common.stats.wilson_ci` / `rate_str`). Means, R² values
+   and differences carry 95% percentile-bootstrap CIs (2,000 resamples) over the independent unit: prompts, steering
+   paths (clustered by source prompt), documents, stories, games, rollouts, or seeds × instances
+   (`bootstrap_ci`, `group_bootstrap`). Rows marked **CI rule** pass only if the whole CI meets the threshold, fail if
+   the whole CI misses it, and are partial (inconclusive) otherwise. Entries still reported without CIs are listed in
+   [`reports/reviews/response-to-review.md`](../reports/reviews/response-to-review.md) (M8).
 5. **Smoke test, then full run.** `--quick` runs find bugs. Bugs found in quick mode are fixed and logged in
    `reports/experiments/learnings.md`. A criterion should never change after results for that claim have been seen.
    Fixes of demonstrable bugs that do not depend on the outcome (tokenization, attention sinks, leakage, memory) are
@@ -31,6 +34,12 @@ How every 🟢 *recomputed* entry turns a published claim into a verdict.
      pass/partial/fail label and are shown everywhere with the reason, but they are excluded from the pre-stated tally.
      The list is [`src/atlas/common/post_hoc.py`](../src/atlas/common/post_hoc.py).
 
+   - **Confirmatory rows** (claim text starts with "Confirmatory:"): a new pre-stated test of a claim whose earlier
+     row was weak, post-hoc or noisy, written into `planned-runs.md` and pushed before it ran (review follow-ups,
+     2026-11-28: commit `3090314`). Where the earlier analysis had already seen the data, the confirmatory test uses
+     fresh data (new documents, stories, prompts or seeds) or a new control. These rows count in the tally; the
+     earlier rows keep their own verdicts and flags.
+
    Verdicts appear on each entry page, on the Replications page, in `results/<slug>/replication.json`, and in the
    README scoreboard.
 7. **Fidelity labels.**
@@ -43,9 +52,11 @@ How every 🟢 *recomputed* entry turns a published claim into a verdict.
 - Our prompts/datasets are re-created in the papers' style, not the original files (unless noted), so absolute numbers
   differ.
 - Smaller models than the papers' (8 GB GPU): a failure on a 1.7B model is not a refutation of a 70B result.
-- Single seeds for pretrained-model analyses (no training randomness). Of the trained-here models only grokking uses
-  several seeds (3 here + 11 companion); belief-fractal, world-model, sae-manifolds and BSF use one.
-- Verdict layers are often the argmax of held-out R² over all layers, with the control read at that layer; margins of
-  a few hundredths (e.g. linebreak claim 1: 0.747 vs 0.70; claim 3 fails by 0.004) are within noise.
+- Single seeds for pretrained-model analyses (no training randomness). Of the trained-here models, grokking uses
+  3 seeds here + 11 companion runs, sae-manifolds 6 extra seeds per k (confirmatory rows) and the BSF toy 3 seeds;
+  belief-fractal and world-model use one.
+- In the original rows, verdict layers are often the argmax of held-out R² over all layers, with the control read at
+  that layer; margins of a few hundredths (e.g. linebreak claim 1: 0.747 vs 0.70; claim 3 fails by 0.004) are within
+  noise. The confirmatory linebreak and stories rows choose the layer on validation groups of fresh data instead.
 - Several claims per entry and many entries: we do not correct for multiple comparisons. Verdicts are descriptive
   replication checks, not hypothesis tests with a family-wise error guarantee.

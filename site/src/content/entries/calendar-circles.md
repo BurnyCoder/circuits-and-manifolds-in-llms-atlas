@@ -46,7 +46,7 @@ citations:
     url: https://www.lesswrong.com/posts/vwdHTmorDPFB8vFQq/clt-features-sharpen-the-cyclical-day-of-week-manifold-in
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/calendar_circles.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/calendar_circles.py
     model: GPT-2 small (raw + SAE) and Qwen3-1.7B (layer sweep + causal patch)
     outcome: ours
     note: Cyclic-order permutation tests against random-word controls, SAE latent tiling, and circle-plane patching with a random-plane control.
@@ -82,7 +82,9 @@ modular day/month arithmetic.
 
 - GPT-2 small, layer 7 (template means removed): the day means lie in cyclic order with score {{g2_days_score}}
   (1 = perfect, permutation p = {{g2_days_p}}); months score {{g2_months_score}} (p = {{g2_months_p}}). Random sets of
-  ordinary words look cyclic at p < 0.05 in {{ctrl_sig_rate|pct}} of {{n_ctrl}} draws.
+  ordinary words (from a pool of 93) look cyclic at p < 0.05 in {{ctrl_sig_rate|pct}} of {{n_ctrl}} draws, and days and
+  months concentrate more of their class-mean variance in two components ({{g2_days_var2|pct}}, {{g2_months_var2|pct}})
+  than 95% of random word sets ({{ctrl_var2_p95_7|pct}} for 7 words, {{ctrl_var2_p95_12|pct}} for 12).
 - Reconstructing day activations from the {{g2_sae_days_n}} SAE latents that fire most on days gives cyclic order
   {{g2_sae_days_score}} (months {{g2_sae_months_score}}); individual latents prefer runs of neighbouring days.
 - Qwen3-1.7B: the clearest day circle is at layer {{q_days_best_layer}} (score {{q_days_best_score}}), months at layer

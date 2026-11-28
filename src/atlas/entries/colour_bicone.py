@@ -40,6 +40,21 @@ def encode_mean(vae, imgs: np.ndarray, device: str, bs: int = 16) -> np.ndarray:
     return np.concatenate(out)
 
 
+def bicone(Z: np.ndarray, hls: np.ndarray) -> dict:
+    """Top-3 PCs of the latents; PC1 vs lightness, PC2–PC3 angle vs hue (clearly coloured samples), radius vs HSL chroma."""
+    scores, comps, var, mu = pca(Z, 3)
+    if np.corrcoef(scores[:, 0], hls[:, 1])[0, 1] < 0:  # orient PC1 so that it increases with lightness
+        scores[:, 0] *= -1
+    r_light = float(np.corrcoef(scores[:, 0], hls[:, 1])[0, 1])
+    chroma = (hls[:, 2] > 0.3) & (hls[:, 1] > 0.2) & (hls[:, 1] < 0.8)  # clearly colored samples
+    ang = np.arctan2(scores[:, 2], scores[:, 1])
+    r_hue = abs(circular_corr(ang[chroma], 2 * np.pi * hls[chroma, 0]))
+    radius = np.hypot(scores[:, 1], scores[:, 2])
+    chroma_true = hls[:, 2] * (1 - np.abs(2 * hls[:, 1] - 1))  # HSL chroma: saturation scaled by the bicone width
+    r_sat = float(np.corrcoef(radius, chroma_true)[0, 1])
+    return {"scores": scores, "var": var, "r_light": r_light, "r_hue": r_hue, "r_sat": r_sat, "min_r": min(r_light, r_hue, r_sat)}
+
+
 def compute(ctx) -> None:
     from diffusers import AutoencoderKL
 
@@ -53,20 +68,20 @@ def compute(ctx) -> None:
     S = 128
     imgs = np.broadcast_to(rgb[:, :, None, None], (n, 3, S, S)).astype(np.float32).copy()
     Z = encode_mean(vae, imgs, ctx.device)
-    scores, comps, var, mu = pca(Z, 3)
-    # Orient PC1 so that it increases with lightness.
-    if np.corrcoef(scores[:, 0], hls[:, 1])[0, 1] < 0:
-        scores[:, 0] *= -1
-    r_light = float(np.corrcoef(scores[:, 0], hls[:, 1])[0, 1])
-    chroma = (hls[:, 2] > 0.3) & (hls[:, 1] > 0.2) & (hls[:, 1] < 0.8)  # clearly colored samples
-    ang = np.arctan2(scores[:, 2], scores[:, 1])
-    r_hue = abs(circular_corr(ang[chroma], 2 * np.pi * hls[chroma, 0]))
-    radius = np.hypot(scores[:, 1], scores[:, 2])
-    chroma_true = hls[:, 2] * (1 - np.abs(2 * hls[:, 1] - 1))  # HSL chroma: saturation scaled by the bicone width
-    r_sat = float(np.corrcoef(radius, chroma_true)[0, 1])
+    bc = bicone(Z, hls)
+    scores, var, r_light, r_hue, r_sat = bc["scores"], bc["var"], bc["r_light"], bc["r_hue"], bc["r_sat"]
     # Control: random-noise images through the same pipeline.
     noise = rng.random((n, 3, S, S)).astype(np.float32)
     _, _, var_noise, _ = pca(encode_mean(vae, noise, ctx.device), 3)
+    # Pre-stated control (review follow-ups, m6): the same VAE architecture with default random initialisation, and
+    # (reported) PCA of the RGB values themselves.
+    torch.manual_seed(ctx.seed)
+    rand_vae = AutoencoderKL.from_config(AutoencoderKL.load_config(REPO)).to(ctx.device, torch.float32).eval()  # fp32: untrained weights can overflow fp16
+    assert float(next(rand_vae.encoder.parameters()).std()) > 0, "random-init VAE has constant weights"
+    bc_rand = bicone(encode_mean(rand_vae, imgs, ctx.device), hls)
+    del rand_vae
+    bc_rgb = bicone(rgb, hls)
+    log.info("random-init VAE: r_light %.3f r_hue %.3f r_sat %.3f; RGB PCA: %.3f %.3f %.3f", bc_rand["r_light"], bc_rand["r_hue"], bc_rand["r_sat"], bc_rgb["r_light"], bc_rgb["r_hue"], bc_rgb["r_sat"])
     log.info("FLUX VAE colour PCA var %s (noise %s); r_light %.3f r_hue %.3f r_sat %.3f", np.round(var, 4), np.round(var_noise, 4), r_light, r_hue, r_sat)
     summary = {
         "n_colors": n,
@@ -77,6 +92,15 @@ def compute(ctx) -> None:
         "r_hue": r_hue,
         "r_sat": r_sat,
         "latent_channels": int(Z.shape[1]),
+        "min_r": bc["min_r"],
+        "rand_min_r": bc_rand["min_r"],
+        "rand_r_light": bc_rand["r_light"],
+        "rand_r_hue": bc_rand["r_hue"],
+        "rand_r_sat": bc_rand["r_sat"],
+        "rgb_min_r": bc_rgb["min_r"],
+        "rgb_r_light": bc_rgb["r_light"],
+        "rgb_r_hue": bc_rgb["r_hue"],
+        "rgb_r_sat": bc_rgb["r_sat"],
     }
     repl = [
         verdict_row(
@@ -93,6 +117,14 @@ def compute(ctx) -> None:
             "all three ≥ 0.8",
             min(r_light, r_hue, r_sat) >= 0.8,
             partial=min(r_light, r_hue) >= 0.8,
+        ),
+        verdict_row(
+            "Confirmatory control: the HSL bicone is learned (random-init VAE)",
+            "the bicone reflects the trained VAE's colour representation",
+            f"min(r_light, r_hue, r_sat): trained {bc['min_r']:.2f} vs random-init VAE {bc_rand['min_r']:.2f} "
+            f"({bc_rand['r_light']:.2f} / {bc_rand['r_hue']:.2f} / {bc_rand['r_sat']:.2f}); PCA of the RGB values themselves {bc_rgb['min_r']:.2f} (reported)",
+            "trained ≥ random-init + 0.2 (pre-stated 2026-11-28)",
+            bc["min_r"] >= bc_rand["min_r"] + 0.2,
         ),
     ]
     payload = {"pcs": scores, "rgb": (rgb * 255).round().astype(int), "hls": hls, "var": var, "var_noise": var_noise}

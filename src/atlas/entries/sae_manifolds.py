@@ -205,6 +205,43 @@ def evaluate_all(sae, insts, pools, intr, device, seed, n_eval=24000) -> list[di
     return rows_out
 
 
+def seed_sweep(insts, pools, intr, ks, steps, ctx, n_seeds: int) -> tuple[np.ndarray, np.ndarray]:
+    """Pre-stated seed sweep (review follow-ups, 2026-11-28): restricted R² and regime labels [seed, k, instance] for
+    n_seeds fresh SAE seeds per k (training seed ctx.seed + 1000·(s+1) + k, evaluation seed + 500)."""
+    R2 = np.zeros((n_seeds, len(ks), len(insts)))
+    REG = np.empty((n_seeds, len(ks), len(insts)), dtype=object)
+    for s in range(n_seeds):
+        for j, k in enumerate(ks):
+            seed = ctx.seed + 1000 * (s + 1) + k
+            rows = evaluate_all(train_sae(pools, k, steps, ctx.device, seed), insts, pools, intr, ctx.device, seed + 500)
+            R2[s, j] = [r["r2"] for r in rows]
+            REG[s, j] = [r["regime"] for r in rows]
+            log.info("seed sweep s=%d k=%d: mean restricted R² %.3f", s, k, R2[s, j].mean())
+    return R2, REG
+
+
+def peak_test(R2: np.ndarray, REG: np.ndarray, n_sel: int, seed: int, n_boot: int = 2000) -> dict:
+    """k* = argmax of mean R² over the first n_sel seeds; on the held-out seeds, Δ = R²(k*) − max(R²(k_min), R²(k_max))
+    and the dilution rise / shattering drop between k_min and k_max, each with a two-level bootstrap CI (seeds, then
+    instances)."""
+    k_star = int(np.argmax(R2[:n_sel].mean((0, 2))))
+    held, reg = R2[n_sel:], REG[n_sel:]
+    dil, sha = (reg == "dilution").astype(float), (reg == "shattering").astype(float)
+
+    def stats(si, ii):
+        m = held[si][:, :, ii].mean((0, 2))
+        d, h = dil[si][:, :, ii].mean((0, 2)), sha[si][:, :, ii].mean((0, 2))
+        return m[k_star] - max(m[0], m[-1]), d[-1] - d[0], h[0] - h[-1]
+
+    n_s, n_i = held.shape[0], held.shape[2]
+    point = stats(np.arange(n_s), np.arange(n_i))
+    rng = np.random.default_rng(seed)
+    boots = np.array([stats(rng.integers(0, n_s, n_s), rng.integers(0, n_i, n_i)) for _ in range(n_boot)])
+    lo, hi = np.quantile(boots, [0.025, 0.975], axis=0)
+    return {"k_star_idx": k_star, "delta": point[0], "delta_lo": lo[0], "delta_hi": hi[0], "dil_rise": point[1], "dil_lo": lo[1],
+            "dil_hi": hi[1], "shat_drop": point[2], "r2_held": held.mean((0, 2)), "r2_sel": R2[:n_sel].mean((0, 2))}
+
+
 def compute(ctx) -> None:
     t0 = time.time()
     seed_everything(ctx.seed)
@@ -225,6 +262,12 @@ def compute(ctx) -> None:
     dil = [t["frac"]["dilution"] for t in table]
     r2s = [t["r2_mean"] for t in table]
     k_best = ks[int(np.argmax(r2s))]
+    n_seeds = 4 if ctx.quick else 6
+    R2, REG = seed_sweep(insts, pools, intr, ks, steps, ctx, n_seeds)
+    pk = peak_test(R2, REG, n_seeds // 2, ctx.seed)
+    k_star = ks[pk["k_star_idx"]]
+    log.info("peak test: k* = %d (selection seeds), held-out Δ = %.3f [%.3f, %.3f]; dilution rise %.2f [%.2f, %.2f], shattering drop %.2f",
+             k_star, pk["delta"], pk["delta_lo"], pk["delta_hi"], pk["dil_rise"], pk["dil_lo"], pk["dil_hi"], pk["shat_drop"])
     summary = {
         "k_best_r2": k_best,
         "r2_best": float(max(r2s)),
@@ -239,6 +282,16 @@ def compute(ctx) -> None:
         "k_max": ks[-1],
         "n_instances": len(insts),
         "steps": steps,
+        "k_star_sel": k_star,
+        "peak_delta": pk["delta"],
+        "peak_delta_lo": pk["delta_lo"],
+        "peak_delta_hi": pk["delta_hi"],
+        "dil_rise_held": pk["dil_rise"],
+        "dil_rise_lo": pk["dil_lo"],
+        "dil_rise_hi": pk["dil_hi"],
+        "shat_drop_held": pk["shat_drop"],
+        "n_seeds": n_seeds,
+        "r2_held_by_k": ", ".join(f"k={k}: {v:.2f}" for k, v in zip(ks, pk["r2_held"])),
     }
     repl = [
         verdict_row(
@@ -259,6 +312,25 @@ def compute(ctx) -> None:
             dil[-1] - dil[0] >= 0.3 and shat[0] > shat[-1],
             partial=dil[-1] > dil[0] and shat[0] > shat[-1],
         ),
+        verdict_row(
+            "Confirmatory: subspace capture has an interior sparsity optimum (fresh seeds)",
+            "restricted R² peaks near k = 4 (Bhalla et al. 2026, Fig. 4A)",
+            f"k* = {k_star} on {n_seeds // 2} selection seeds; on {n_seeds - n_seeds // 2} held-out seeds R²(k*) − max(R²({ks[0]}), R²({ks[-1]})) = "
+            f"{pk['delta']:.3f} [{pk['delta_lo']:.3f}, {pk['delta_hi']:.3f}] (95% CI, seeds × instances); held-out R² by k: {summary['r2_held_by_k']}. "
+            f"Originally pre-stated metric: capture fraction peaks at k = {summary['k_best_capture']} (max {max(cap) * 100:.0f}%)",
+            "k* ∈ {4, 6} and CI of Δ > 0; partial if k* ∈ {8, …, 20} and CI > 0 (pre-stated 2026-11-28)",
+            k_star in (4, 6) and pk["delta_lo"] > 0,
+            partial=8 <= k_star <= 20 and pk["delta_lo"] > 0,
+        ),
+        verdict_row(
+            "Confirmatory: low k shatters, high k dilutes (fresh seeds)",
+            "low k: shattering; high k: dilution (Fig. 4B)",
+            f"held-out seeds: dilution rises by {pk['dil_rise'] * 100:.0f} points [{pk['dil_lo'] * 100:.0f}, {pk['dil_hi'] * 100:.0f}] from k = {ks[0]} to {ks[-1]}; "
+            f"shattering drops by {pk['shat_drop'] * 100:.0f} points",
+            "dilution rise ≥ 30 points with CI > 0 and shattering drop > 0; partial if both > 0 (pre-stated 2026-11-28)",
+            pk["dil_rise"] >= 0.3 and pk["dil_lo"] > 0 and pk["shat_drop"] > 0,
+            partial=pk["dil_rise"] > 0 and pk["shat_drop"] > 0,
+        ),
     ]
-    write_entry(SLUG, {"ks": ks, "table": table, "kinds": KINDS, "L0": L0, "atoms": ATOMS}, summary, repl, models=["TopK SAEs on synthetic manifolds (trained here)"], runtime_s=time.time() - t0, ndigits=3)
+    write_entry(SLUG, {"ks": ks, "table": table, "kinds": KINDS, "L0": L0, "atoms": ATOMS, "seed_r2": R2.mean(2), "r2_held": pk["r2_held"], "r2_sel": pk["r2_sel"]}, summary, repl, models=["TopK SAEs on synthetic manifolds (trained here)"], runtime_s=time.time() - t0, ndigits=3)
     log.info("sae-manifolds summary: %s", summary)

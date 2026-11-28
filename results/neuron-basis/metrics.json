@@ -1,20 +1,23 @@
 {
  "meta": {
   "slug": "neuron-basis",
-  "generated": "2026-11-27 22:27 UTC",
-  "git_commit": "3e2e8ed2388279f6d28ad62db5cfe6a1ac4789c2",
+  "generated": "2026-11-28 05:57 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "Qwen/Qwen3-1.7B"
   ],
-  "runtime_s": 221.133615,
+  "runtime_s": 159.31667,
   "quick": false
  },
  "summary": {
   "base_loss": 3.030207,
   "k480_loss": 4.112269,
   "k480_rel": 0.357092,
+  "k480_rel_lo": 0.341462,
+  "k480_rel_hi": 0.372396,
   "k480_kl": 1.609199,
-  "random480_loss": 14.9095,
+  "random480_loss": 14.202173,
   "drop480_loss": 14.328905,
   "band_loss": 3.045164,
   "band_kl": 0.052616,

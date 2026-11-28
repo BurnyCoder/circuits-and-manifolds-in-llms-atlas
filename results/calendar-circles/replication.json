@@ -2,7 +2,7 @@
  {
   "claim": "Days and months are arranged in cyclic order (GPT-2 small, layer 7)",
   "published": "circles for days, months, years in GPT-2 L7 (Fig. 1)",
-  "ours": "days order 1.00 (p = 0.003); months 1.00 (p = 0.0000); random-word control significant in 2% of 40 sets",
+  "ours": "days order 1.00 (p = 0.003); months 1.00 (p = 0.0000); random-word control significant in 2% of 40 sets (93-word pool); class-mean variance in 2 PCs: days 0.68, months 0.42 vs random-set 95th pct 0.47 (7 words), 0.33 (12 words)",
   "criterion": "both p < 0.05 and control false-positive rate \u2264 10%",
   "verdict": "pass"
  },

@@ -28,6 +28,7 @@ import torch
 
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
+from ..common.stats import rate_str
 
 log = get_logger()
 SLUG = "jlens"
@@ -239,6 +240,7 @@ def compute(ctx) -> None:
         "confirm_top10_j": int(sum(c["rank_j"] <= 10 for c in confirm)),
         "confirm_top10_logit": int(sum(c["rank_logit"] <= 10 for c in confirm)),
     }
+    wr = lambda rate, n: rate_str(round(rate * n), n)  # noqa: E731  rate with its Wilson 95% CI
     repl = [
         verdict_row(
             "The J-lens surfaces unspoken intermediate steps better than the logit lens",
@@ -252,7 +254,8 @@ def compute(ctx) -> None:
         verdict_row(
             "Swapping J-lens coordinates swaps the concept",
             "France → China swaps change capital/language/continent answers together (76/192 top-1 across functions, Claude)",
-            f"layer {best_swap['layer']}: target answer in top-5 for {best_swap['top5_success'] * 100:.0f}% of {best_swap['n']} prompts (random direction {best_swap['random_top5'] * 100:.0f}%)",
+            f"layer {best_swap['layer']}: target answer in top-5 for {wr(best_swap['top5_success'], best_swap['n'])} of {best_swap['n']} prompts "
+            f"(random direction {wr(best_swap['random_top5'], best_swap['n'])}; Wilson 95% CIs)",
             "≥ 50% and ≥ 30 points above the random-direction swap",
             best_swap["top5_success"] >= 0.5 and best_swap["top5_success"] - best_swap["random_top5"] >= 0.3,
             partial=best_swap["top5_success"] - best_swap["random_top5"] >= 0.2,
@@ -260,7 +263,8 @@ def compute(ctx) -> None:
         verdict_row(
             "Swapping J-space coefficients (paper-style sparse NNLS decomposition) swaps the concept",
             "category (\"think of a {category}\") swap with the J-space component: 59% top-5 vs 5% for the non-J component (Claude)",
-            f"layer {best_nnls['layer']}: target answer in top-5 for {best_nnls['nnls_top5'] * 100:.0f}% of {best_nnls['n']} prompts (random vector {best_nnls['nnls_random_top5'] * 100:.0f}%)",
+            f"layer {best_nnls['layer']}: target answer in top-5 for {wr(best_nnls['nnls_top5'], best_nnls['n'])} of {best_nnls['n']} prompts "
+            f"(random vector {wr(best_nnls['nnls_random_top5'], best_nnls['n'])}; Wilson 95% CIs)",
             "≥ 50% and ≥ 30 points above the random-vector swap (amendment 2026-11-27, same thresholds)",
             best_nnls["nnls_top5"] >= 0.5 and best_nnls["nnls_top5"] - best_nnls["nnls_random_top5"] >= 0.3,
             partial=best_nnls["nnls_top5"] - best_nnls["nnls_random_top5"] >= 0.2,

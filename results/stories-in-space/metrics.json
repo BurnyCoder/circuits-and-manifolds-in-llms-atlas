@@ -1,13 +1,14 @@
 {
  "meta": {
   "slug": "stories-in-space",
-  "generated": "2026-11-27 23:01 UTC",
-  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "generated": "2026-11-28 07:55 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "Qwen/Qwen2.5-1.5B-Instruct",
    "SimpleStories"
   ],
-  "runtime_s": 435.076979,
+  "runtime_s": 766.823573,
   "quick": false
  },
  "summary": {
@@ -17,6 +18,14 @@
   "best_r2": 0.542713,
   "r_geom": 0.111546,
   "r_geom_null95": 0.060774,
-  "n_rsa_prefixes": 600
+  "n_rsa_prefixes": 600,
+  "f_n_stories": 200,
+  "f_layer": 17,
+  "f_r2": 0.533051,
+  "f_r2_lo": 0.463497,
+  "f_r2_hi": 0.565558,
+  "f_bow_r2": 0.321959,
+  "f_rsa": 0.125957,
+  "f_rsa_null95": 0.066349
  }
 }

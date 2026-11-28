@@ -1,22 +1,25 @@
 {
  "meta": {
   "slug": "manifold-steering",
-  "generated": "2026-11-28 00:19 UTC",
-  "git_commit": "7409294329b83f8ff118d008dd45bfe36ed9494f",
+  "generated": "2026-11-28 07:08 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "Qwen/Qwen3-1.7B"
   ],
-  "runtime_s": 260.014336,
+  "runtime_s": 1180.44074,
   "quick": false
  },
  "summary": {
   "layer": 22,
   "accuracy": 0.68254,
-  "E_manifold": 1.72661,
-  "E_linear": 1.62517,
-  "via_manifold": 0.406593,
-  "via_linear": 0.008242,
-  "n_paths": 28,
+  "E_manifold": 1.647816,
+  "E_linear": 1.50389,
+  "via_manifold": 0.459478,
+  "via_linear": 0.021291,
+  "n_paths": 112,
+  "spline_vs_polyline": "L22 +0.062 [+0.057, +0.066]; L24 +0.089 [+0.083, +0.094]; L26 +0.098 [+0.092, +0.104]",
+  "n_layers_spline_better": 0,
   "endpoint_by_layer": "L12 0.00, L16 0.00, L20 0.07, L22 0.86, L24 1.00, L26 1.00"
  }
 }

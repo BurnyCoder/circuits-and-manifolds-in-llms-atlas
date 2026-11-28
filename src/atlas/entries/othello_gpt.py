@@ -24,6 +24,7 @@ from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
 from ..common.models import hooked
 from ..common.othello import SQ_TO_TOK, SQUARES, legal_moves, random_game
+from ..common.stats import bootstrap_ci
 
 log = get_logger()
 SLUG = "othello-gpt"
@@ -165,6 +166,15 @@ def compute(ctx) -> None:
         Y = rel[te].reshape(-1, 64)
         mask = Y != 0
         occ_acc.append(((pred == Y) & mask).sum().item() / mask.sum().item())
+    # Bootstrap CIs over test games at the best layer (review follow-ups, M8): all squares and occupied squares only.
+    bl = int(np.argmax(acc["mine/theirs"]))
+    with torch.no_grad():
+        Wb, bb = probes[bl]
+        pg = (torch.einsum("gpd,dsc->gpsc", R[bl][te].to(ctx.device).float(), Wb) + bb).argmax(-1).cpu()  # [game, pos, square]
+    Yg = rel[te]
+    hit = (pg == Yg).float()
+    acc_ci = bootstrap_ci(hit.mean((1, 2)).numpy())
+    occ_ci = bootstrap_ci((((pg == Yg) & (Yg != 0)).sum((1, 2)) / (Yg != 0).sum((1, 2))).numpy())
 
     # 3) Intervention: flip one occupied square's mine/theirs probe direction at the best middle layer (3–5).
     L = 3 + int(np.argmax(acc["mine/theirs"][4:7]))  # resid_post of block L == R[L+1]
@@ -267,7 +277,8 @@ def compute(ctx) -> None:
         verdict_row(
             "The board is linearly decodable relative to the current player",
             "linear mine/theirs probes ≈ 99.5% from layer 4; black/white ≈ 75% (Nanda et al.)",
-            f"mine/theirs {acc['mine/theirs'][best] * 100:.1f}% (best layer {best}); black/white {max(acc['black/white']) * 100:.1f}%; "
+            f"mine/theirs {acc['mine/theirs'][best] * 100:.1f}% [{acc_ci[1] * 100:.1f}, {acc_ci[2] * 100:.1f}] (best layer {best}; occupied squares only "
+            f"{occ_acc[best] * 100:.1f}% [{occ_ci[1] * 100:.1f}, {occ_ci[2] * 100:.1f}]; 95% CIs over test games); black/white {max(acc['black/white']) * 100:.1f}%; "
             f"random-init model {max(acc['random-init model']) * 100:.1f}%; shuffled labels {max(acc['shuffled labels']) * 100:.1f}%",
             "mine/theirs > 95% and ≥ 10 points above black/white, random-init and shuffled-label controls",
             acc["mine/theirs"][best] > 0.95

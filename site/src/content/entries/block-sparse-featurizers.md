@@ -7,7 +7,7 @@ models: [BSF / TopK SAE (trained here), InceptionV1]
 fidelity: recomputed
 evidence: correlational
 order: 620
-summary: Goodfire report that many concepts are small 2–4-dimensional subspaces that block-sparse featurizers capture whole. In our toy test blocks beat a TopK SAE clearly; the InceptionV1 curve ring turns out not to be specific to curve neurons.
+summary: Goodfire report that many concepts are small 2–4-dimensional subspaces that block-sparse featurizers capture whole. In our toy test blocks beat a TopK SAE clearly, also on superposed inputs; the InceptionV1 curve ring is not specific to curve neurons and is even stronger in an untrained network.
 viz: block-sparse
 data: block-sparse-featurizers.json
 locations:
@@ -37,10 +37,10 @@ citations:
     url: https://github.com/goodfire-ai/block-sparse-featurizer
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/block_sparse.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/block_sparse.py
     model: toy concept manifolds; InceptionV1 mixed3b
     outcome: ours
-    note: BSF vs TopK SAE on sphere-valued toy concepts; harmonic analysis of the curve-response block (top-16 PCs as a stand-in for a learned block).
+    note: BSF vs TopK SAE on sphere-valued toy concepts; harmonic analysis of the curve-response block (top-16 PCs as a stand-in for a learned block); confirmatory superposed-input evaluation and a random-init InceptionV1 control.
 ---
 
 ## In plain words
@@ -68,6 +68,13 @@ minimized at block size 2–4.
   neurons' responses but also {{random_channels_harm_share|pct}} for 10 random non-curve channels. The orientation ring
   is mostly a property of stimuli that vary only in orientation, not specific to curve detectors, so the InceptionV1
   pass says little (the toy comparison is unaffected).
+- Confirmatory tests (pre-stated 2026-11-28):
+  - On superposed inputs (4 concepts active at once, as in training) the block-sparse featurizer still reconstructs
+    each concept far better: median $R^2$ {{sup_bsf}} vs {{sup_sae}} for the TopK SAE, averaged over {{sup_n_seeds}} seeds,
+    ahead in {{sup_bsf_wins}} of {{sup_n_seeds}} seeds (pass).
+  - An *untrained* InceptionV1 gives an even higher harmonic share ({{randinit_h123|pct}}) than the trained network
+    ({{curve_h123|pct}}), so the control fails. Shifting each channel's tuning by a random orientation leaves the share
+    unchanged ({{shift_null_h123|pct}}): the measure tracks how smooth each channel's tuning is, not a learned ring.
 
 ## Limitations
 

@@ -1,12 +1,13 @@
 {
  "meta": {
   "slug": "colour-bicone",
-  "generated": "2026-11-27 22:18 UTC",
-  "git_commit": "f54feef5b5a6885889da93eebd0bb81e50b44806",
+  "generated": "2026-11-28 08:08 UTC",
+  "git_commit": "7d41639b6c197534d7bebd076ee144ab3d2f0b3b",
+  "src_dirty_at_start": false,
   "models": [
    "diffusers/FLUX.1-vae (VAE)"
   ],
-  "runtime_s": 29.760638,
+  "runtime_s": 32.866466,
   "quick": false
  },
  "summary": {
@@ -17,6 +18,15 @@
   "r_light": 0.98306,
   "r_hue": 0.989429,
   "r_sat": 0.928124,
-  "latent_channels": 16
+  "latent_channels": 16,
+  "min_r": 0.928124,
+  "rand_min_r": 0.084694,
+  "rand_r_light": 0.507343,
+  "rand_r_hue": 0.750573,
+  "rand_r_sat": 0.084694,
+  "rgb_min_r": 0.402643,
+  "rgb_r_light": 0.990867,
+  "rgb_r_hue": 0.402643,
+  "rgb_r_sat": 0.995809
  }
 }

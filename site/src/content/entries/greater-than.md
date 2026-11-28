@@ -43,7 +43,7 @@ citations:
     url: https://www.goodfire.ai/research/replicating-circuit-tracing-for-a-simple-mechanism
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/greater_than.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/greater_than.py
     model: GPT-2 small
     outcome: ours
     note: Probability difference, year × year heatmaps for all 32 on/off patching combinations, circuit-only faithfulness and a random-head control.

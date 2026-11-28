@@ -10,14 +10,14 @@
  {
   "claim": "Swapping J-lens coordinates swaps the concept",
   "published": "France \u2192 China swaps change capital/language/continent answers together (76/192 top-1 across functions, Claude)",
-  "ours": "layer 11: target answer in top-5 for 12% of 8 prompts (random direction 0%)",
+  "ours": "layer 11: target answer in top-5 for 12% [2, 47] of 8 prompts (random direction 0% [0, 32]; Wilson 95% CIs)",
   "criterion": "\u2265 50% and \u2265 30 points above the random-direction swap",
   "verdict": "fail"
  },
  {
   "claim": "Swapping J-space coefficients (paper-style sparse NNLS decomposition) swaps the concept",
   "published": "category (\"think of a {category}\") swap with the J-space component: 59% top-5 vs 5% for the non-J component (Claude)",
-  "ours": "layer 9: target answer in top-5 for 12% of 8 prompts (random vector 0%)",
+  "ours": "layer 9: target answer in top-5 for 12% [2, 47] of 8 prompts (random vector 0% [0, 32]; Wilson 95% CIs)",
   "criterion": "\u2265 50% and \u2265 30 points above the random-vector swap (amendment 2026-11-27, same thresholds)",
   "verdict": "fail",
   "post_hoc": "paper-style swap added after the pre-stated swap failed"

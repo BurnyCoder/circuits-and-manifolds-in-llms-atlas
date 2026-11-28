@@ -7,7 +7,7 @@ models: [Pythia-160M, Pythia-410M, Pythia-1B, Pythia-1.4B, Pythia-2.8B]
 fidelity: recomputed
 evidence: mixed
 order: 110
-summary: Larger models store numbers on a spiral (a line wound around circles of period 2, 5, 10 and 100) and use it to add like a clock. In Pythia up to 2.8B the helix fit is partial, and patching it works no better than a generic 9-D subspace.
+summary: Larger models store numbers on a spiral (a line wound around circles of period 2, 5, 10 and 100) and use it to add like a clock. In Pythia up to 2.8B the helix fit is partial, and patching it beats a random 9-D subspace but not the top principal directions.
 viz: number-helix
 data: number-helix.json
 locations:
@@ -37,10 +37,10 @@ citations:
     url: https://arxiv.org/abs/2304.01373
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/number_helix.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/number_helix.py
     model: Pythia 160M → 2.8B
     outcome: ours
-    note: First test of the helix below 6B parameters that we know of — embedding spectra, held-out helix fits with shuffled controls, and activation patching.
+    note: First test of the helix below 6B parameters that we know of — embedding spectra, cross-validated helix fits with shuffled controls, and activation patching against PCA-9 and random 9-D subspaces.
   - who: Neuronpedia — The Circuits Research Landscape (attribution graphs)
     url: https://www.neuronpedia.org/graph/info
     model: attribution graphs (model not stated)
@@ -74,6 +74,13 @@ helix(b) to the last token, and MLPs 14–18 build helix(a + b).
   {{patch_layer}}, moving the number's activation along the helix recovers a median {{patch_helix|pct}} of the clean
   logit difference, versus {{patch_full|pct}} for the full layer, {{patch_pca9|pct}} for the top-9 PCA directions and
   {{patch_linear|pct}} for the linear direction alone ({{patch_n}} prompts).
+- With 5-fold cross-validation over the numbers and the best layer chosen for every basis (the shuffled control
+  included), the helix reaches $R^2$ = {{helix_cv_r2}} (layer {{cv_layer}}) vs {{shuffled_cv_r2}} shuffled: just under the
+  pre-stated 0.5, partial as before.
+- Confirmatory patch test (pre-stated 2026-11-28), at every layer where the full-layer patch recovers at least half
+  the effect: {{patch_spec}} (mean per-prompt recovery; paired differences with 95% bootstrap CIs). The helix carries
+  far more than a random 9-D direction set from the same activation span, but no more than the top-9 PCA directions,
+  so the patching result supports "a low-dimensional number subspace", not the helix in particular (partial).
 
 ## Limitations
 

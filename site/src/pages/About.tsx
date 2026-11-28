@@ -9,8 +9,8 @@ export default function About() {
         The Atlas of Circuits &amp; Manifolds collects the most striking mechanisms found inside neural networks by
         mechanistic-interpretability research and makes each one explorable. It is maintained by Libor “Burny” Burian.
         Source code, data pipeline and reports:{' '}
-        <a href="https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas" target="_blank" rel="noopener">
-          github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas
+        <a href="https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas" target="_blank" rel="noopener">
+          github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas
         </a>
         .
       </p>

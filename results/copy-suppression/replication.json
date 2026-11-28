@@ -19,5 +19,12 @@
   "ours": "negative direct effect on 8/8 prompts; ablation raises the copied token's probability on 5/8",
   "criterion": "negative direct effect on \u2265 75% of prompts",
   "verdict": "pass"
+ },
+ {
+  "claim": "Confirmatory: L10H7 suppresses the copied token specifically",
+  "published": "copy suppression lowers the logit of tokens that appear earlier in the context (McDougall et al.)",
+  "ours": "direct effect lower on the copied token than on a control token (most probable next token not in the prompt) on 62% [43, 79] of 24 prompts; negative on 100% [86, 100] (Wilson 95% CIs)",
+  "criterion": "both \u2265 75% of the 24 prompts; partial if one holds (pre-stated 2026-11-28)",
+  "verdict": "partial"
  }
 ]

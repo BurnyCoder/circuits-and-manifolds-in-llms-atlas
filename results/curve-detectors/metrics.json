@@ -1,18 +1,24 @@
 {
  "meta": {
   "slug": "curve-detectors",
-  "generated": "2026-11-27 18:30 UTC",
-  "git_commit": "f9703bbeb4d29e4715f7f9dd76460ac124ea8d1d",
+  "generated": "2026-11-28 05:46 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "InceptionV1 (Lucid weights via Lucent)"
   ],
-  "runtime_s": 279.099859
+  "runtime_s": 204.942641,
+  "quick": false
  },
  "summary": {
   "sel_curve_median": 0.947427,
   "sel_control_median": 0.097087,
   "max_orient_gap": 65.0,
   "n_curve_gt_line": 10,
-  "n_controls": 20
+  "n_controls": 20,
+  "sel_control_resp_median": 0.107621,
+  "n_controls_resp": 18,
+  "sel_diff_lo": 0.747559,
+  "sel_diff_hi": 0.901043
  }
 }

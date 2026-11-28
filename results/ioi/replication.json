@@ -33,5 +33,12 @@
   "ours": "all 7 classes ablated \u2192 -1.27; 26 random heads \u2192 median 2.48",
   "criterion": "circuit knockout drops logit diff by > 70%, random median drops it by < 40%",
   "verdict": "pass"
+ },
+ {
+  "claim": "Confirmatory: the circuit is faithful with (head, position) nodes",
+  "published": "circuit keeps 87% of the logit difference (\u00a74), nodes = heads at their class positions (\u00a72.1)",
+  "ours": "circuit heads kept only at S1+1 / S2 / END by class, everything else mean-ablated: logit diff 3.35 [3.17, 3.53] = 95% of full model (all-position circuit: 93%)",
+  "criterion": "between 60% and 120% of the full model; partial 40\u201360% (pre-stated 2026-11-28)",
+  "verdict": "pass"
  }
 ]

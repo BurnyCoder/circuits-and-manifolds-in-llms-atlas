@@ -1,8 +1,9 @@
 {
  "meta": {
   "slug": "number-helix",
-  "generated": "2026-11-27 21:45 UTC",
-  "git_commit": "f54feef5b5a6885889da93eebd0bb81e50b44806",
+  "generated": "2026-11-28 08:04 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "EleutherAI/pythia-160m",
    "EleutherAI/pythia-410m",
@@ -10,7 +11,7 @@
    "EleutherAI/pythia-1.4b",
    "EleutherAI/pythia-2.8b"
   ],
-  "runtime_s": 2025.68966,
+  "runtime_s": 589.490205,
   "quick": false
  },
  "summary": {
@@ -20,14 +21,20 @@
   "shuffled_test_r2": -0.091916,
   "linear_test_r2": 0.24157,
   "circles_test_r2": 0.4124,
-  "acc_largest": 0.781726,
+  "acc_largest": 0.846939,
   "patch_layer": 1,
-  "patch_helix": 0.769154,
-  "patch_full": 0.99975,
-  "patch_pca9": 0.810822,
-  "patch_linear": 0.046502,
+  "patch_helix": 0.758131,
+  "patch_full": 1.000409,
+  "patch_pca9": 0.798555,
+  "patch_linear": 0.041833,
   "patch_n": 80,
   "top_periods": "100, 50, 33.3, 2",
-  "n_models": 5
+  "n_models": 5,
+  "helix_cv_r2": 0.499817,
+  "shuffled_cv_r2": -0.106889,
+  "linear_cv_r2": 0.259422,
+  "circles_cv_r2": 0.378872,
+  "cv_layer": 11,
+  "patch_spec": "L1: helix 72% vs random 9-D 2% (diff +70 [+66, +73]) vs PCA-9 78% (diff -6 [-9, -2]); L8: helix 69% vs random 9-D 4% (diff +65 [+62, +68]) vs PCA-9 65% (diff +4 [-1, +9])"
  }
 }

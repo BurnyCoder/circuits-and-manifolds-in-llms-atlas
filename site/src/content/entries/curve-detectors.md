@@ -42,7 +42,7 @@ citations:
     url: https://github.com/greentfrapp/lucent
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/curve_detectors.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/curve_detectors.py
     model: InceptionV1 (Lucid weights via Lucent)
     outcome: ours
     note: Synthetic arcs at 72 orientations × 4 radii plus straight lines, 20 random control neurons, and our own feature visualizations.
@@ -67,7 +67,8 @@ $S = |\sum_\theta r_\theta e^{i\theta}| / \sum_\theta r_\theta$ on rectified res
 **What we measured:**
 
 - Median selectivity {{sel_curve_median}} for the ten curve neurons versus {{sel_control_median}} for
-  {{n_controls}} random other mixed3b neurons.
+  {{n_controls}} random other mixed3b neurons ({{sel_control_resp_median}} over the {{n_controls_resp}} controls that
+  respond at all; 95% CI of the difference {{sel_diff_lo}}–{{sel_diff_hi}}).
 - {{n_curve_gt_line}} of 10 respond more than 1.5× as strongly to their best curve as to any straight line.
 - Their preferred orientations tile the circle: the largest gap between neighbours is {{max_orient_gap}}°.
 

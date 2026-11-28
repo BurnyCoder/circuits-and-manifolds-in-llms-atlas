@@ -14,5 +14,19 @@
   "criterion": "dilution at the largest k \u2265 30 points above the smallest k and shattering higher at the smallest k (amendment: the pre-stated claim had the direction reversed relative to the paper)",
   "verdict": "fail",
   "post_hoc": "claim restated (direction corrected) after a full run"
+ },
+ {
+  "claim": "Confirmatory: subspace capture has an interior sparsity optimum (fresh seeds)",
+  "published": "restricted R\u00b2 peaks near k = 4 (Bhalla et al. 2026, Fig. 4A)",
+  "ours": "k* = 6 on 3 selection seeds; on 3 held-out seeds R\u00b2(k*) \u2212 max(R\u00b2(3), R\u00b2(25)) = 0.075 [0.034, 0.121] (95% CI, seeds \u00d7 instances); held-out R\u00b2 by k: k=3: 0.42, k=4: 0.50, k=6: 0.54, k=8: 0.51, k=10: 0.51, k=14: 0.50, k=20: 0.48, k=25: 0.47. Originally pre-stated metric: capture fraction peaks at k = 3 (max 100%)",
+  "criterion": "k* \u2208 {4, 6} and CI of \u0394 > 0; partial if k* \u2208 {8, \u2026, 20} and CI > 0 (pre-stated 2026-11-28)",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Confirmatory: low k shatters, high k dilutes (fresh seeds)",
+  "published": "low k: shattering; high k: dilution (Fig. 4B)",
+  "ours": "held-out seeds: dilution rises by 99 points [94, 100] from k = 3 to 25; shattering drops by 0 points",
+  "criterion": "dilution rise \u2265 30 points with CI > 0 and shattering drop > 0; partial if both > 0 (pre-stated 2026-11-28)",
+  "verdict": "fail"
  }
 ]

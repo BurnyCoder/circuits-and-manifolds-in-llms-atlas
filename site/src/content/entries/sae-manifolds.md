@@ -7,7 +7,7 @@ models: [TopK SAEs on synthetic manifolds (trained here)]
 fidelity: recomputed
 evidence: correlational
 order: 610
-summary: Goodfire report that sparse autoencoders capture curved concepts only when the sparsity matches the data, and otherwise shatter or dilute them. Our synthetic rerun shows dilution at large k but a nearly flat capture curve and no shattering.
+summary: Goodfire report that sparse autoencoders capture curved concepts only when the sparsity matches the data, and otherwise shatter or dilute them. Our synthetic rerun, with 6 seeds per k, finds a modest but reproducible capture optimum at k = 6 and dilution at large k, but no shattering at small k.
 viz: sae-manifolds
 data: sae-manifolds.json
 tags: [SAE, manifolds, shattering, dilution, synthetic benchmark]
@@ -34,10 +34,10 @@ citations:
     url: https://github.com/goodfire-ai/sae-manifold
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/sae_manifolds.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/sae_manifolds.py
     model: TopK SAEs on 16 synthetic manifolds
     outcome: ours
-    note: Re-implemented synthetic benchmark (the official repo has no generator); simplified regime classification stated in the text.
+    note: Re-implemented synthetic benchmark (the official repo has no generator); simplified regime classification stated in the text. A confirmatory 6-seed sweep with held-out seeds tests the sparsity optimum.
 ---
 
 ## In plain words
@@ -65,6 +65,13 @@ present:
   k = {{k_max}}. At most {{capture_max|pct}} of manifolds get the "capture" label.
 - Shattering goes from {{shatter_at_min_k|pct}} at the smallest k to {{shatter_at_max_k|pct}} at k = {{k_max}}. Dilution goes
   from {{dilution_at_min_k|pct}} to {{dilution_at_max_k|pct}}.
+- Both rows above are post-hoc (one seed per k, metric chosen after a full run). The confirmatory test (pre-stated
+  2026-11-28) trains {{n_seeds}} fresh SAEs per k, picks the best k on half of them (k* = {{k_star_sel}}) and checks it on
+  the other half: there, $R^2$(k*) beats the better of the two ends by {{peak_delta}} (95% CI {{peak_delta_lo}} to
+  {{peak_delta_hi}} over seeds and instances). Held-out mean $R^2$ by k: {{r2_held_by_k}}. The sweet spot is real but
+  shallow. On the same seeds, dilution rises by {{dil_rise_held|pct}} from the smallest to the largest k, while
+  shattering never appears (drop {{shat_drop_held|pct}}), so the shattering → capture → dilution sequence is only
+  two-thirds reproduced.
 
 ## Limitations
 

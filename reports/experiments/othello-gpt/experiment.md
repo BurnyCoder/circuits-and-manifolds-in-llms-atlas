@@ -35,7 +35,7 @@ for the intervention; the unedited model's error against the edited board.
 | Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Othello-GPT predicts legal moves | illegal top-1 rate 0.01% (Li et al.) | 0.07% illegal top-1 moves on 500 held-out synthetic games | < 1% | ✅ pass |
-| The board is linearly decodable relative to the current player | linear mine/theirs probes ≈ 99.5% from layer 4; black/white ≈ 75% (Nanda et al.) | mine/theirs 98.9% (best layer 6); black/white 75.6%; random-init model 72.1%; shuffled labels 53.9% | mine/theirs > 95% and ≥ 10 points above black/white, random-init and shuffled-label controls | ✅ pass |
+| The board is linearly decodable relative to the current player | linear mine/theirs probes ≈ 99.5% from layer 4; black/white ≈ 75% (Nanda et al.) | mine/theirs 98.9% [98.8, 99.0] (best layer 6; occupied squares only 97.9% [97.7, 98.2]; 95% CIs over test games); black/white 75.6%; random-init model 72.2%; shuffled labels 53.9% | mine/theirs > 95% and ≥ 10 points above black/white, random-init and shuffled-label controls | ✅ pass |
 | Editing the linear board representation changes predicted legal moves | flip error 0.10 (linear) vs 2.72 (no intervention) (Nanda et al. Table) | layer 5: error 0.57 vs 1.26 without intervention and 1.26 for a random direction (n = 150) | intervention error < 50% of the no-intervention error and below the random-direction error | ✅ pass |
 <!-- /table:replication -->
 
@@ -67,7 +67,7 @@ than Li et al.'s (their error 0.10 vs 2.72), probably because we edit one layer 
 | `best_layer` | 6 |
 | `acc_rel_best` | 0.988803 |
 | `acc_abs_best` | 0.756173 |
-| `acc_rand_best` | 0.720867 |
+| `acc_rand_best` | 0.721549 |
 | `acc_shuf_best` | 0.539285 |
 | `occ_acc_best` | 0.979427 |
 | `int_layer` | 5 |

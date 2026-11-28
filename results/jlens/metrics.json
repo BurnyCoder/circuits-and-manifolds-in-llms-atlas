@@ -1,14 +1,14 @@
 {
  "meta": {
   "slug": "jlens",
-  "generated": "2026-11-28 00:47 UTC",
-  "git_commit": "212f9fd313dc7a0f4bfc0547ea19fa114c89725e",
+  "generated": "2026-11-28 05:52 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
   "src_dirty_at_start": false,
   "models": [
    "Qwen/Qwen3-1.7B",
    "neuronpedia/jacobian-lens"
   ],
-  "runtime_s": 105.829968,
+  "runtime_s": 95.368509,
   "quick": false
  },
  "summary": {

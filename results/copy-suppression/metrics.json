@@ -1,12 +1,14 @@
 {
  "meta": {
   "slug": "copy-suppression",
-  "generated": "2026-11-27 17:49 UTC",
-  "git_commit": "71f2afe9757578e6d47e45a747e12d66cb215392",
+  "generated": "2026-11-28 05:35 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "gpt2"
   ],
-  "runtime_s": 2.469273
+  "runtime_s": 123.167953,
+  "quick": false
  },
  "summary": {
   "n_tokens": 5000,
@@ -17,8 +19,12 @@
   "ctrl_top10_max": 0.4012,
   "ctrl_top10_argmax": "11.10",
   "n_prompts": 8,
+  "n_prompts_all": 24,
   "n_neg_direct": 8,
   "n_ablation_up": 5,
-  "mean_attn_copy": 0.34877
+  "n_neg_direct_all": 24,
+  "n_ablation_up_all": 13,
+  "mean_attn_copy": 0.335905,
+  "n_below_control": 15
  }
 }
