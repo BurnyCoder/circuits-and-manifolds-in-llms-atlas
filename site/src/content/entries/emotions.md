@@ -7,7 +7,7 @@ models: [Qwen3-1.7B]
 fidelity: replicated
 evidence: mixed
 order: 420
-summary: A model's internal "emotion vectors" arrange themselves by pleasantness and intensity like human emotion ratings — and adding one changes the model's choices.
+summary: Anthropic found emotion vectors in Claude laid out by pleasantness and intensity, and steering with them changed its choices. In Qwen3-1.7B we recover the pleasantness axis strongly, but not the intensity axis or the effect on choices.
 viz: emotions
 data: emotions.json
 locations:

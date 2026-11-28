@@ -51,8 +51,9 @@ the two ends passes through "voids" where decoded frames are garbled or the car 
 
 A conv encoder maps each frame to a 64-D LayerNorm latent, a GRU combines it with the action, and a decoder predicts the
 next frame as a residual. The manifold is a smoothing spline through position-binned means of the latents. Isometry:
-correlation between distances along the path and true position differences over 50 anchors (paper: r = 0.996 along the
-manifold, 0.06 for straight chords).
+correlation between distances along the path and true position differences over 50 anchors (the paper's metric differs:
+it correlates arc lengths on the activation manifold with arc lengths on the behaviour manifold, r = 0.996 over 1,225
+anchor pairs, vs r = 0.06 for activation-space chords).
 
 **What we measured** ({{n_frames}} frames from 100 rollouts):
 

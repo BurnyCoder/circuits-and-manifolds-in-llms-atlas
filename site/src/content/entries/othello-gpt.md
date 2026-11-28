@@ -50,7 +50,7 @@ replications:
     url: https://arxiv.org/abs/2309.00941
     model: Othello-GPT
     outcome: replicated
-    note: Replaced Li et al.'s nonlinear MLP probes with linear mine/theirs probes (~99.5% from layer 4) and showed simple vector-addition interventions work as well as gradient-based edits.
+    note: Replaced Li et al.'s nonlinear MLP probes with linear mine/theirs probes (≥ 99% from layer 4; peak 99.6%) and showed simple vector-addition interventions work as well as gradient-based edits.
 ---
 
 ## In plain words

@@ -56,7 +56,7 @@ believe it was the Golden Gate Bridge ("Golden Gate Claude", a public demo in Ma
 Three dictionaries (1M, 4M, 34M features) on the middle-layer residual stream; dead-feature fractions ≈ 2%, 35% and 65%;
 fewer than 300 features active per token; reconstruction explains at least 65% of variance; loss follows a power law in
 compute. Feature steering clamps a feature's activation and lets the decoder direction flow through the rest of the
-model. The arXiv copy of the paper (2605.29358) carries a CC BY 4.0 license (to verify).
+model. The arXiv copy of the paper (2605.29358) carries a CC BY 4.0 license.
 
 ## Limitations
 

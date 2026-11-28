@@ -42,7 +42,7 @@ its activations: the network computes the Bayes-optimal belief even though nobod
 Mess3 has labelled transition matrices $T^{(t)}_{ij} = P(\text{emit } t, \text{next state } j \mid \text{state } i)$;
 an observer updates beliefs as $\eta \leftarrow \eta T^{(t)} / (\eta T^{(t)} \mathbf{1})$. Because the next-token
 distribution depends on the history only through $\eta$, an optimal predictor must carry $\eta$; the paper shows an affine
-map from the final residual stream recovers it (their Fig. 3) and that for other processes the belief geometry can be
+map from the final residual stream recovers it (their Fig. 5C, arXiv v3) and that for other processes the belief geometry can be
 spread across layers.
 
 **What we measured** ({{steps}} training steps):

@@ -7,14 +7,14 @@ models: [TopK SAEs on synthetic manifolds (trained here)]
 fidelity: recomputed
 evidence: correlational
 order: 610
-summary: Sparse autoencoders chop curved concepts into pieces — "capture" only works when the sparsity matches the data; otherwise manifolds shatter or dilute.
+summary: Goodfire report that sparse autoencoders capture curved concepts only when the sparsity matches the data, and otherwise shatter or dilute them. Our synthetic rerun shows dilution at large k but a nearly flat capture curve and no shattering.
 viz: sae-manifolds
 data: sae-manifolds.json
 tags: [SAE, manifolds, shattering, dilution, synthetic benchmark]
 related: [calendar-circles, block-sparse-featurizers, toy-superposition]
 quote:
   text: When we train SAEs on actual neural network representations, we observe dilution.
-  source: bhalla2026
+  source: bhalla-blog
 citations:
   - id: bhalla2026
     title: Do Sparse Autoencoders Capture Concept Manifolds?

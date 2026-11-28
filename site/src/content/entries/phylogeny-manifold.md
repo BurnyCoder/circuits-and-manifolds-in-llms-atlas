@@ -40,7 +40,7 @@ the distance between two cities measured along the Earth's surface rather than t
 
 ## How it works (technical)
 
-Embeddings are averaged over 4-kbp genome regions at layer 24 of 32. A k-nearest-neighbour graph (K = 27, angular
+Embeddings at layer 24 of 32 are averaged over the last 2 kbp of random 4-kbp genome regions. A k-nearest-neighbour graph (K = 27, angular
 distance) gives geodesic distances that correlate roughly linearly with phylogenetic branch-length distance (GTDB, 120
 marker genes); Mycoplasmatales are the outlier. A learned flat ~10-dimensional "phylogeny subspace" predicts distances
 with r = 0.98 on training clades and ≈ 0.9 on held-out clades, capturing ~70% of variance — "flat structure plus

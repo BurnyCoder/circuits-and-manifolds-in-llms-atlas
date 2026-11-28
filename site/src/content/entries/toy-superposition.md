@@ -27,8 +27,8 @@ replications:
   - who: zroe1 — replication of Toy Models of Superposition
     url: https://github.com/zroe1/toy-models-of-superposition
     model: toy ReLU models
-    outcome: replicated
-    note: Reproduces the superposition phase diagrams; notes sensitivity to learning rate and batch size.
+    outcome: partial
+    note: Superposition and its dependence on sparsity replicate; the trained phase diagrams only roughly match theory (marked as still in progress); results depend strongly on learning rate and batch size.
 ---
 
 ## In plain words

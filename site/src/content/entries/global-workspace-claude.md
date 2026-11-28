@@ -30,6 +30,11 @@ citations:
     authors: Ayonrinde, Lindsey
     year: 2026
     url: https://transformer-circuits.pub/2026/october-update/index.html
+  - id: jpp-repo
+    title: "jpp_lens (code and recall@10 numbers for the J++ lens)"
+    authors: Ayonrinde, Lindsey (safety-research)
+    year: 2026
+    url: https://github.com/safety-research/jpp_lens
 replications:
   - who: This atlas (Qwen3-1.7B)
     url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/jlens.py
@@ -54,7 +59,8 @@ Psychologists describe a "global workspace": a small stage of things you are cur
 while lots of processing happens backstage. Anthropic found something analogous in Claude. A lens that reads what each
 layer "would say" exposes a band of middle layers holding a couple of dozen concepts at once — the ones the model can
 report, hold on purpose, reason with silently (21, then 42, before answering 49), and pass along. Swapping one concept
-there (France ↔ China) changes every downstream answer about capitals, languages and currencies together; wiping it out
+there (France → China) changes its answers about capital, language and continent together (one example; 76/192 top-1
+across categories); wiping it out
 destroys multi-step reasoning while routine tasks survive.
 
 ## How it works (technical)
@@ -64,7 +70,7 @@ sparse non-negative combination of up to ~25 J-lens vectors. Published results: 
 swaps succeed in the top 5 for 59% (J-space component) vs 5% (non-J component); multi-hop coordinate swaps 54–70% across
 Haiku/Sonnet/Opus 4.5; ablating broadcast heads drops injected-thought reports from 0.54 to 0.09; ablating
 evaluation-awareness directions cuts verbalized eval awareness from 71% to 3%. The October 2026 J++ lens raises recall@10
-to 55.2% vs 35.7% for the J-lens on Qwen3.6-27B.
+to 55.2% vs 35.7% for the J-lens on Qwen3.6-27B (numbers from the jpp_lens repository README).
 
 ## Limitations
 

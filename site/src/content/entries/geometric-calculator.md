@@ -7,7 +7,7 @@ models: [Llama-3.1-8B (paper), Pythia-410M/1.4B/2.8B (our probes)]
 fidelity: replicated
 evidence: causal
 order: 640
-summary: Asked "16 months after August?", Llama turns August into 8, adds 16 on base-10 circles like a calculator, and maps 24 back to a month.
+summary: Asked "16 months after August?", Llama turns August into 8, adds 16 on base-10 circles like a calculator, and maps 24 back to a month. Fourier probes in Pythia show only weak parity and mod-10 signals.
 viz: geometric-calculator
 data: calculator-probes.json
 locations:

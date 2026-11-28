@@ -21,7 +21,7 @@ citations:
     venue: Transformer Circuits Thread (arXiv 2604.07729)
     url: https://transformer-circuits.pub/2026/emotions/index.html
   - id: blog
-    title: Emotion concepts and their function (blog post)
+    title: Emotion concepts in a large language model (blog post)
     authors: Anthropic
     year: 2026
     url: https://www.anthropic.com/research/emotion-concepts-function

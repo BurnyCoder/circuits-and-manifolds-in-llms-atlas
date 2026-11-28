@@ -7,7 +7,7 @@ models: [Pythia-160M, Pythia-410M, Pythia-1B, Pythia-1.4B, Pythia-2.8B]
 fidelity: recomputed
 evidence: mixed
 order: 110
-summary: Numbers are stored on a spiral — a line wound around circles of period 2, 5, 10 and 100 — that larger models use to add like a clock.
+summary: Larger models store numbers on a spiral (a line wound around circles of period 2, 5, 10 and 100) and use it to add like a clock. In Pythia up to 2.8B the helix fit is partial, and patching it works no better than a generic 9-D subspace.
 viz: number-helix
 data: number-helix.json
 locations:
@@ -41,11 +41,11 @@ replications:
     model: Pythia 160M → 2.8B
     outcome: ours
     note: First test of the helix below 6B parameters that we know of — embedding spectra, held-out helix fits with shuffled controls, and activation patching.
-  - who: Neuronpedia attribution graphs on Gemma-2-2B
+  - who: Neuronpedia — The Circuits Research Landscape (attribution graphs)
     url: https://www.neuronpedia.org/graph/info
-    model: Gemma-2-2B + transcoders
-    outcome: failed
-    note: Addition graphs show lookup-table-like features rather than a clean helix (attributed by the authors partly to transcoder limitations).
+    model: attribution graphs (model not stated)
+    outcome: partial
+    note: Inconclusive rather than a failure. Addition graphs show lookup-table features and do not seem to recover the helix; the authors present this as a limitation of transcoders (they may not preserve geometry), not as evidence that the model lacks a helix.
 ---
 
 ## In plain words

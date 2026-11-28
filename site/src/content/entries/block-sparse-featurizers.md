@@ -16,7 +16,8 @@ tags: [block sparsity, SAE, vision, curve detectors, multidimensional features]
 related: [curve-detectors, sae-manifolds, colour-bicone]
 quote:
   text: most concepts appear to be multidimensional – and specifically, two- to four-dimensional
-  source: fel2026
+  source: bsf-blog
+  where: said of vision models
 citations:
   - id: fel2026
     title: "Structuring Sparsity: Block-Sparse Featurizers Capture Visual Concept Manifolds"
