@@ -164,6 +164,17 @@ results were known, so they are listed as post-hoc as well.
 | manifold-steering | Endpoint check in code for layers 12, 16, 20 (reported only) and 22, 24, 26. | reported, no verdict |
 | sae-features | Golden Gate specificity counted separately ("golden gate" or "san francisco" only); claim renamed to a bridge feature. | reported, no verdict |
 
+## J-lens confirmatory test on fresh prompts (added 2026-11-28 01:35 WET, before running)
+
+The methods review (M11) found the J-lens intermediate-rank row rests on n = 3 and is post-hoc. This test reuses the
+pre-stated metric unchanged on 24 new two-hop prompts written before any lens readout was computed on them. The prompts
+were filtered only by tokenization (every intermediate is one Qwen3 token with a leading space; checked with the
+tokenizer alone).
+
+| Entry | Data | Claim | Metric | Pass criterion |
+|---|---|---|---|---|
+| jlens | 24 prompts, 3 templates × 8: "Fact: The capital of the state containing {city} is" (Miami, Chicago, Seattle, Detroit, Las Vegas, Philadelphia, Cleveland, New Orleans); "Fact: The capital of the country where the {landmark} is located is" (Colosseum, Kremlin, Acropolis, Taj Mahal, Great Wall, Sagrada Familia, pyramids of Giza, CN Tower); "Fact: The language spoken in the country whose capital is {capital} is" (Berlin, Lisbon, Tokyo, Moscow, Stockholm, Warsaw, Oslo, Ankara) | The J-lens surfaces the unspoken intermediate (state / country) better than the logit lens | best rank over lens layers of the intermediate token at the last position, J-lens vs logit lens, per prompt | the J-lens rank is strictly better on more prompts than the reverse **and** a two-sided sign test over non-tied prompts gives p < 0.05; partial if it wins more prompts with p ≥ 0.05; fail otherwise |
+
 ## Later batches (criteria are added here before each batch runs)
 
 | Batch | Entries | Models | Where |
