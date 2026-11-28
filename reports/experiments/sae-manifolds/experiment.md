@@ -15,20 +15,25 @@ When does a TopK SAE capture a concept manifold with a compact group of atoms, a
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
-| Subspace capture has a sparsity sweet spot | restricted R² (k_i atoms reconstruct each manifold from superposed codes) peaks near k = 4 (Bhalla et al. 2026, Fig. 4A) | mean restricted R² peaks at k = 6 (0.53; 0.42 at k = 3, 0.48 at k = 25); regime label 'capture' for up to 100% of 48 manifolds | restricted-R² peak at k ∈ {3, 4, 6} (amendment 2026-11-27: the paper's capture score; was 'capture fraction') | ✅ pass |
-| Sparsity moves the SAE from shattering (small k) to dilution (large k) | low k: shattered across atoms; intermediate k: capture; high k: redundant atoms lose specificity (dilution) (Fig. 4B) | shattering 0% at k = 3 → 0% at k = 25; dilution 0% → 100% | dilution at the largest k ≥ 30 points above the smallest k and shattering higher at the smallest k (amendment: the pre-stated claim had the direction reversed relative to the paper) | ❌ fail |
+| Subspace capture has a sparsity sweet spot | restricted R² (k_i atoms reconstruct each manifold from superposed codes) peaks near k = 4 (Bhalla et al. 2026, Fig. 4A) | mean restricted R² peaks at k = 6 (0.53; 0.42 at k = 3, 0.48 at k = 25); regime label 'capture' for up to 100% of 48 manifolds | restricted-R² peak at k ∈ {3, 4, 6} (amendment 2026-11-27: the paper's capture score; was 'capture fraction') | ✅ pass (post-hoc: metric switched to restricted R² after a full run whose log showed its peak) |
+| Sparsity moves the SAE from shattering (small k) to dilution (large k) | low k: shattered across atoms; intermediate k: capture; high k: redundant atoms lose specificity (dilution) (Fig. 4B) | shattering 0% at k = 3 → 0% at k = 25; dilution 0% → 100% | dilution at the largest k ≥ 30 points above the smallest k and shattering higher at the smallest k (amendment: the pre-stated claim had the direction reversed relative to the paper) | ❌ fail (post-hoc: claim restated (direction corrected) after a full run) |
 <!-- /table:replication -->
 
 ## Interpretation
 
-The restricted-R² sweet spot replicates: capture peaks at intermediate k and degrades at both ends. The regime labels show the paper's capture → dilution transition as k grows, with most manifolds captured at small k and all diluted at large k. We do not see the paper's shattering at the smallest k, so the shattering-to-dilution claim fails on its shattering half. Absolute restricted R² is lower than the paper's.
+Both rows are post-hoc: the restricted-R² metric for claim 1 was adopted after a full run whose log already showed its
+peak, and claim 2 was restated (direction corrected) after the same run. The curve is flat: the maximum
+(`r2_best` at `k_best_r2` in the summary table) is nearly tied with k = 10 on the site's curve and only a few
+hundredths above the ends (`r2_min_k`, `r2_max_k`), with one SAE seed per k and no CI. This does not support "degrades at both ends". The regime labels show the
+paper's capture → dilution transition as k grows; we do not see shattering at the smallest k. Absolute restricted R²
+is lower than the paper's. Details: [methods review](../../reviews/methods-review.md), C2.
 
 ## Limitations
 
 - The regime label (support × spread thresholds) is ours; the paper shows a phase diagram.
-- One SAE seed per k; no Ising-coupling recovery.
+- One SAE seed per k; no Ising-coupling recovery. To do: ≥ 3 seeds per k and a pre-stated bootstrap peak test.
 
 ## All summary values
 

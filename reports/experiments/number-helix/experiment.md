@@ -15,7 +15,7 @@ Five Pythia models (160M–2.8B). For each, the Fourier spectrum of number-token
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Number embeddings are periodic with periods 2, 5, 10 | Fourier peaks at T = 2, 5, 10 in GPT-J (Kantamneni & Tegmark Fig. 2); 2, 2.5, 5, 10 (Zhou et al. 2024) | pythia-2.8b: strongest embedding periods 100, 50, 33.3, 2 | at least two of {2, 5, 10} among the top-4 periods (±5%) | ❌ fail |
 | Numbers lie on a generalized helix (T = 2, 5, 10, 100) | helix fits the residual stream of GPT-J / Pythia-6.9B / Llama-3.1-8B | pythia-2.8b layer 11: held-out R² 0.49 vs -0.09 for a shuffled helix, 0.24 linear-only | held-out helix R² ≥ 0.5 and ≥ 0.2 above the shuffled control | 🟡 partial |
@@ -24,11 +24,21 @@ Five Pythia models (160M–2.8B). For each, the Fourier spectrum of number-token
 
 ## Interpretation
 
-This is the first small-model evidence we know of. Pythia-1.4B and 2.8B solve two-digit addition well enough to test, and in 2.8B patching only the 9-dimensional helix subspace recovers most of the full-layer effect. The linear-only basis recovers almost nothing, which supports the trigonometric (not magnitude) account. The held-out helix fit is far above the shuffled control but lands just under the pre-stated R² threshold (partial). The embedding spectrum is dominated by long periods (100, 50, 33) and does not show the 2/5/10 peaks reported for larger models (fail).
+Pythia-1.4B and 2.8B solve two-digit addition well enough to test, and in 2.8B patching the 9-dimensional helix
+subspace recovers most of the full-layer effect at early layers (the pre-stated criterion passes). **This is not
+helix-specific:** a dimension-matched 9-D PCA subspace recovers about as much (`patch_pca9` vs `patch_helix` at layer `patch_layer`
+in the summary table below; slightly more, in fact), whereas the paper finds the helix ahead of PCA (7.21 vs 6.13 logit
+difference, Kantamneni & Tegmark Table 1). The 1-D linear patch recovering almost nothing is not evidence for the
+trigonometric account, because it has 8 fewer dimensions. By mid-depth the full-layer recovery itself is near zero, so
+the information has left the operand token. The held-out helix fit is far above the shuffled control but lands just
+under the pre-stated R² threshold (partial). The embedding spectrum is dominated by long periods (100, 50, 33) and
+does not show the 2/5/10 peaks reported for larger models (fail). Details: [methods review](../../reviews/methods-review.md), M7.
 
 ## Limitations
 
 - Models below 1B cannot add, so the causal test applies only to 1.4B and 2.8B.
+- The helix-fit layer is the argmax of held-out R² over 33 layers with one split of 20 test numbers.
+- To do: random 9-D subspace control, k-fold CV over a, max over layers for every basis.
 - The paper's models (GPT-J, Pythia-6.9B, Llama-3.1-8B) are in the RunPod tier, not run here.
 
 ## All summary values

@@ -15,20 +15,27 @@ Last-token activations of "{a}+{b}=" (a, b ∈ 1…99) in Pythia-410M, 1.4B and 
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Addition results are encoded on base-10 circles (T = 2, 5, 10, …) | Fourier probes peak at T ∈ {2, 5, 10, 20, 50, 100} in Llama-3.1-8B (Feucht et al.) | pythia-2.8b layer 21: top-8 periods 150, 149, 148, 147, 146, 145, 144, 143 (0 of the base-10 set); R²(T=10) 0.20 vs neighbours -0.01 | ≥ 3 base-10 periods in the top 8 and R²(T=10) ≥ neighbours + 0.1 | ❌ fail |
-| Base-10 periods stand out as peaks (amendment: peak score, removes the long-period magnitude trend) | Fourier probes peak at T ∈ {2, 5, 10, 20, 50, 100} in Llama-3.1-8B (Feucht et al.) | pythia-2.8b layer 21: top-8 periods by R²(T) − mean R²(T±1): 2, 10, 38, 58, 5, 7, 15, 17 (3 of the base-10 set) | ≥ 3 base-10 periods among the top-8 peaks and R²(T=10) ≥ neighbours + 0.1 (same thresholds) | ✅ pass |
+| Base-10 periods stand out as peaks (amendment: peak score, removes the long-period magnitude trend) | Fourier probes peak at T ∈ {2, 5, 10, 20, 50, 100} in Llama-3.1-8B (Feucht et al.) | pythia-2.8b layer 21: top-8 periods by R²(T) − mean R²(T±1): 2, 10, 38, 58, 5, 7, 15, 17 (3 of the base-10 set) | ≥ 3 base-10 periods among the top-8 peaks and R²(T=10) ≥ neighbours + 0.1 (same thresholds) | ✅ pass (post-hoc: peak-score analysis added after the pre-stated ranking failed) |
 <!-- /table:replication -->
 
 ## Interpretation
 
-Base-10 periods (2, 10, 5) stand out as peaks in Pythia-2.8B, consistently across layers. That is small-model evidence for the paper's number circles. The pre-stated global ranking fails because periods longer than the range of a+b act as a monotone magnitude code with high R², which says nothing about circles. We report both rows.
+Weak evidence for a mod-10 code, not for base-10 circles. The amended peak-score row is post-hoc (added after the
+pre-stated ranking failed) and is excluded from the tally. Even on its own terms it is weak: one of its three base-10
+"peaks", T = 5, has held-out R² near zero (see the per-period curves on the site), so the pass rests on T = 2 (parity) and T = 10 (R² about
+0.2 in late layers). Non-base-10 periods (4, 7, 15) also recur among the peaks, the peak score has no null, the verdict
+layer is the one that maximises R²(2) + R²(5) + R²(10), and only two of four layers give three hits. The pre-stated
+global ranking fails because periods longer than the range of a+b act as a monotone magnitude code. Details: [methods review](../../reviews/methods-review.md), M6.
 
 ## Limitations
 
 - The paper's 28-neuron ablations and DAS are not reproduced; probes are correlational.
-- Long-period artifacts make global rankings misleading for this probe family.
+- The train/test split is by row, so some test prompts repeat training prompts or their commuted form (b + a).
+- To do: count a peak only if R²(T) > 0.05, add a permutation null for the hit count, fix the layer a priori and split
+  by unordered pair {a, b}.
 
 ## All summary values
 

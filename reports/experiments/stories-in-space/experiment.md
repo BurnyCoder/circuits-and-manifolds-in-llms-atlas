@@ -15,20 +15,25 @@ Qwen2.5-1.5B-Instruct reads 160 SimpleStories sentence by sentence (all prefixes
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | The model's running emotional reading is linearly decodable | ridge probes predict per-sentence emotion ratings (RMSE 0.09) from layer-9 activations (Llama-3.1-8B-Instruct) | held-out-story R² 0.54 at layer 23 (1681 prefixes from 160 stories) | R² ≥ 0.5 | ✅ pass |
-| Behaviour and activation geometry agree | distance-matrix correlation r = .92 (emotions) | RSA Spearman r = 0.11 over 600 prefixes (story-shuffle null 95th percentile 0.06) | r ≥ 0.6 (amendment 2026-11-27: computed over prefixes, not 3–6 emotion centroids) | ❌ fail |
+| Behaviour and activation geometry agree | distance-matrix correlation r = .92 (emotions) | RSA Spearman r = 0.11 over 600 prefixes (story-shuffle null 95th percentile 0.06) | r ≥ 0.6 (amendment 2026-11-27: computed over prefixes, not 3–6 emotion centroids) | ❌ fail (post-hoc: RSA replaced the centroid analysis after the smoke test) |
 <!-- /table:replication -->
 
 ## Interpretation
 
-The emotional reading is linearly decodable from activations of unseen stories, best in late layers (pass). Behaviour and activation geometry agree only weakly: the RSA correlation is above the story-shuffle null but far below the paper's value (fail). The model's internal geometry carries the ratings, but the full prefix-by-prefix distance structure is not shared.
+The emotional reading is decodable from activations of unseen stories, but only just: the best layer passes R² 0.5 by
+a few hundredths, only a third of layers reach it, the layer is the argmax of test R², and there is no text baseline
+(e.g. a bag-of-words ridge on the prefix). Behaviour and activation geometry agree only weakly: the RSA correlation
+(post-hoc, it replaced the centroid analysis after the smoke test) is above the story-shuffle null but far below the
+paper's value. Details: [methods review](../../reviews/methods-review.md), M9.
 
 ## Limitations
 
 - SimpleStories are mostly cheerful, so ratings vary little for some emotions.
 - Expected digit ratings from a 1.5B model are a noisy behavioural readout.
+- To do: bag-of-words baseline, layer chosen on validation stories, bootstrap CIs over stories.
 
 ## All summary values
 

@@ -3,7 +3,8 @@
 **An interactive, cited field guide to the mechanisms found inside neural networks.** It covers attention-head
 circuits, curved representation manifolds, interpretable neurons, sparse-autoencoder (SAE) features, steering vectors,
 attribution graphs and lenses. Wherever an open model exists, the data is **recomputed on open models with our own
-code**, and each recomputation is scored against criteria written down before it ran.
+code**, and each recomputation is scored against criteria meant to be written down before it ran (an audit found
+exceptions; those rows are flagged post-hoc and not counted).
 
 🌐 **Website:** https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/ · **Author:** Libor "Burny" Burian ·
 **Code:** MIT
@@ -16,9 +17,11 @@ code**, and each recomputation is scored against criteria written down before it
   and say honestly when a finding did not hold up.
 - **For experts.** Each 🟢 entry re-tests a paper's central claims on open models (GPT-2, Pythia, Qwen3/Qwen2.5,
   TransformerLens toy models, Othello-GPT, InceptionV1, FLUX VAE, models trained here). The tests use matched controls
-  (random heads/directions, shuffled labels, random-init models) and 95% bootstrap CIs. Each claim gets a pass /
-  partial / fail verdict against a criterion fixed in [`reports/planned-runs.md`](reports/planned-runs.md) before the
-  run. Closed-model findings (Claude, Evo 2) are 🟠 interactive redraws/simulations built from the published numbers,
+  (random heads/directions, shuffled labels, random-init models); only three entries compute 95% bootstrap CIs so far.
+  Each claim gets a pass / partial / fail verdict against a criterion in
+  [`reports/planned-runs.md`](reports/planned-runs.md). An adversarial methods review
+  ([`reports/reviews/methods-review.md`](reports/reviews/methods-review.md)) found that some analyses were changed
+  after results had been seen; those rows are marked **post-hoc**, shown with the reason, and excluded from the tally. Closed-model findings (Claude, Evo 2) are 🟠 interactive redraws/simulations built from the published numbers,
   shown next to open-model replications by others. Everything is cited and deep-linked. Each entry has at most one
   verbatim quote of 15 words or fewer, and everything else is paraphrased.
 
@@ -35,8 +38,9 @@ single-lab. The atlas puts circuits *and* geometry in one place. It labels fidel
    inside clickable model diagrams (GPT-2, Qwen3, Othello-GPT, InceptionV1, Claude). Aggregate "General neural network"
    (every finding from every model on one input → output network), "General LLM" and "General transformer" views show
    where in relative depth each kind of mechanism tends to live.
-2. Pre-registered-style replication checks of many classic results on open models, with controls and CIs, in one
-   codebase where `python -m atlas.run --entries all` regenerates every number.
+2. Pre-registered-style replication checks of many classic results on open models, with controls, in one codebase
+   where `python -m atlas.run --entries all` regenerates every number, and with post-hoc analyses flagged rather than
+   counted.
 3. Small-model tests that the literature lacks. Examples: Fourier/helix probes for addition across Pythia sizes,
    counting manifolds in Qwen3-1.7B, emotion-vector geometry and steering in a 1.7B model, and Goodfire-style neuron
    sparsification on Qwen3.
@@ -55,8 +59,8 @@ per-entry reports for every claim):
 <!-- table:headlines -->
 | Entry | Headline claim | Published | Ours | Verdict |
 |---|---|---|---|---|
-| actadd | Adding a 'weddings' vector steers the topic | > 90% of completions about weddings vs ~2% unsteered (Turner et al.) | wedding words in 0% of completions unsteered → 75% at c = 4 (random vector 0%); best 92% | ✅ pass |
-| attribution-graphs | Two-hop factual recall goes through an intermediate concept | Dallas → Texas → Austin path plus a direct shortcut (Claude 3.5 Haiku) | positive embedding → intermediate → answer path in 3/3 public Gemma-2-2B graphs (Dallas, Oakland, Shanghai) | ✅ pass |
+| actadd | Adding a 'weddings' vector steers the topic | > 90% of completions about weddings vs ~2% unsteered (Turner et al.) | wedding words in 0% [0, 14] of completions unsteered → 75% [55, 88] at c = 4 (random vector 0% [0, 14]); best 92% (n = 24 per cell; Wilson 95% CIs) | ✅ pass |
+| attribution-graphs | Two-hop factual recall goes through an intermediate concept | Dallas → Texas → Austin path plus a direct shortcut (Claude 3.5 Haiku) | positive embedding → intermediate → answer path in 3/3 public Gemma-2-2B graphs (Dallas, Oakland, Shanghai) | ✅ pass (post-hoc: criteria written after three runs had moved this result from 0/3 to 3/3) |
 | belief-fractal | Belief states are linearly decodable from the final residual stream | Mess3: linear regression recovers the belief fractal (MSE ≈ 4e-4, paper Fig. 3) | held-out R² 0.975 (MSE 3.99e-03) after 30000 steps vs 0.932 at initialization | ❌ fail |
 | block-sparse-featurizers | Blocks capture multi-dimensional concepts that single-direction SAEs fragment | per-block R²: BSF 0.93–0.97 vs TopK SAE ≈ 0.53 (toy, Fel et al. 2026) | median per-concept R²: BSF 1.00 vs TopK SAE 0.64 (32 sphere concepts in 3-D subspaces of d = 128) | ✅ pass |
 | calculator-probes | Addition results are encoded on base-10 circles (T = 2, 5, 10, …) | Fourier probes peak at T ∈ {2, 5, 10, 20, 50, 100} in Llama-3.1-8B (Feucht et al.) | pythia-2.8b layer 21: top-8 periods 150, 149, 148, 147, 146, 145, 144, 143 (0 of the base-10 set); R²(T=10) 0.20 vs neighbours -0.01 | ❌ fail |
@@ -67,18 +71,18 @@ per-entry reports for every claim):
 | emotions | The main axis of emotion space is valence | PC1 26% of variance; r = 0.81 with human valence (Claude Sonnet 4.5) | PC1 48% of variance; \|r\| = 0.94 with human valence (shuffled-label 95th pct 0.12); 71 emotions, 1651 stories | ✅ pass |
 | greater-than | GPT-2 small predicts years greater than the start year | probability difference 81.7% | PD = 90.2% [89.7, 90.7] over 1164 prompts | ✅ pass |
 | grokking | Generalization comes long after memorization (grokking) | train acc ~100% by ~1.4k epochs; test generalizes at ~10k (Fig. 2, wd=1, 30% split) | seed 0: train≥99% @ 200, test≥95% @ 7200; seed 1: train≥99% @ 200, test≥95% @ 6100; seed 2: train≥99% @ 200, test≥95% @ 13500 | ✅ pass |
-| grokking-runs | Grokking replicates across seeds (companion project's 11 runs) | grokking with wd = 1 on a 30% split (Nanda et al. 2023, one run) | 11/11 seeds reach > 99% test accuracy; test-95% step ÷ train-99% step: median 57.2× (min 32.2×) | ✅ pass |
-| induction-heads | A 2-layer attention-only model forms induction heads in layer 1 | Induction heads need ≥2 layers (Elhage et al. 2021); score defined by Olsson et al. 2022 | max layer-1 induction score 0.65 vs 0.033 at random init | ✅ pass |
+| grokking-runs | Grokking replicates across seeds (companion project's 11 runs) | grokking with wd = 1 on a 30% split (Nanda et al. 2023, one run) | 11/11 seeds reach > 99% test accuracy; test-95% step ÷ train-99% step: median 57.2× (min 32.2×) | ✅ pass (post-hoc: descriptive row: no pre-stated criterion; companion results known in advance) |
+| induction-heads | A 2-layer attention-only model forms induction heads in layer 1 | Induction heads need ≥2 layers (Elhage et al. 2021); score defined by Olsson et al. 2022 | max layer-1 induction score 0.65 vs 0.031 at random init | ✅ pass |
 | ioi | GPT-2 small prefers the indirect object over the subject | mean logit diff 3.56; IO > S in 99.3% of prompts | 3.54 [3.37, 3.70] on 320 prompts; IO > S in 99.4% | ✅ pass |
-| jlens | The J-lens surfaces unspoken intermediate steps better than the logit lens | J-lens beats logit / tuned lens; intermediates (21, 42) become readable in middle layers (Claude) | best rank of the intermediate token at the last position: median 4 (J-lens) vs 9 (logit lens); top-10 for 3/3 vs 2/3 | ✅ pass |
+| jlens | The J-lens surfaces unspoken intermediate steps better than the logit lens | J-lens beats logit / tuned lens; intermediates (21, 42) become readable in middle layers (Claude) | best rank of the intermediate token at the last position: median 4 (J-lens) vs 9 (logit lens); top-10 for 3/3 vs 2/3 | ✅ pass (post-hoc: arithmetic case removed from the metric after its ranks had been seen) |
 | linebreak-manifold | Character count since the last newline is linearly decodable | Haiku: probe R² 0.985 after layer 1; open models (T-Tech): Qwen3-8B 0.852 at L5, Gemma-2-9B 0.868 | Qwen3-1.7B: best held-out R² 0.747 at layer 6 (shuffled labels -0.005); GPT-2 small 0.759 | ✅ pass |
-| manifold-steering | Steering along the manifold stays on the behaviour manifold | weekdays, Llama-3.1-8B: E_BC 0.34 (manifold) vs 0.93 (linear) | Qwen3-1.7B layer 22: E_BC 1.727 (manifold) vs 1.625 (linear) over 28 paths | ❌ fail |
+| manifold-steering | Steering along the manifold stays on the behaviour manifold | weekdays, Llama-3.1-8B: E_BC 0.34 (manifold) vs 0.93 (linear) | Qwen3-1.7B layer 22: E_BC 1.727 (manifold) vs 1.625 (linear) over 28 paths | ❌ fail (post-hoc: layers 22–26 chosen after failing full-mode runs at layers 12–20) |
 | neuron-basis | Most neuron activations can be zeroed per token with little damage | keep 320/4,096 (92.2% ablated): loss 1.886 → 1.940 (+2.9%), KL 0.140 (Qwen3.6-35B-A3B MoE); open Qwen3-1.7B replication: KL ≈ 0.80 | keep 480/6,144 (92.2% ablated): loss 3.030 → 4.112 (+35.7%), KL 1.609; random-480 → 14.910 | 🟡 partial |
 | number-helix | Number embeddings are periodic with periods 2, 5, 10 | Fourier peaks at T = 2, 5, 10 in GPT-J (Kantamneni & Tegmark Fig. 2); 2, 2.5, 5, 10 (Zhou et al. 2024) | pythia-2.8b: strongest embedding periods 100, 50, 33.3, 2 | ❌ fail |
 | othello-gpt | Othello-GPT predicts legal moves | illegal top-1 rate 0.01% (Li et al.) | 0.07% illegal top-1 moves on 500 held-out synthetic games | ✅ pass |
-| refusal-direction | Ablating one direction removes refusal | directional ablation sharply lowers refusal on harmful prompts in 13 chat models (Arditi et al. Fig. 1) | refusal on 64 harmful test prompts: 86% → 0% (random direction: 84%) | ✅ pass |
-| sae-features | Adding an SAE feature's direction steers generation toward its concept (Golden Gate) | clamping the Golden Gate Bridge feature makes Claude 3 Sonnet obsessed with the bridge (Templeton et al. 2024) | GPT-2 small layer 8, feature #17608: completions mentioning the bridge 0% → 92% at α = 40 (random direction 0%) | ✅ pass |
-| sae-manifolds | Subspace capture has a sparsity sweet spot | restricted R² (k_i atoms reconstruct each manifold from superposed codes) peaks near k = 4 (Bhalla et al. 2026, Fig. 4A) | mean restricted R² peaks at k = 6 (0.53; 0.42 at k = 3, 0.48 at k = 25); regime label 'capture' for up to 100% of 48 manifolds | ✅ pass |
+| refusal-direction | Ablating one direction removes refusal | directional ablation sharply lowers refusal on harmful prompts in 13 chat models (Arditi et al. Fig. 1) | refusal on 64 harmful test prompts: 86% [75, 92] → 0% [0, 6] (random direction: 84% [74, 91]; Wilson 95% CIs) | ✅ pass |
+| sae-features | Adding an SAE feature's direction steers generation toward its concept (a bridge feature; Golden Gate analogue) | clamping the Golden Gate Bridge feature makes Claude 3 Sonnet obsessed with the bridge (Templeton et al. 2024) | GPT-2 small layer 8, feature #17608: completions mentioning the bridge 0% → 92% at α = 40 (random direction 0%); 'Golden Gate' or 'San Francisco' named in 0% | ✅ pass (post-hoc: feature-selection rule changed twice after smoke tests that showed steering outcomes) |
+| sae-manifolds | Subspace capture has a sparsity sweet spot | restricted R² (k_i atoms reconstruct each manifold from superposed codes) peaks near k = 4 (Bhalla et al. 2026, Fig. 4A) | mean restricted R² peaks at k = 6 (0.53; 0.42 at k = 3, 0.48 at k = 25); regime label 'capture' for up to 100% of 48 manifolds | ✅ pass (post-hoc: metric switched to restricted R² after a full run whose log showed its peak) |
 | stories-in-space | The model's running emotional reading is linearly decodable | ridge probes predict per-sentence emotion ratings (RMSE 0.09) from layer-9 activations (Llama-3.1-8B-Instruct) | held-out-story R² 0.54 at layer 23 (1681 prefixes from 160 stories) | ✅ pass |
 | world-model | The world model's latents encode the car's state | linear probes: position R² ≈ 0.95, velocity ≈ 0.90 (Wurgaft et al. App. B) | position R² 1.00, velocity 0.06 (untrained encoder: position 0.97) | ❌ fail |
 <!-- /table:headlines -->
@@ -86,79 +90,97 @@ per-entry reports for every claim):
 Scoreboard of all pre-stated claims:
 
 <!-- table:scoreboard -->
-| Entry | Models | Claims | ✅ pass | 🟡 partial | ❌ fail | Runtime (s) | Generated (UTC) |
-|---|---|---|---|---|---|---|---|
-| [actadd](reports/experiments/actadd/experiment.md) | gpt2-xl | 2 | 1 | 0 | 1 | 456 | 2026-11-27 22:38 UTC |
-| [attribution-graphs](reports/experiments/attribution-graphs/experiment.md) | gemma-2-2b (Neuronpedia public graphs) | 2 | 2 | 0 | 0 | 88 | 2026-11-27 18:03 UTC |
-| [belief-fractal](reports/experiments/belief-fractal/experiment.md) | 4-layer transformer (trained here) | 2 | 1 | 0 | 1 | 1463 | 2026-11-27 22:17 UTC |
-| [block-sparse-featurizers](reports/experiments/block-sparse-featurizers/experiment.md) | BSF / TopK SAE (trained here), InceptionV1 | 2 | 2 | 0 | 0 | 49 | 2026-11-27 22:21 UTC |
-| [calculator-probes](reports/experiments/calculator-probes/experiment.md) | EleutherAI/pythia-410m, EleutherAI/pythia-1.4b, EleutherAI/pythia-2.8b | 2 | 1 | 0 | 1 | 372 | 2026-11-27 22:50 UTC |
-| [calendar-circles](reports/experiments/calendar-circles/experiment.md) | gpt2, Qwen/Qwen3-1.7B | 3 | 2 | 1 | 0 | 798 | 2026-11-27 21:11 UTC |
-| [colour-bicone](reports/experiments/colour-bicone/experiment.md) | diffusers/FLUX.1-vae (VAE) | 2 | 2 | 0 | 0 | 30 | 2026-11-27 22:18 UTC |
-| [copy-suppression](reports/experiments/copy-suppression/experiment.md) | gpt2 | 3 | 3 | 0 | 0 | 2 | 2026-11-27 17:49 UTC |
-| [curve-detectors](reports/experiments/curve-detectors/experiment.md) | InceptionV1 (Lucid weights via Lucent) | 3 | 3 | 0 | 0 | 279 | 2026-11-27 18:30 UTC |
-| [emotions](reports/experiments/emotions/experiment.md) | Qwen/Qwen3-1.7B | 4 | 2 | 0 | 2 | 639 | 2026-11-27 23:22 UTC |
-| [greater-than](reports/experiments/greater-than/experiment.md) | gpt2 | 3 | 3 | 0 | 0 | 98 | 2026-11-27 17:57 UTC |
-| [grokking](reports/experiments/grokking/experiment.md) | 1L transformer (trained here) | 5 | 5 | 0 | 0 | 1585 | 2026-11-27 18:23 UTC |
-| [grokking-runs](reports/experiments/grokking-runs/experiment.md) | BurnyCoder/grokking-modular-addition-runs | 5 | 5 | 0 | 0 | 131 | 2026-11-27 19:07 UTC |
-| [induction-heads](reports/experiments/induction-heads/experiment.md) | attn-only-2l, gpt2, EleutherAI/pythia-160m | 4 | 4 | 0 | 0 | 1096 | 2026-11-27 17:47 UTC |
-| [ioi](reports/experiments/ioi/experiment.md) | gpt2 | 5 | 5 | 0 | 0 | 120 | 2026-11-27 17:49 UTC |
-| [jlens](reports/experiments/jlens/experiment.md) | Qwen/Qwen3-1.7B, neuronpedia/jacobian-lens | 3 | 1 | 0 | 2 | 104 | 2026-11-27 22:40 UTC |
-| [linebreak-manifold](reports/experiments/linebreak-manifold/experiment.md) | Qwen/Qwen3-1.7B, gpt2 | 4 | 2 | 0 | 2 | 464 | 2026-11-27 21:53 UTC |
-| [manifold-steering](reports/experiments/manifold-steering/experiment.md) | Qwen/Qwen3-1.7B | 2 | 1 | 0 | 1 | 201 | 2026-11-27 22:43 UTC |
-| [neuron-basis](reports/experiments/neuron-basis/experiment.md) | Qwen/Qwen3-1.7B | 3 | 1 | 1 | 1 | 221 | 2026-11-27 22:27 UTC |
-| [number-helix](reports/experiments/number-helix/experiment.md) | EleutherAI/pythia-160m, EleutherAI/pythia-410m, EleutherAI/pythia-1b, EleutherAI/pythia-1.4b, EleutherAI/pythia-2.8b | 3 | 1 | 1 | 1 | 2026 | 2026-11-27 21:45 UTC |
-| [othello-gpt](reports/experiments/othello-gpt/experiment.md) | othello-gpt | 3 | 3 | 0 | 0 | 133 | 2026-11-27 18:26 UTC |
-| [refusal-direction](reports/experiments/refusal-direction/experiment.md) | Qwen/Qwen2.5-1.5B-Instruct | 2 | 2 | 0 | 0 | 142 | 2026-11-27 22:30 UTC |
-| [sae-features](reports/experiments/sae-features/experiment.md) | gpt2, gpt2-small-res-jb SAE | 2 | 2 | 0 | 0 | 582 | 2026-11-27 23:11 UTC |
-| [sae-manifolds](reports/experiments/sae-manifolds/experiment.md) | TopK SAEs on synthetic manifolds (trained here) | 2 | 1 | 0 | 1 | 215 | 2026-11-27 23:26 UTC |
-| [stories-in-space](reports/experiments/stories-in-space/experiment.md) | Qwen/Qwen2.5-1.5B-Instruct, SimpleStories | 2 | 1 | 0 | 1 | 435 | 2026-11-27 23:01 UTC |
-| [world-model](reports/experiments/world-model/experiment.md) | mountain-car world model (trained here) | 2 | 1 | 0 | 1 | 234 | 2026-11-27 22:54 UTC |
-| **Total (26 entries)** | | **75** | **57** | **3** | **15** | | |
+| Entry | Models | Pre-stated claims | ✅ pass | 🟡 partial | ❌ fail | Post-hoc rows (not counted) | Runtime (s) | Generated (UTC) |
+|---|---|---|---|---|---|---|---|---|
+| [actadd](reports/experiments/actadd/experiment.md) | gpt2-xl | 2 | 1 | 0 | 1 | 0 | 442 | 2026-11-28 00:55 UTC |
+| [attribution-graphs](reports/experiments/attribution-graphs/experiment.md) | gemma-2-2b (Neuronpedia public graphs) | 0 | 0 | 0 | 0 | 2 | 88 | 2026-11-27 18:03 UTC |
+| [belief-fractal](reports/experiments/belief-fractal/experiment.md) | 4-layer transformer (trained here) | 2 | 1 | 0 | 1 | 0 | 1463 | 2026-11-27 22:17 UTC |
+| [block-sparse-featurizers](reports/experiments/block-sparse-featurizers/experiment.md) | BSF / TopK SAE (trained here), InceptionV1 | 2 | 2 | 0 | 0 | 1 | 53 | 2026-11-28 00:08 UTC |
+| [calculator-probes](reports/experiments/calculator-probes/experiment.md) | EleutherAI/pythia-410m, EleutherAI/pythia-1.4b, EleutherAI/pythia-2.8b | 1 | 0 | 0 | 1 | 1 | 372 | 2026-11-27 22:50 UTC |
+| [calendar-circles](reports/experiments/calendar-circles/experiment.md) | gpt2, Qwen/Qwen3-1.7B | 2 | 2 | 0 | 0 | 1 | 391 | 2026-11-28 00:36 UTC |
+| [colour-bicone](reports/experiments/colour-bicone/experiment.md) | diffusers/FLUX.1-vae (VAE) | 2 | 2 | 0 | 0 | 0 | 30 | 2026-11-27 22:18 UTC |
+| [copy-suppression](reports/experiments/copy-suppression/experiment.md) | gpt2 | 3 | 3 | 0 | 0 | 0 | 2 | 2026-11-27 17:49 UTC |
+| [curve-detectors](reports/experiments/curve-detectors/experiment.md) | InceptionV1 (Lucid weights via Lucent) | 3 | 3 | 0 | 0 | 0 | 279 | 2026-11-27 18:30 UTC |
+| [emotions](reports/experiments/emotions/experiment.md) | Qwen/Qwen3-1.7B | 4 | 2 | 0 | 2 | 0 | 639 | 2026-11-27 23:22 UTC |
+| [greater-than](reports/experiments/greater-than/experiment.md) | gpt2 | 3 | 3 | 0 | 0 | 0 | 98 | 2026-11-27 17:57 UTC |
+| [grokking](reports/experiments/grokking/experiment.md) | 1L transformer (trained here) | 5 | 5 | 0 | 0 | 0 | 1585 | 2026-11-27 18:23 UTC |
+| [grokking-runs](reports/experiments/grokking-runs/experiment.md) | BurnyCoder/grokking-modular-addition-runs | 2 | 2 | 0 | 0 | 3 | 131 | 2026-11-27 19:07 UTC |
+| [induction-heads](reports/experiments/induction-heads/experiment.md) | attn-only-2l, gpt2, EleutherAI/pythia-160m | 4 | 4 | 0 | 0 | 0 | 366 | 2026-11-28 00:42 UTC |
+| [ioi](reports/experiments/ioi/experiment.md) | gpt2 | 5 | 5 | 0 | 0 | 0 | 120 | 2026-11-27 17:49 UTC |
+| [jlens](reports/experiments/jlens/experiment.md) | Qwen/Qwen3-1.7B, neuronpedia/jacobian-lens | 2 | 0 | 1 | 1 | 2 | 106 | 2026-11-28 00:47 UTC |
+| [linebreak-manifold](reports/experiments/linebreak-manifold/experiment.md) | Qwen/Qwen3-1.7B, gpt2 | 4 | 2 | 0 | 2 | 0 | 464 | 2026-11-27 21:53 UTC |
+| [manifold-steering](reports/experiments/manifold-steering/experiment.md) | Qwen/Qwen3-1.7B | 0 | 0 | 0 | 0 | 2 | 260 | 2026-11-28 00:19 UTC |
+| [neuron-basis](reports/experiments/neuron-basis/experiment.md) | Qwen/Qwen3-1.7B | 3 | 1 | 1 | 1 | 0 | 221 | 2026-11-27 22:27 UTC |
+| [number-helix](reports/experiments/number-helix/experiment.md) | EleutherAI/pythia-160m, EleutherAI/pythia-410m, EleutherAI/pythia-1b, EleutherAI/pythia-1.4b, EleutherAI/pythia-2.8b | 3 | 1 | 1 | 1 | 0 | 2026 | 2026-11-27 21:45 UTC |
+| [othello-gpt](reports/experiments/othello-gpt/experiment.md) | othello-gpt | 3 | 3 | 0 | 0 | 0 | 130 | 2026-11-28 00:07 UTC |
+| [refusal-direction](reports/experiments/refusal-direction/experiment.md) | Qwen/Qwen2.5-1.5B-Instruct | 2 | 2 | 0 | 0 | 1 | 147 | 2026-11-28 00:45 UTC |
+| [sae-features](reports/experiments/sae-features/experiment.md) | gpt2, gpt2-small-res-jb SAE | 0 | 0 | 0 | 0 | 2 | 600 | 2026-11-28 00:29 UTC |
+| [sae-manifolds](reports/experiments/sae-manifolds/experiment.md) | TopK SAEs on synthetic manifolds (trained here) | 0 | 0 | 0 | 0 | 2 | 215 | 2026-11-27 23:26 UTC |
+| [stories-in-space](reports/experiments/stories-in-space/experiment.md) | Qwen/Qwen2.5-1.5B-Instruct, SimpleStories | 1 | 1 | 0 | 0 | 1 | 435 | 2026-11-27 23:01 UTC |
+| [world-model](reports/experiments/world-model/experiment.md) | mountain-car world model (trained here) | 2 | 1 | 0 | 1 | 1 | 232 | 2026-11-28 00:15 UTC |
+| **Total (26 entries)** | | **60** | **46** | **3** | **11** | **19** | | |
 <!-- /table:scoreboard -->
 
 **In plainer language: what held up and what did not.** The tables above are generated from `results/`; this summary
-is qualitative and links each point to an entry report.
+is qualitative and links each point to an entry report. An adversarial methods review
+([`reports/reviews/methods-review.md`](reports/reviews/methods-review.md)) re-read every module, result and log; its
+corrections are folded in below.
 
-- **The classic circuits replicate fully** on the open models they were found in, with controls behaving as predicted
-  (random heads or directions do nothing; shuffled labels and random-init models give chance):
-  - induction heads, IOI, copy suppression, greater-than, grokking (3 seeds here plus 11 companion seeds), Othello-GPT
-    and curve detectors.
-  - IOI's numbers land within sampling error of the paper's.
+- **The classic circuits replicate** on the open models they were found in:
+  - induction heads, IOI, copy suppression, greater-than, grokking (3 seeds here; 11 companion seeds as a code-level
+    cross-check), Othello-GPT and curve detectors.
+  - IOI's numbers land within sampling error of the paper's. IOI and greater-than faithfulness are measured more
+    leniently than in the papers (all positions or all MLPs kept clean), so those percentages are upper bounds.
+  - The "random-init" controls of induction heads and Othello-GPT were all-zero networks until the review (a
+    TransformerLens default). Properly initialised, the Othello control rises to about 72% probe accuracy (the
+    induction control barely changes), and both claims still pass.
   - The Othello-GPT board edit and the copy-suppression ablation are weaker than published, but still pass.
-- **Geometry mostly replicates:**
-  - day/month circles in GPT-2;
-  - the FLUX VAE's colour bicone;
-  - the mountain-car world model's isometric position manifold;
-  - block-sparse featurizers keeping concepts together;
-  - the SAE sparsity sweet spot;
-  - the count of characters since a line break, decodable in Qwen3 and GPT-2.
-- **New small-model evidence:** in Pythia-2.8B, patching only the number helix recovers most of a layer's effect on
-  addition ([number helix](reports/experiments/number-helix/experiment.md)). Base-10 periods stand out as peaks in Fourier
-  probes ([geometric calculator](reports/experiments/calculator-probes/experiment.md)). Both papers only had evidence
-  from 6–8B models.
-- **Steering and directions:** the refusal direction switches refusal on and off; the weddings ActAdd vector and
-  Golden-Gate-style SAE feature steering work in GPT-2; manifold steering passes through intermediate weekdays where
-  straight lines jump.
+- **Geometry: some replicates, some passes turned out to be uninformative.**
+  - Replicates: day/month circles in GPT-2; the FLUX VAE's colour bicone (its lightness/hue/saturation axes); block-sparse
+    featurizers keeping toy concepts together; the count of characters since a line break is decodable (in Qwen3 and,
+    just as well, in GPT-2).
+  - Uninformative passes, found by controls added after the review:
+    [world model](reports/experiments/world-model/experiment.md): an untrained encoder gives the same "isometric"
+    position manifold;
+    [block-sparse featurizers](reports/experiments/block-sparse-featurizers/experiment.md): random InceptionV1 channels
+    are nearly as orientation-harmonic as the curve neurons.
+  - Post-hoc, not counted: the [SAE sparsity sweet spot](reports/experiments/sae-manifolds/experiment.md) (metric
+    chosen after a full run; the curve is nearly flat).
+- **Small models and arithmetic:** in Pythia-2.8B, patching the number helix recovers most of a layer's effect on
+  addition at early layers, but a generic 9-D PCA subspace does as well, so this is not evidence for the helix
+  specifically ([number helix](reports/experiments/number-helix/experiment.md)). Fourier probes show parity and a weak
+  mod-10 signal, not base-10 circles ([geometric calculator](reports/experiments/calculator-probes/experiment.md)).
+- **Steering and directions:**
+  - The refusal direction switches refusal off and on, and both a random and a label-shuffled direction leave refusal
+    near baseline ([refusal](reports/experiments/refusal-direction/experiment.md)).
+  - The weddings ActAdd vector steers GPT-2 XL's topic ([ActAdd](reports/experiments/actadd/experiment.md)).
+  - Post-hoc, not counted: SAE feature steering works, but the "Golden Gate" feature in GPT-2 is a generic bridge
+    feature: none of its steered completions names the Golden Gate ([SAE features](reports/experiments/sae-features/experiment.md)); manifold
+    steering visits intermediate weekdays, which the path construction nearly guarantees
+    ([manifold steering](reports/experiments/manifold-steering/experiment.md)); two-hop paths in public Gemma-2-2B
+    attribution graphs ([attribution graphs](reports/experiments/attribution-graphs/experiment.md)); the J-lens
+    ranking intermediates better than the logit lens on 3 prompts. A confirmatory test on 24 fresh prompts, pre-stated
+    before it ran, comes out partial: the J-lens wins most prompts but the sign test narrowly misses p < 0.05
+    ([J-lens](reports/experiments/jlens/experiment.md)).
 - **What did not replicate here (negative results, kept on the site):**
   - [ActAdd](reports/experiments/actadd/experiment.md): the Love − Hate vector does not shift measured sentiment.
-  - [J-lens](reports/experiments/jlens/experiment.md): concept swaps fail in Qwen3-1.7B with two independent
-    implementations. This matches an open replication that found no selectivity up to 9B.
-  - [Emotions](reports/experiments/emotions/experiment.md): there is no arousal axis, and steering does not move
-    preferences, although valence replicates strongly.
-  - [Stories in space](reports/experiments/stories-in-space/experiment.md): behaviour and activation geometry agree only
-    weakly.
-  - [Linebreak manifold](reports/experiments/linebreak-manifold/experiment.md): the counting curve is not as compact as
-    Claude's and is not an early-layer phenomenon.
+  - [J-lens](reports/experiments/jlens/experiment.md): concept swaps fail in Qwen3-1.7B with two implementations,
+    matching an open replication that found no selectivity up to 9B.
+  - [Emotions](reports/experiments/emotions/experiment.md): valence replicates strongly, but there is no arousal axis
+    and steering does not move preferences.
+  - [Stories in space](reports/experiments/stories-in-space/experiment.md): behaviour and activation geometry agree
+    only weakly; the emotional reading is only just decodable.
+  - [Linebreak manifold](reports/experiments/linebreak-manifold/experiment.md): the counting curve is far less compact
+    than Claude's; the early-layer claim fails by a margin within noise.
   - [Belief fractal](reports/experiments/belief-fractal/experiment.md) and
-    [world model](reports/experiments/world-model/experiment.md): the probe claims fail against their pre-stated controls
-    because untrained networks already decode most of the signal.
+    [world model](reports/experiments/world-model/experiment.md): the probe claims fail against their pre-stated
+    controls because untrained networks already decode most of the signal.
   - [Neuron basis](reports/experiments/neuron-basis/experiment.md): zeroing 92% of neurons hurts the dense Qwen3 much
-    more than Goodfire's MoE. A gentler selection rule matches the open replication.
-- **Method fixes before full runs** (tokenization traps, attention-sink outliers, overfit probes, task accuracy, wrong
-  feature selection, evaluation protocols) are listed as dated amendments in
-  [`reports/planned-runs.md`](reports/planned-runs.md) and explained in
-  [`reports/experiments/learnings.md`](reports/experiments/learnings.md). No pass threshold was changed after a full run.
+    more than Goodfire's MoE, and the gate-open pattern is weaker than reported.
+- **Method changes and their status.** Fixes of demonstrable bugs (tokenization traps, attention-sink outliers,
+  leakage, memory) are dated amendments in [`reports/planned-runs.md`](reports/planned-runs.md). Changes made after
+  results for that claim had been seen are listed in its post-review section and flagged post-hoc everywhere.
+  Lessons are in [`reports/experiments/learnings.md`](reports/experiments/learnings.md).
 
 ## All entries
 
@@ -340,7 +362,13 @@ results to `results/`, site data to `site/public/data/`.
       [Hugging Face collection](https://huggingface.co/collections/BurnyCoder/circuits-and-manifolds-atlas-6b09d298455cc520d1ceaaf6).
 - [ ] Paper-scale runs on a rented GPU (≤ $20): number helix on GPT-J/Pythia-6.9B, geometric calculator and manifold
       steering on an 8B model, emotions/J-lens at 8B.
-- [ ] Fact-check and link-check every citation; NeurIPS-style self-review into `reports/reviews/`.
+- [x] Fact-check and link-check every citation ([`reports/reviews/fact-check.md`](reports/reviews/fact-check.md));
+      adversarial methods review ([`reports/reviews/methods-review.md`](reports/reviews/methods-review.md)); controls
+      fixed and post-hoc rows flagged.
+- [ ] Remaining review items: 95% CIs in every entry (Wilson for rates, bootstrap for R²/E_BC); larger n for steering
+      and J-lens prompts; new pre-stated tests for the post-hoc rows (attribution-graph negative control, SAE-manifold
+      seeds, a piecewise-linear manifold-steering control, a random 9-D subspace for the helix, a permutation null for
+      calculator peaks); random-init InceptionV1 and VAE controls; IOI faithfulness with per-position nodes.
 - [ ] Screenshots and a short screen recording for this README.
 - [ ] Stretch entries: assistant axis, successor heads, function vectors, attention sinks, entropy neurons, truth
       directions, feature absorption, crosscoders.

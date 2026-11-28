@@ -29,9 +29,9 @@ place the phase change at 2.5–5B tokens; Pythia logs 2,097,152 tokens per step
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
-| A 2-layer attention-only model forms induction heads in layer 1 | Induction heads need ≥2 layers (Elhage et al. 2021); score defined by Olsson et al. 2022 | max layer-1 induction score 0.65 vs 0.033 at random init | trained max score > 0.3 and > 10× the random-init score | ✅ pass |
+| A 2-layer attention-only model forms induction heads in layer 1 | Induction heads need ≥2 layers (Elhage et al. 2021); score defined by Olsson et al. 2022 | max layer-1 induction score 0.65 vs 0.031 at random init | trained max score > 0.3 and > 10× the random-init score | ✅ pass |
 | Induction heads causally implement in-context copying | Ablating induction heads removes in-context learning in small attn-only models (Olsson et al., Argument 3) | repeat loss 2.68 [2.55, 2.83] → 12.45 [12.33, 12.56] nats when ablated (random-head control 2.64 [2.51, 2.79]) | ablation raises repeat loss by > 1 nat and > 3× the random-head control's increase | ✅ pass |
 | Induction requires a previous-token head (K-composition) | Induction head keys read a previous-token head's output (Elhage et al. 2021) | ablating prev-token head 0.3 raises repeat loss to 11.22 nats | ablation raises repeat loss by > 1 nat | ✅ pass |
 | Induction heads form abruptly early in training (phase change) | ICL score jumps in a narrow window at ~2.5–5B tokens in Anthropic's models (Olsson et al., Argument 1) | Pythia-160M: largest jump in max induction score between 1.07B and 2.10B tokens (0.03 at init → 0.96 final) | largest single-interval jump occurs before 20B tokens and accounts for > 50% of the total rise | ✅ pass |
@@ -65,7 +65,7 @@ phase-change argument, though our checkpoint grid can only bound when the jump h
 | `a2_prev_score` | 0.519901 |
 | `a2_ind_heads` | 1.6 |
 | `a2_ind_max` | 0.649771 |
-| `a2_rand_ind_max` | 0.033075 |
+| `a2_rand_ind_max` | 0.031402 |
 | `a2_loss_first` | 14.503569 |
 | `a2_loss_second` | 2.67987 |
 | `a2_loss_abl_ind` | 12.449474 |

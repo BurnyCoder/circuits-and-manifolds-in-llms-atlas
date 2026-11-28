@@ -15,7 +15,7 @@ Qwen3-1.7B (28 layers × 6,144 neurons) on 48 × 512 WikiText-103 tokens. Per-to
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Most neuron activations can be zeroed per token with little damage | keep 320/4,096 (92.2% ablated): loss 1.886 → 1.940 (+2.9%), KL 0.140 (Qwen3.6-35B-A3B MoE); open Qwen3-1.7B replication: KL ≈ 0.80 | keep 480/6,144 (92.2% ablated): loss 3.030 → 4.112 (+35.7%), KL 1.609; random-480 → 14.910 | relative loss increase < 25% and KL < 1.0, and the random-480 control at least 3× worse in loss increase | 🟡 partial |
 | The few large activations carry the computation | ablating only the top 12.5% per expert → loss 4.587 (bottom-448 control) | zeroing only the top 480 per token → loss 14.329 (base 3.030) | loss increase ≥ 5× that of keeping only the top 480 | ✅ pass |

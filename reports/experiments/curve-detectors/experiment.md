@@ -30,7 +30,7 @@ the ~20–30° tuning widths reported there.
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Curve neurons are tuned to one orientation | each curve detector responds to curves in a narrow orientation band (radial tuning curves) | median orientation selectivity 0.95 vs 0.10 for 20 random mixed3b neurons | curve median ≥ control median + 0.2 | ✅ pass |
 | Curve neurons prefer curves to straight lines | near-zero activations are mostly straight lines; synthetic curves reach up to 24σ | 10/10 neurons respond > 1.5× more to their best curve than to any straight line | ≥ 8 of 10 | ✅ pass |
@@ -41,8 +41,9 @@ the ~20–30° tuning widths reported there.
 
 The ten neurons are sharply orientation-tuned compared with random mixed3b neurons, every one prefers its best curve to
 any straight line, and their preferred orientations leave no gap larger than the criterion — they tile the circle, as
-in the paper's radial tuning curves. This replicates the synthetic-stimulus part of the Distill article; the
-dataset-example and circuit (weights from mixed3a) analyses are not recomputed here.
+in the paper's radial tuning curves. The control median is somewhat flattered: random neurons that never respond get
+selectivity 0 by definition. This replicates the synthetic-stimulus part of the Distill article; the dataset-example
+and circuit (weights from mixed3a) analyses are not recomputed here.
 
 ## Limitations
 
