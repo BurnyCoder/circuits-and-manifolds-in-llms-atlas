@@ -18,7 +18,7 @@ https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/
 | Hugging Face collection (grokking ×3, Mess3, world model) | ✅ |
 | RunPod paper-scale tier (≤ $20) | ⏳ launcher and spend guard ready; needs `RUNPOD_API_KEY` in `.env` |
 | Fact-check, adversarial methods review in `reports/reviews/` | ✅ done; controls fixed (random-init, norm-matched, label-shuffled, untrained encoder, random channels) and 8 entries rerun |
-| Review follow-ups (CIs everywhere, larger n, new pre-stated tests for post-hoc rows) | ⏳ Wilson CIs started (refusal, calendar); rest on the README to-do list |
+| Review follow-ups (CIs everywhere, larger n, new pre-stated tests for post-hoc rows) | ⏳ 2026-11-28 05:40 WET: 18 new tests and 9 control fixes pre-registered (`3090314`) and implemented (`b4059db`); smoke tests running, then full runs of 21 entries (~3 h GPU) |
 | Stretch entries | ⏳ |
 
 Roughly 85% of the plan is done. Remaining: the review follow-ups (CIs, larger samples, new pre-stated tests), the

@@ -30,6 +30,19 @@ The model reaches the Bayes-optimal loss almost exactly, and its residual stream
 - The pre-stated control turned out too easy for this process; a harder process (e.g. RRXOR) or an MSE-ratio criterion would discriminate better.
 - One seed.
 
+## Deviations from the paper
+
+Documented after the methods review (m9). The Mess3 transition matrices match Shai et al. App. A.3 (entries 0.765,
+0.0675, 0.0425, 0.00375). Two training choices differ:
+
+| Setting | Shai et al. 2024 (App. A) | Here | Why |
+|---|---|---|---|
+| Attention head size | d_head = 8 | d_head = 64 (1 head, d_model = 64) | TransformerLens default for one head with d_model = 64; Mess3 needs no attention capacity beyond the last few tokens |
+| Optimiser | SGD, learning rate 0.01 | Adam, learning rate 1e-3, 30,000 steps × batch 512 | Adam converges faster at this scale. The model reaches the Bayes-optimal loss (row 2), so optimisation did not limit the result. |
+
+Neither deviation was chosen after seeing results. Both could change *how* the belief geometry is laid out in the
+residual stream, but not whether the optimal predictor's information is present.
+
 ## All summary values
 
 <!-- table:summary -->
