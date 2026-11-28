@@ -86,8 +86,8 @@ the 2-layer attention-only model predicts the repeat almost perfectly ({{a2_loss
 head is {{a2_prev_head}} (score {{a2_prev_score}}), and the induction head(s) {{a2_ind_heads}} reach a score of
 {{a2_ind_max}}, versus {{a2_rand_ind_max}} for the same architecture at random initialization. Zero-ablating the
 induction heads raises the repeat loss to {{a2_loss_abl_ind}} nats and ablating the single previous-token head raises
-it to {{a2_loss_abl_prev}} nats, while ablating the same number of random layer-1 heads gives {{a2_loss_abl_rand}}
-nats. GPT-2 small has {{gpt2_n_ind_heads}} heads with an induction score above 0.3 (strongest: {{gpt2_top_ind}}, score
+it to {{a2_loss_abl_prev}} nats, while ablating non-induction layer-1 heads instead gives {{a2_loss_abl_rand}}
+nats on average over every same-size set (the review asked for all sets instead of one random draw). GPT-2 small has {{gpt2_n_ind_heads}} heads with an induction score above 0.3 (strongest: {{gpt2_top_ind}}, score
 {{gpt2_top_ind_score}}).
 
 **Phase change.** Across Pythia-160M checkpoints, the strongest induction score rises from {{pythia_init_ind}} at

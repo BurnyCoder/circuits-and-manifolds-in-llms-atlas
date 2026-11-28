@@ -30,7 +30,10 @@ export default function Scoreboard() {
         Every claim we re-tested, the number the original paper reports, what we measured on open models, the pass criterion
         (see <code>reports/planned-runs.md</code>), and the verdict. Failures are kept, not hidden. Rows marked{' '}
         <b>post-hoc</b> had their analysis or criterion chosen after results for that claim had been seen (or never had a
-        pre-stated criterion); they stay in the table with the reason but are not counted below.
+        pre-stated criterion); they stay in the table with the reason but are not counted below. Rows starting with{' '}
+        <b>Confirmatory:</b> are re-tests written down and pushed before they ran, after an adversarial review, with
+        stronger controls, fresh data or more seeds; they are counted. A partial verdict can also mean inconclusive: the
+        95% confidence interval straddles the pass threshold.
       </p>
       <div className="kpis">
         <div className="kpi">

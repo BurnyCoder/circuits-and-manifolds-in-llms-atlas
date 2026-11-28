@@ -7,7 +7,7 @@ models: [Qwen3-1.7B]
 fidelity: replicated
 evidence: mixed
 order: 420
-summary: Anthropic found emotion vectors in Claude laid out by pleasantness and intensity, and steering with them changed its choices. In Qwen3-1.7B we recover the pleasantness axis strongly, but not the intensity axis or the effect on choices.
+summary: Anthropic found emotion vectors in Claude laid out by pleasantness and intensity, and steering with them changed its choices. In Qwen3-1.7B we recover the pleasantness axis strongly, but not the intensity axis or the effect on choices, and the "danger" signal rises almost as much for sugar as for Tylenol.
 viz: emotions
 data: emotions.json
 locations:
@@ -37,7 +37,7 @@ replications:
     url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/emotions.py
     model: Qwen3-1.7B (writes its own stories)
     outcome: ours
-    note: 80 emotions with human norms, neutral-PC projection, shuffled-label control, dose sweep and a preference-steering test with a random-vector control.
+    note: 80 emotions with human norms, neutral-PC projection, shuffled-label control, dose sweep (confirmatory version with 8 phrasings and a sugar control) and a preference-steering test with a random-vector control.
   - who: Hong — replication on Llama-3.1-8B-Instruct
     url: https://jyhong.gitlab.io/post/emotion-vector-part1/
     model: Llama-3.1-8B-Instruct (full 205k-story corpus)
@@ -72,9 +72,14 @@ strength 0.5 of the residual norm shifts activity preferences (blissful +212 Elo
 **What we measured** (Qwen3-1.7B layer {{layer}}, {{n_emotions}} emotions, {{n_stories}} stories it wrote itself):
 
 - PC1 explains {{var_pc1|pct}} of the variance and correlates with human valence at |r| = {{r_valence}} (shuffled labels,
-  95th percentile: {{null_valence_p95}}); PC2 ({{var_pc2|pct}}) correlates with human arousal at |r| = {{r_arousal}}.
+  95th percentile: {{null_valence_p95}}; 95% CI over emotions {{r_valence_lo}}–{{r_valence_hi}}); PC2 ({{var_pc2|pct}}) correlates with human arousal at |r| = {{r_arousal}}.
 - Tylenol sweep: per tenfold increase in dose, the "afraid" projection changes by {{afraid_slope}} and "calm" by
   {{calm_slope}}.
+- Confirmatory dose test (pre-stated 2026-11-28; 8 phrasings × 7 doses, with sugar as a harmless control): the
+  afraid − calm projection rises by {{dose_slope_tylenol}} per tenfold dose for Tylenol (permutation p =
+  {{dose_p_tylenol}}), but also by {{dose_slope_sugar}} for sugar; the difference is not significant (p =
+  {{dose_p_diff}}). The vector reacts mostly to large numbers in a "should I worry?" question, not specifically to
+  danger, so the row is partial.
 - Preference test: the probability of choosing option A is {{pref_base}} at baseline, {{pref_blissful}} with the blissful
   vector added to A's words, {{pref_hostile}} with hostile, and {{pref_random}} with a random vector.
 

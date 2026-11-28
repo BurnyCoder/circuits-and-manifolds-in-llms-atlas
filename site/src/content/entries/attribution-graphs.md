@@ -7,7 +7,7 @@ models: [Gemma-2-2B]
 fidelity: replicated
 evidence: mixed
 order: 200
-summary: Feature-level causal graphs of single predictions — multi-hop facts, shared multilingual concepts, rhyme planning — on an open model.
+summary: Feature-level causal graphs of single predictions — multi-hop facts, shared multilingual concepts, rhyme planning — on an open model. Our pre-stated re-check finds multilingual middle-layer sharing well above unrelated graphs, but the two-hop path is not specific to the intermediate concept.
 viz: attribution-graph
 data: attribution-graphs.json
 locations:
@@ -48,7 +48,7 @@ replications:
     url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/attribution_graphs.py
     model: Gemma-2-2B (public Neuronpedia graphs, read-only)
     outcome: ours
-    note: Re-renders nine featured graphs at supernode level and checks the two-hop path and multilingual-overlap claims quantitatively.
+    note: Re-renders nine featured graphs at supernode level and checks the two-hop path and multilingual-overlap claims quantitatively, with a label-permutation null and an unrelated-graph control in pre-stated confirmatory tests.
   - who: Neuronpedia / circuit-tracer authors — featured Gemma-2-2B graphs
     url: https://www.neuronpedia.org/graph/info
     model: Gemma-2-2B + GemmaScope transcoders
@@ -89,6 +89,18 @@ features are grouped into human-labelled supernodes. Hypotheses read off a graph
   middle that Lindsey et al. describe.
 - Error nodes supply a median {{error_share_median|pct}} of the direct input to the output logits — the part of the
   computation the replacement model does not explain.
+
+**Confirmatory tests** (pre-stated 2026-11-28 after the methods review flagged the two rows above as post-hoc):
+
+- *Is the two-hop path specific to the intermediate?* No. When the labels of all feature groups are randomly permuted,
+  a randomly labelled group carries a path at least as strong as the "intermediate" one often enough that the
+  permutation p-values are {{label_null_p}}. The path is specific (p < 0.05) in {{two_hop_specific}} of 3 graphs.
+  Paths through wrong intermediates were found in {{wrong_paths_found}} of {{wrong_paths_total}} checks, but that
+  mostly means those labels do not occur in these graphs. The path check shows that strong positive paths run from
+  the city to the answer; it does not show that they run through the state or country concept in particular.
+- *Is the middle-layer overlap specific to the multilingual graphs?* Yes. Three unrelated graphs (Dallas, addition,
+  Michael Jordan) share {{overlap_ctrl_middle|pct}} of their middle-layer features, against {{overlap_middle|pct}} for
+  the three antonym graphs. One graph per language, so this is still n = 1 per condition.
 
 ## Limitations
 

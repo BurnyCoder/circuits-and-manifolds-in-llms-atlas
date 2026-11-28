@@ -7,7 +7,7 @@ models: [Qwen3-1.7B]
 fidelity: recomputed
 evidence: causal
 order: 630
-summary: To change Llama's answer from Monday to Thursday, walk along the curved weekday manifold — the outputs pass through Tuesday and Wednesday. In Qwen3-1.7B the path visits the intermediate days, as built, but does not stay closer to natural outputs.
+summary: To change Llama's answer from Monday to Thursday, walk along the curved weekday manifold — the outputs pass through Tuesday and Wednesday. In Qwen3-1.7B the path visits the intermediate days, as built, but a smooth path is no better than straight segments through the same day centroids.
 viz: manifold-steering
 data: manifold-steering.json
 locations:
@@ -36,7 +36,7 @@ replications:
     url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/manifold_steering.py
     model: Qwen3-1.7B
     outcome: ours
-    note: Periodic spline through the 7 answer centroids (in their 6-D span; layers 22–26), along-manifold vs chord paths for all day pairs 2–3 apart, behaviour-manifold energy. Both rows are post-hoc (layers chosen after failing runs at 12–20).
+    note: Periodic spline through the 7 answer centroids (in their 6-D span; layers 22–26), along-manifold vs chord paths for all day pairs 2–3 apart, behaviour-manifold energy. Both original rows are post-hoc (layers chosen after failing runs at 12–20); a pre-stated confirmatory test against a piecewise-linear path through the same centroids fails at all three layers.
   - who: Gupta, Fruengel & Heimersheim — "Spokes, not a Ring"
     url: https://arxiv.org/abs/2610.37796
     model: Llama-3.1-8B, Mistral-7B, GPT-2 XL
@@ -64,10 +64,16 @@ Llama-3.1-8B: $E_{BC}$ 0.34 along the manifold vs 0.93 for linear steering (week
 - {{via_manifold|pct}} of manifold path points predict one of the intermediate days vs {{via_linear|pct}} for the
   straight line. This is close to guaranteed by construction: the spline passes exactly through the intermediate
   centroids, which make the model say that day almost every time at these layers, while a chord between two vertices
-  never passes a third. A fair control would be a piecewise-linear path through the same centroids.
+  never passes a third. A piecewise-linear path through the same centroids visits them about as often (verdict
+  table, row 2).
 - Both rows are post-hoc: the layers (22–26) were chosen after full runs at layers 12–20 had failed. At layers 12–20,
   writing a day's centroid makes the model say that day in almost no cases (endpoint success by layer: {{endpoint_by_layer}}),
   so the answer is not yet formed there.
+- Confirmatory test (pre-stated 2026-11-28; layers 22, 24 and 26 all used, 4 source prompts per day): does the smooth
+  manifold path stay closer to natural outputs than a piecewise-linear path through the *same* centroids? No:
+  $E_{BC}$(spline) − $E_{BC}$(piecewise-linear) = {{spline_vs_polyline}} (mean over paths, 95% CI over source prompts),
+  positive at every layer. In Qwen3-1.7B the curved geometry between the day centroids does not help; what moves the
+  answer through the intermediate days is passing through their centroids.
 
 ## Limitations
 

@@ -77,7 +77,7 @@ are gate-closed (Q3/Q4), yet the most causally important cells are gate-open (Q1
 **What we measured** (Qwen3-1.7B, 28 layers × 6,144 neurons, {{n_tokens}} WikiText-103 tokens):
 
 - Keeping the top 480 neurons per token per layer (92.2% zeroed) changes the loss from {{base_loss}} to {{k480_loss}}
-  ({{k480_rel|pct}} relative), KL {{k480_kl}} nats. Keeping a random 480 instead gives {{random480_loss}}; zeroing only
+  ({{k480_rel|pct}} relative; 95% CI over sequences {{k480_rel_lo|pct}}–{{k480_rel_hi|pct}}), KL {{k480_kl}} nats. Keeping a random 480 instead gives {{random480_loss}}; zeroing only
   the top 480 gives {{drop480_loss}}.
 - Mean-ablating the central P25–P75 band of every neuron gives {{band_loss}} (KL {{band_kl}}).
 - {{gate_closed_frac|pct}} of all activations are gate-closed, but {{top_attr_gate_open|pct}} of the top-1% cells by

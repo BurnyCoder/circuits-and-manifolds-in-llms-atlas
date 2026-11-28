@@ -7,7 +7,7 @@ models: [Qwen3-1.7B, GPT-2 small]
 fidelity: replicated
 evidence: correlational
 order: 120
-summary: Claude tracks how many characters it has written on a twisting, rippled curve to know when to break a line. In Qwen3-1.7B (and GPT-2) the count is decodable, but the curve is far less compact and not concentrated in the first layers.
+summary: Claude tracks how many characters it has written on a twisting, rippled curve to know when to break a line. In Qwen3-1.7B (and GPT-2) the count is decodable (whether above the paper-level bar is inconclusive on fresh data), but the curve is far less compact.
 viz: linebreak
 data: linebreak-manifold.json
 locations:
@@ -77,6 +77,11 @@ reaches $R^2$ = 0.985.
 - The per-count mean activations at layer {{q_best_layer}} put {{q_var6|pct}} of their variance in 6 principal components
   ({{q_var3|pct}} in 3), and the PC1–PC2 angle turns {{q_deg_per_char}}° per character.
 - Qwen3-1.7B predicts real line breaks well: the AUC of its newline probability is {{q_auc}} (GPT-2 small {{g_auc}}).
+- Confirmatory re-test (pre-stated 2026-11-28) on fresh documents, with the layer chosen on validation documents and
+  95% CIs from resampling test documents: $R^2$ = {{qf_r2}} ({{qf_r2_lo}}–{{qf_r2_hi}}) at layer {{qf_layer}}, so the
+  0.7 bar is inside the interval (inconclusive). The best early layer ({{qf_early_layer}}) reaches {{qf_ratio}} of that
+  ({{qf_ratio_lo}}–{{qf_ratio_hi}}) against a 0.9 bar (inconclusive). GPT-2 small reaches {{gf_r2}}
+  ({{gf_r2_lo}}–{{gf_r2_hi}}): the count is just as readable in the much weaker model.
 
 ## Limitations
 

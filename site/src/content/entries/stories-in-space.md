@@ -66,6 +66,12 @@ matches human valence–arousal ratings (r = .93).
 between rating vectors and between activations correlate at Spearman r = {{r_geom}}. Shuffling whole stories' ratings
 gives at most {{r_geom_null95}} (95th percentile).
 
+**Confirmatory re-test** (pre-stated 2026-11-28; {{f_n_stories}} fresh stories, layer chosen on validation stories,
+95% CI from resampling test stories): $R^2$ = {{f_r2}} ({{f_r2_lo}}–{{f_r2_hi}}) at layer {{f_layer}}, so the 0.5 bar is
+inside the interval (inconclusive). A bag-of-words model on the same prefix text reaches {{f_bow_r2}}, so the
+activations carry more than the words alone. Geometry again agrees only weakly: RSA r = {{f_rsa}} against a
+story-shuffle 95th percentile of {{f_rsa_null95}} (above chance, far below the 0.3 bar, fail).
+
 ## Limitations
 
 - Smaller instruct model; trajectories use human norms of the six emotion words to place ratings in 2-D, a simplification

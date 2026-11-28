@@ -7,7 +7,7 @@ models: [GPT-2 small]
 fidelity: recomputed
 evidence: causal
 order: 25
-summary: A late attention head looks back at words the model is about to repeat and pushes them down — a built-in "don't just copy" brake.
+summary: A late attention head looks back at words the model is about to repeat and pushes them down — a built-in "don't just copy" brake. It replicates in GPT-2, though the head also pushes down close variants of the copied word.
 viz: copy-suppression
 data: copy-suppression.json
 locations:
@@ -68,6 +68,11 @@ QK circuit peak on the diagonal. A copy-suppression-only ablation (CSPA) keeps 7
 - Behaviour: on {{n_neg_direct}} of {{n_prompts}} hand-written prompts the head's direct effect on the repeated token's
   logit is negative, and zero-ablating it raises that token's probability on {{n_ablation_up}} of them. Mean attention
   to the earlier copy is {{mean_attn_copy}}.
+- Confirmatory control (pre-stated 2026-11-28, {{n_prompts_all}} prompts): the head's direct effect is negative on the
+  copied token in {{n_neg_direct_all}} of {{n_prompts_all}} prompts, but lower than on a control token (the most probable
+  next token that does not occur in the prompt) in only {{n_below_control}} of them, so the row is partial. Many control
+  tokens are variants of words in the prompt (" King" after "king", " doors" after "door", " Alice" after "Alice gave
+  Bob"), which the head also pushes down. The suppression is real but not limited to the exact copied token.
 
 ## Limitations
 

@@ -65,6 +65,11 @@ tracks these coordinates through the diffusion process and edits colors in the l
   images the same pipeline gives {{var_noise3|pct}}.
 - Correlation of PC1 with lightness {{r_light}}; circular correlation of the PC2–PC3 angle with hue {{r_hue}}; correlation
   of the radius with chroma {{r_sat}}.
+- Confirmatory control (pre-stated 2026-11-28): the same VAE architecture with random weights scores only
+  {{rand_min_r}} on the weakest of the three correlations ({{rand_r_light}} / {{rand_r_hue}} / {{rand_r_sat}}), against
+  {{min_r}} for the trained VAE. The bicone is learned (pass). PCA of the raw RGB values, reported without a verdict,
+  gives lightness {{rgb_r_light}}, hue {{rgb_r_hue}} and chroma {{rgb_r_sat}}: lightness and chroma are already linear
+  in RGB, but a clean hue circle is not, so the trained VAE does more than copy RGB.
 
 ## Limitations
 

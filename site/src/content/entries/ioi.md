@@ -109,6 +109,11 @@ logits; the circuit keeps 87% of $\Delta$ when everything else is mean-ablated.
 - Keeping only the 26 circuit heads (mean-ablating the other 118) leaves a logit difference of {{faithful_ld}}, i.e.
   {{faithful_frac|pct}} of the full model. Knocking out all seven classes drops it to {{all_classes_ablated_ld}}, while
   knocking out 26 random heads leaves a median of {{rand_ablated_ld_median}}.
+- With the paper's node definition, (head, position) pairs (each class kept only at its position: previous-token heads
+  at S1+1, duplicate-token and induction heads at S2, the rest at END), the circuit keeps {{faithful_pos_frac|pct}}
+  (95% CI {{faithful_pos_frac_lo|pct}}–{{faithful_pos_frac_hi|pct}}). This confirmatory test was pre-stated on
+  2026-11-28. Restricting positions does not lower faithfulness, so the gap to the paper's 87% is not explained by our
+  keeping heads at every position.
 
 ## Limitations
 

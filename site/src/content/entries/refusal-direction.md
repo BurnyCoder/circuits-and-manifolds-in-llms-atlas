@@ -60,6 +60,11 @@ refusal judged by the paper's substring list):
   prompts, at the same layer and norm. Ablating it leaves harmful refusal at {{harm_shuf|pct}}; adding it gives
   {{safe_shuf|pct}} refusal on harmless prompts. (A random unit direction barely overlaps any activation, so ablating it
   could hardly fail.) Wilson 95% CIs are in the verdict table.
+- Is the "compliance" fluent text, or did the ablation just break the model? A pre-stated check (2026-11-28) scores the
+  ablated completions with the *unmodified* model, without storing any text: median {{nll_ablated}} nats per token
+  (tokens 6–40) against {{nll_safe_base}} for ordinary answers to harmless prompts, and no repetition (distinct
+  3-grams {{distinct3_ablated}} vs {{distinct3_safe_base}}). That is within the pre-stated +1 nat margin. The higher
+  value is expected because the unmodified model would have refused, so a compliant answer is unlikely under it.
 
 ## Limitations
 

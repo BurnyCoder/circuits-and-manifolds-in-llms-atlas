@@ -80,7 +80,8 @@ features, and showed clamping changes behaviour.
 - {{n_lift}} of {{n_concepts}} concept features gain ≥ 30 points of on-topic completions at α = {{alpha}} (median lift
   {{median_lift|pct}}).
 - Both rows are post-hoc: the feature-selection rule was changed twice after smoke tests that had logged steering
-  rates. Each cell has only 12 completions.
+  rates. Since the review each cell has {{n_per_cell}} completions (was 12), with Wilson 95% CIs in the verdict table;
+  the outcome is unchanged: the feature steers toward bridges in general, never toward the Golden Gate in particular.
 
 ## Limitations
 

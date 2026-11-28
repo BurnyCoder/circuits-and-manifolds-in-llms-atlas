@@ -59,10 +59,13 @@ anchor pairs, vs r = 0.06 for activation-space chords).
 
 - Linear probes read position with $R^2$ = {{r2_position}} and velocity with {{r2_velocity}} (untrained encoder: position
   {{r2_position_untrained}}).
-- Distances along the spline track position differences with r = {{r_arc}}; straight-chord distances give r = {{r_chord}}.
+- Distances along the spline track position differences with r = {{r_arc}} (95% CI over rollouts {{r_arc_lo}}–{{r_arc_hi}});
+  straight-chord distances give r = {{r_chord}}.
 - Control added after the methods review: the same analysis on the **untrained** encoder gives r = {{r_arc_untrained}}
   along its spline and {{r_chord_untrained}} for chords. A spline through position-ordered means is monotone in
-  position almost by construction, so this isometry does not show anything learned (the control row fails).
+  position almost by construction, so this isometry does not show anything learned (the control row fails). The
+  trained-minus-untrained contrast of (arc − chord) is {{contrast}} (95% CI over rollouts {{contrast_lo}} to
+  {{contrast_hi}}), i.e. below zero, not just below the pre-stated +0.2.
 - Mean distance from path points to the nearest real frame embedding: {{void_manifold}} along the manifold vs
   {{void_linear}} along the straight line.
 
