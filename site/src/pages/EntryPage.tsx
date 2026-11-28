@@ -3,11 +3,13 @@
 import { Suspense, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CategoryTag, FidelityBadge } from '../components/Badges'
+import VerdictCell from '../components/VerdictCell'
 import VizBoundary from '../components/VizBoundary'
 import { entryBySlug } from '../lib/content'
 import { useData } from '../lib/data'
 import { CATEGORY, COLLECTIONS, EVIDENCE } from '../lib/labels'
 import { renderMarkdown } from '../lib/markdown'
+import { tally } from '../lib/verdicts'
 import { vizRegistry } from '../viz/registry'
 
 export default function EntryPage() {
@@ -24,6 +26,7 @@ export default function EntryPage() {
   }, [e, data, extra])
   const replication = [...(data?.replication ?? []), ...(extra?.replication ?? [])]
   const html = useMemo(() => (e ? renderMarkdown(e.body, summary) : ''), [e, summary])
+  const t = tally(replication)
   if (!e) return <p>Unknown entry “{slug}”. <Link to="/">Back to the atlas</Link></p>
 
   const Viz = e.viz ? vizRegistry[e.viz] : undefined
@@ -49,6 +52,13 @@ export default function EntryPage() {
         </div>
         <h1>{e.title}</h1>
         <p className="summary">{e.summary}</p>
+        {replication.length > 0 && (
+          <p className="verdict-line">
+            Our recomputation, pre-stated claims: <span className="outcome pass">{t.pass} pass</span> ·{' '}
+            <span className="outcome partial">{t.partial} partial</span> · <span className="outcome fail">{t.fail} fail</span>
+            {t.postHoc > 0 && <> · {t.postHoc} post-hoc row{t.postHoc > 1 ? 's' : ''} (not counted)</>} — details below.
+          </p>
+        )}
       </header>
 
       {Viz && (
@@ -96,7 +106,7 @@ export default function EntryPage() {
                   <th>Claim</th>
                   <th>Published</th>
                   <th>Ours</th>
-                  <th>Pass criterion</th>
+                  <th>Criterion</th>
                   <th>Verdict</th>
                 </tr>
               </thead>
@@ -107,7 +117,7 @@ export default function EntryPage() {
                     <td>{r.published}</td>
                     <td>{r.ours}</td>
                     <td>{r.criterion}</td>
-                    <td className={`outcome ${r.verdict}`}>{r.verdict}</td>
+                    <VerdictCell r={r} />
                   </tr>
                 ))}
               </tbody>

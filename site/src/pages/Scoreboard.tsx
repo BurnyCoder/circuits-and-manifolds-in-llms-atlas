@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import { entries } from '../lib/content'
 import { loadData } from '../lib/data'
 import type { ReplicationResult } from '../lib/types'
+import { tally } from '../lib/verdicts'
+import VerdictCell from '../components/VerdictCell'
 
 export default function Scoreboard() {
   const [rows, setRows] = useState<(ReplicationResult & { slug: string; title: string })[]>([])
@@ -19,27 +21,33 @@ export default function Scoreboard() {
         ),
     ).then((all) => setRows(all.flat()))
   }, [])
-  const count = (v: string) => rows.filter((r) => r.verdict === v).length
+  const t = tally(rows)
   const others = entries.flatMap((e) => (e.replications ?? []).filter((r) => r.outcome !== 'ours').map((r) => ({ ...r, slug: e.slug, title: e.title })))
   return (
     <>
       <h1>Replications scoreboard</h1>
       <p className="prose">
         Every claim we re-tested, the number the original paper reports, what we measured on open models, the pass criterion
-        we fixed before running (see <code>reports/planned-runs.md</code>), and the verdict. Failures are kept, not hidden.
+        (see <code>reports/planned-runs.md</code>), and the verdict. Failures are kept, not hidden. Rows marked{' '}
+        <b>post-hoc</b> had their analysis or criterion chosen after results for that claim had been seen (or never had a
+        pre-stated criterion); they stay in the table with the reason but are not counted below.
       </p>
       <div className="kpis">
         <div className="kpi">
-          <div className="v outcome pass">{count('pass')}</div>
+          <div className="v outcome pass">{t.pass}</div>
           <div className="l">pass</div>
         </div>
         <div className="kpi">
-          <div className="v outcome partial">{count('partial')}</div>
+          <div className="v outcome partial">{t.partial}</div>
           <div className="l">partial</div>
         </div>
         <div className="kpi">
-          <div className="v outcome fail">{count('fail')}</div>
+          <div className="v outcome fail">{t.fail}</div>
           <div className="l">fail</div>
+        </div>
+        <div className="kpi">
+          <div className="v">{t.postHoc}</div>
+          <div className="l">post-hoc (not counted)</div>
         </div>
       </div>
       <section className="panel table-wrap">
@@ -64,7 +72,7 @@ export default function Scoreboard() {
                 <td>{r.published}</td>
                 <td>{r.ours}</td>
                 <td>{r.criterion}</td>
-                <td className={`outcome ${r.verdict}`}>{r.verdict}</td>
+                <VerdictCell r={r} />
               </tr>
             ))}
           </tbody>

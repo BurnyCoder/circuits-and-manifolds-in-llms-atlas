@@ -107,4 +107,6 @@ export interface ReplicationResult {
   ours: string
   criterion: string
   verdict: 'pass' | 'partial' | 'fail' | 'n/a'
+  /** Reason the row is post-hoc (src/atlas/common/post_hoc.py); such rows are shown but not counted. */
+  post_hoc?: string
 }

@@ -401,6 +401,18 @@ blockquote.quote cite {
 .outcome.ours {
   color: var(--accent);
 }
+/* Post-hoc reason under a verdict (rows excluded from tallies). */
+.posthoc {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78em;
+  font-weight: 400;
+  color: var(--muted);
+}
+.verdict-line {
+  font-size: 14px;
+  color: var(--muted);
+}
 .two-col {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
