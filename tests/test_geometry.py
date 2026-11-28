@@ -51,3 +51,19 @@ def test_ridge_alpha_selection_beats_overfit_alpha():
     cv = ridge_r2(X[tr], y[tr, None], X[te], y[te, None], alpha=grid, groups=groups[tr])
     assert cv >= max(fixed.values()) - 0.05  # the inner split picks a near-best alpha without seeing the test set
     assert cv > fixed[1e5] + 0.1  # and avoids a badly over-regularized one
+
+
+def test_cyclic_order_ties_are_not_an_order():
+    # Methods review m3: all-equal angles used to score 1.0 (stable argsort); now NaN and never significant.
+    assert np.isnan(cyclic_order_score(np.zeros(7)))
+    assert cyclic_order_pvalue(float("nan"), 7, n_perm=100) == 1.0
+
+
+def test_ridge_predict_matches_ridge_r2():
+    from atlas.common.geometry import r2_score, ridge_predict
+
+    rng = np.random.default_rng(1)
+    X = rng.normal(size=(200, 5))
+    y = X @ rng.normal(size=5) + 0.1 * rng.normal(size=200)
+    pred = ridge_predict(X[:150], y[:150, None], X[150:], [1e-2, 1e0, 1e2])
+    assert r2_score(y[150:, None], pred) == ridge_r2(X[:150], y[:150, None], X[150:], y[150:, None], [1e-2, 1e0, 1e2])

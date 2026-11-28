@@ -22,11 +22,13 @@ import torch
 
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
+from ..common.stats import bootstrap_ci
 
 log = get_logger()
 SLUG = "number-helix"
 PERIODS = (2, 5, 10, 100)
 MODELS = ["EleutherAI/pythia-160m", "EleutherAI/pythia-410m", "EleutherAI/pythia-1b", "EleutherAI/pythia-1.4b", "EleutherAI/pythia-2.8b"]
+N_RAND9 = 5  # random 9-D subspaces per prompt (pre-stated control, review follow-ups 2026-11-28)
 MIN_PATCH_N = 20  # minimum correctly solved prompts for a patching verdict (amendment 2026-11-27, before the full run)
 FEWSHOT = ["12+7=19\n31+22=53\n40+8=48\n", "5+11=16\n27+30=57\n63+14=77\n", "8+8=16\n44+21=65\n19+60=79\n"]
 
@@ -94,6 +96,7 @@ def run_model(name: str, ctx) -> dict:
         "linear only": a[:, None].astype(float),
         "shuffled helix (control)": basis(shuffled),
     }
+    folds = np.array_split(rng.permutation(100), 5)  # 5-fold CV over a (review follow-ups; was one 80/20 split)
     for L in range(nl + 1):
         X = Xall[:, L]
         Xc = X - X.mean(0)
@@ -102,7 +105,8 @@ def run_model(name: str, ctx) -> dict:
         row = {"layer": L}
         for k, B in bases.items():
             r_in, r_te, _ = fit_r2(Z, B, tr, te)
-            row[k] = {"in": r_in, "test": r_te}
+            cv = [fit_r2(Z, B, np.setdiff1d(a, f), f)[1] for f in folds]
+            row[k] = {"in": r_in, "test": r_te, "cv": float(np.mean(cv))}
         layers_out.append(row)
     best_L = int(np.argmax([r["helix"]["test"] for r in layers_out[1:]])) + 1
 
@@ -146,12 +150,15 @@ def run_model(name: str, ctx) -> dict:
         Xc = X - mu
         U, S, Vt = np.linalg.svd(Xc, full_matrices=False)
         P9 = Vt[:9]
+        rng9 = np.random.default_rng(1000 + L)
+        span = Vt[:99]  # the 99-D span of the number-token activations at this layer
+        Q9 = [np.linalg.qr((rng9.normal(size=(9, 99)) @ span).T)[0].T for _ in range(N_RAND9)]  # random orthonormal 9-D bases in it
         fits = {}
         for k in ("helix", "circles only (no linear term)", "linear only"):
             B = bases[k]
             A = np.c_[B, np.ones(100)]
             fits[k] = (np.linalg.lstsq(A, Xc, rcond=None)[0], B)
-        rec = {k: [] for k in ("full layer", "helix", "circles only (no linear term)", "linear only", "PCA-9")}
+        rec = {k: [] for k in ("full layer", "helix", "circles only (no linear term)", "linear only", "PCA-9", "random 9-D")}
         for a1, a2, b in use[: (20 if ctx.quick else 80)]:
             clean_ids = tok(prompt(a1, b), return_tensors="pt", add_special_tokens=False).input_ids.to(ctx.device)
             corr_ids = tok(prompt(a2, b), return_tensors="pt", add_special_tokens=False).input_ids.to(ctx.device)
@@ -165,20 +172,23 @@ def run_model(name: str, ctx) -> dict:
             for k, (Wk, B) in fits.items():
                 deltas[k] = (B[a1] - B[a2]) @ Wk[: B.shape[1]]  # move along the fitted manifold from a' to a
             deltas["PCA-9"] = P9.T @ (P9 @ (hc - hx).cpu().numpy())
+            deltas["random 9-D"] = np.stack([Q.T @ (Q @ (hc - hx).cpu().numpy()) for Q in Q9])  # [N_RAND9, d], one batched pass
             for k, dlt in deltas.items():
                 # Hidden state L = output of block L-1 (hidden_states[0] = embeddings) -> hook block L-1.
                 dvec = torch.tensor(dlt, device=ctx.device)
 
                 def hook(m, i, o, dvec=dvec):
                     hs = o[0] if isinstance(o, tuple) else o
-                    hs[:, a_pos] += dvec.to(hs.dtype)
+                    hs[:, a_pos] += dvec.to(hs.dtype)  # [d] or, for the random 9-D draws, [N_RAND9, d] (one per batch row)
                     return o
 
                 h = model.gpt_neox.layers[L - 1].register_forward_hook(hook)  # patch_layers are all >= 1
-                lp = ld(model(corr_ids).logits[0, -1].float())
+                ids_k = corr_ids.repeat(len(dvec), 1) if dvec.ndim == 2 else corr_ids
+                lps = [ld(lg.float()) for lg in model(ids_k).logits[:, -1]]
                 h.remove()
-                rec[k].append((lp - ld_corr) / (ld_clean - ld_corr + 1e-9))
-        patch.append({"layer": L, **{k: float(np.median(v)) if v else None for k, v in rec.items()}, "n": len(rec["helix"])})
+                rec[k].append(float(np.mean([(lp - ld_corr) / (ld_clean - ld_corr + 1e-9) for lp in lps])))
+        patch.append({"layer": L, **{k: float(np.median(v)) if v else None for k, v in rec.items()}, "n": len(rec["helix"]),
+                      "per_prompt": {k: np.array(v) for k, v in rec.items()}})
         log.info("%s L%d patch recovery: %s", name, L, {k: round(v, 3) if isinstance(v, float) else v for k, v in patch[-1].items()})
     del model
     torch.cuda.empty_cache()
@@ -225,6 +235,28 @@ def compute(ctx) -> None:
         "top_periods": ", ".join(f"{p:.3g}" for p in top_periods),
         "n_models": len(res),
     }
+    # Row 2 (control fix): 5-fold CV over a, max over layers for every basis including the shuffled control.
+    cvmax = {k: max(r[k]["cv"] for r in big["layers"][1:]) for k in ("helix", "shuffled helix (control)", "linear only", "circles only (no linear term)")}
+    cv_layer = 1 + int(np.argmax([r["helix"]["cv"] for r in big["layers"][1:]]))
+    summary.update({"helix_cv_r2": cvmax["helix"], "shuffled_cv_r2": cvmax["shuffled helix (control)"], "linear_cv_r2": cvmax["linear only"],
+                    "circles_cv_r2": cvmax["circles only (no linear term)"], "cv_layer": cv_layer})
+    # Pre-stated test (review follow-ups): helix vs random 9-D and PCA-9 at every layer where the full-layer patch
+    # recovers ≥ 50%; paired per-prompt differences, bootstrap CI of the mean.
+    qual = [p for p in big["patch"] if (p["full layer"] or 0) >= 0.5]
+    spec = []
+    for p in qual:
+        pp = p["per_prompt"]
+        spec.append({"layer": p["layer"], "vs_random9": bootstrap_ci(pp["helix"] - pp["random 9-D"]), "vs_pca9": bootstrap_ci(pp["helix"] - pp["PCA-9"]),
+                     "helix": float(np.mean(pp["helix"])), "random9": float(np.mean(pp["random 9-D"])), "pca9": float(np.mean(pp["PCA-9"]))})
+        log.info("%s L%d helix − random-9 %s, helix − PCA-9 %s (mean recovery helix %.2f, random-9 %.2f, PCA-9 %.2f)", big["name"], p["layer"],
+                 np.round(spec[-1]["vs_random9"], 3), np.round(spec[-1]["vs_pca9"], 3), spec[-1]["helix"], spec[-1]["random9"], spec[-1]["pca9"])
+    beats_r9 = bool(spec) and all(x["vs_random9"][1] > 0 for x in spec)
+    beats_p9 = bool(spec) and all(x["vs_pca9"][1] > 0 for x in spec)
+    summary["patch_spec"] = "; ".join(
+        f"L{x['layer']}: helix {x['helix'] * 100:.0f}% vs random 9-D {x['random9'] * 100:.0f}% (diff {x['vs_random9'][0] * 100:+.0f} [{x['vs_random9'][1] * 100:+.0f}, {x['vs_random9'][2] * 100:+.0f}]) "
+        f"vs PCA-9 {x['pca9'] * 100:.0f}% (diff {x['vs_pca9'][0] * 100:+.0f} [{x['vs_pca9'][1] * 100:+.0f}, {x['vs_pca9'][2] * 100:+.0f}])" for x in spec) or "no layer with full-layer recovery ≥ 50%"
+    for p in big["patch"] + [q for r in res[:-1] for q in r["patch"]]:
+        p.pop("per_prompt", None)  # raw per-prompt arrays are only needed for the test above
     repl = [
         verdict_row(
             "Number embeddings are periodic with periods 2, 5, 10",
@@ -236,23 +268,31 @@ def compute(ctx) -> None:
         verdict_row(
             "Numbers lie on a generalized helix (T = 2, 5, 10, 100)",
             "helix fits the residual stream of GPT-J / Pythia-6.9B / Llama-3.1-8B",
-            f"{summary['largest']} layer {big['best_layer']}: held-out R² {bl['helix']['test']:.2f} vs {bl['shuffled helix (control)']['test']:.2f} for a shuffled helix, "
-            f"{bl['linear only']['test']:.2f} linear-only",
-            "held-out helix R² ≥ 0.5 and ≥ 0.2 above the shuffled control",
-            bl["helix"]["test"] >= 0.5 and bl["helix"]["test"] - bl["shuffled helix (control)"]["test"] >= 0.2,
-            partial=bl["helix"]["test"] - bl["shuffled helix (control)"]["test"] >= 0.1,
+            f"{summary['largest']}: 5-fold CV R² over a, max over layers for each basis: helix {cvmax['helix']:.2f} (layer {cv_layer}) vs "
+            f"{cvmax['shuffled helix (control)']:.2f} for a shuffled helix, {cvmax['linear only']:.2f} linear-only, {cvmax['circles only (no linear term)']:.2f} circles only",
+            "held-out helix R² ≥ 0.5 and ≥ 0.2 above the shuffled control (control fix 2026-11-28: CV, controls max-selected too)",
+            cvmax["helix"] >= 0.5 and cvmax["helix"] - cvmax["shuffled helix (control)"] >= 0.2,
+            partial=cvmax["helix"] - cvmax["shuffled helix (control)"] >= 0.1,
         ),
         verdict_row(
             "Patching along the helix recovers most of the full-layer effect",
             "GPT-J: helix 7.21 vs full 8.34 logit diff (86%); PCA 6.13",
             f"{summary['largest']} layer {best_patch['layer']}: median recovery helix {summary['patch_helix'] * 100:.0f}%, full layer {summary['patch_full'] * 100:.0f}%, "
             f"PCA-9 {summary['patch_pca9'] * 100:.0f}%, linear-only {summary['patch_linear'] * 100:.0f}% (n = {best_patch['n']} correct prompts; accuracy {big['accuracy'] * 100:.0f}%)",
-            f"helix ≥ 50% of the full-layer recovery and ≥ linear-only (needs ≥ {MIN_PATCH_N} correctly solved prompts, else n/a)",
+            f"helix ≥ 50% of the full-layer recovery and ≥ linear-only; full-layer recovery ≥ 50% (m7 guard, 2026-11-28) (needs ≥ {MIN_PATCH_N} correctly solved prompts, else n/a)",
             # Too few solved prompts -> no verdict (small Pythia models rarely solve a+b; see planned-runs amendment).
             None
             if best_patch["n"] < MIN_PATCH_N
-            else summary["patch_full"] > 0 and summary["patch_helix"] >= 0.5 * summary["patch_full"] and summary["patch_helix"] >= summary["patch_linear"],
+            else summary["patch_full"] >= 0.5 and summary["patch_helix"] >= 0.5 * summary["patch_full"] and summary["patch_helix"] >= summary["patch_linear"],
             partial=summary["patch_helix"] > summary["patch_linear"],
+        ),
+        verdict_row(
+            "Confirmatory: patching along the helix beats generic 9-D subspaces",
+            "GPT-J: helix 7.21 vs PCA 6.13 logit difference (Kantamneni & Tegmark Table 1)",
+            f"{summary['largest']}, mean per-prompt recovery, paired differences [95% bootstrap CI]: {summary['patch_spec']}",
+            "CI > 0 against random 9-D and PCA-9 at every layer with full-layer recovery ≥ 50%; partial if only against random 9-D (pre-stated 2026-11-28)",
+            None if best_patch["n"] < MIN_PATCH_N or not spec else beats_r9 and beats_p9,
+            partial=beats_r9,
         ),
     ]
     write_entry(SLUG, {"models": res, "periods": PERIODS}, summary, repl, models=[r["name"] for r in res], runtime_s=time.time() - t0, ndigits=3)

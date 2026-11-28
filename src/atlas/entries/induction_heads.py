@@ -15,6 +15,7 @@ induction-heads/index.html and Elhage et al. 2021, https://transformer-circuits.
 from __future__ import annotations
 
 import copy
+import itertools
 import time
 
 import numpy as np
@@ -94,12 +95,13 @@ def attn_only_2l(ctx) -> dict:
         "ablate induction heads": _ablation_loss(model, tok, [(1, h) for h in ind_heads], L),
         "ablate prev-token head": _ablation_loss(model, tok, [(0, prev_head)], L),
     }
-    # Control: ablate the same number of random layer-1 heads that are NOT induction heads.
-    rng = np.random.default_rng(ctx.seed)
+    # Control: ablate every set of non-induction layer-1 heads of the same size (up to 20 sets; review m4 — was one
+    # random draw). Per sequence, the mean loss over sets is the control; the set with the largest increase is reported.
     others = [h for h in range(model.cfg.n_heads) if h not in ind_heads]
-    abl["ablate random L1 heads (control)"] = _ablation_loss(
-        model, tok, [(1, int(h)) for h in rng.choice(others, size=min(len(ind_heads), len(others)), replace=False)], L
-    )
+    sets = list(itertools.islice(itertools.combinations(others, min(len(ind_heads), len(others))), 20))
+    ctrl = np.stack([_ablation_loss(model, tok, [(1, int(h)) for h in hs], L) for hs in sets])  # [n_sets, n_seq]
+    abl["ablate random L1 heads (control)"] = ctrl.mean(0)
+    abl["ablate worst non-induction L1 head set (control max)"] = ctrl[int(ctrl.mean(1).argmax())]
 
     # Control: random-init model with identical architecture.
     # Pretrained TransformerLens configs carry init_weights=False; without re-enabling it the "random" model's attention
@@ -123,6 +125,7 @@ def attn_only_2l(ctx) -> dict:
         "ablations": {k: bootstrap_ci(v) for k, v in abl.items()},
         "prev_head": prev_head,
         "ind_heads": ind_heads,
+        "ctrl_sets": [[int(h) for h in hs] for hs in sets],
         "example": {
             "tokens": toks,
             "seq_len": L,
@@ -254,7 +257,7 @@ def compute(ctx) -> None:
             "Induction heads causally implement in-context copying",
             "Ablating induction heads removes in-context learning in small attn-only models (Olsson et al., Argument 3)",
             f"repeat loss {ci_str(*ab['clean'])} → {ci_str(*ab['ablate induction heads'])} nats when ablated "
-            f"(random-head control {ci_str(*ab['ablate random L1 heads (control)'])})",
+            f"(non-induction L1 head sets, mean over {len(a2['ctrl_sets'])} sets: {ci_str(*ab['ablate random L1 heads (control)'])}; worst set {ab['ablate worst non-induction L1 head set (control max)'][0]:.2f})",
             "ablation raises repeat loss by > 1 nat and > 3× the random-head control's increase",
             (ab["ablate induction heads"][0] - ab["clean"][0]) > 1
             and (ab["ablate induction heads"][0] - ab["clean"][0])

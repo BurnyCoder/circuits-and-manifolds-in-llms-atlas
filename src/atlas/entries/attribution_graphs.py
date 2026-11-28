@@ -25,6 +25,7 @@ import requests
 from ..common.env import RESULTS
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
+from ..common.stats import perm_pvalue
 
 log = get_logger()
 SLUG = "attribution-graphs"
@@ -40,6 +41,21 @@ CASES = {
     "gemma-addition": "Addition",
     "gemma-michael-jordan": "Known entity: Michael Jordan",
 }
+TWO_HOP = {
+    "gemma-fact-dallas-austin": ("Dallas", "Texas", "Austin"),
+    "gemma-fact-oakland-sacramento": ("Oakland", "California", "Sacramento"),
+    "gemma-fact-shanghai-beijing": ("Shanghai", "China", "Beijing"),
+}
+# Pre-stated specificity test (reports/planned-runs.md, review follow-ups, 2026-11-28): wrong intermediates per graph,
+# a label-permutation null, and a control triplet of unrelated graphs for the multilingual overlap.
+WRONG = {
+    "gemma-fact-dallas-austin": ["California", "Florida", "China"],
+    "gemma-fact-oakland-sacramento": ["Texas", "Florida", "China"],
+    "gemma-fact-shanghai-beijing": ["Japan", "Texas", "California"],
+}
+LANGS = ["gemma-small-big-en", "gemma-small-big-fr", "gemma-small-big-zh"]
+CONTROL_TRIPLET = ["gemma-fact-dallas-austin", "gemma-addition", "gemma-michael-jordan"]
+BANDS = {"early (0–7)": (0, 7), "middle (8–17)": (8, 17), "late (18–25)": (18, 25)}
 
 
 def fetch(slug: str) -> dict:
@@ -176,6 +192,33 @@ def path_strength(s: dict, start_label: str, mid_label: str, end_label: str) -> 
     return best, direct
 
 
+def label_null_p(s: dict, a: str, m: str, b: str, n_perm: int = 1000, seed: int = 0) -> float:
+    """P(path strength ≥ observed) when the labels of all non-embedding, non-logit groups are randomly permuted: is the
+    path specific to the groups labelled as the intermediate, or would any labelled group do?"""
+    obs, _ = path_strength(s, a, m, b)
+    idx = [i for i, n in enumerate(s["nodes"]) if n["kind"] not in ("embed", "logit")]
+    labels = [s["nodes"][i]["label"] for i in idx]
+    rng = np.random.default_rng(seed)
+    null = []
+    for _ in range(n_perm):
+        nodes = [dict(n) for n in s["nodes"]]
+        for i, lab in zip(idx, rng.permutation(labels)):
+            nodes[i]["label"] = lab
+        null.append(path_strength({**s, "nodes": nodes}, a, m, b)[0])
+    return perm_pvalue(obs, null)
+
+
+def band_jaccard(by: dict, slugs: list[str]) -> dict:
+    """Jaccard overlap of the transcoder-feature sets of several graphs, per layer band."""
+    sets = [set(by[s]["_feats"]) for s in slugs]
+    layer_of = {k: v for s in slugs for k, v in by[s]["_feats"].items()}
+    out = {}
+    for band, (lo, hi) in BANDS.items():
+        ss = [{f for f in st if lo <= layer_of[f] <= hi} for st in sets]
+        out[band] = len(set.intersection(*ss)) / (len(set.union(*ss)) or 1)
+    return out
+
+
 def compute(ctx) -> None:
     t0 = time.time()
     slugs = list(CASES)[:3] if ctx.quick else list(CASES)
@@ -188,27 +231,21 @@ def compute(ctx) -> None:
             log.warning("graph %s failed: %s", slug, e)
     by = {g["slug"]: g for g in graphs}
     two_hop = []
-    for slug, (a, m, b) in {
-        "gemma-fact-dallas-austin": ("Dallas", "Texas", "Austin"),
-        "gemma-fact-oakland-sacramento": ("Oakland", "California", "Sacramento"),
-        "gemma-fact-shanghai-beijing": ("Shanghai", "China", "Beijing"),
-    }.items():
+    for slug, (a, m, b) in TWO_HOP.items():
         if slug in by:
             ph, d = path_strength(by[slug], a, m, b)
-            two_hop.append({"slug": slug, "path": ph, "direct": d})
-            log.info("%s: two-hop path strength %.3f, direct %.3f", slug, ph, d)
-    # Multilingual feature overlap by layer band.
-    overlap = {}
-    langs = [s for s in ("gemma-small-big-en", "gemma-small-big-fr", "gemma-small-big-zh") if s in by]
-    if len(langs) == 3:
-        sets = [set(by[s]["_feats"]) for s in langs]
-        layer_of = {**by[langs[0]]["_feats"], **by[langs[1]]["_feats"], **by[langs[2]]["_feats"]}
-        for band, (lo, hi) in {"early (0–7)": (0, 7), "middle (8–17)": (8, 17), "late (18–25)": (18, 25)}.items():
-            ss = [{f for f in s if lo <= layer_of[f] <= hi} for s in sets]
-            inter = len(ss[0] & ss[1] & ss[2])
-            union = len(ss[0] | ss[1] | ss[2]) or 1
-            overlap[band] = inter / union
+            wrong = {w: path_strength(by[slug], a, w, b)[0] for w in WRONG[slug]}
+            p_null = label_null_p(by[slug], a, m, b, 200 if ctx.quick else 1000, ctx.seed)
+            two_hop.append({"slug": slug, "path": ph, "direct": d, "wrong": wrong, "p_label_null": p_null})
+            log.info("%s: two-hop path strength %.3f, direct %.3f; wrong intermediates %s; label-permutation p %.4f", slug, ph, d, wrong, p_null)
+    # Multilingual feature overlap by layer band, and the same for a control triplet of unrelated graphs.
+    overlap, overlap_ctrl = {}, {}
+    if all(s in by for s in LANGS):
+        overlap = band_jaccard(by, LANGS)
         log.info("multilingual feature overlap (Jaccard of 3 graphs): %s", overlap)
+    if all(s in by for s in CONTROL_TRIPLET):
+        overlap_ctrl = band_jaccard(by, CONTROL_TRIPLET)
+        log.info("control-triplet feature overlap (unrelated graphs): %s", overlap_ctrl)
     for g in graphs:
         g.pop("_feats")
     n_paths = sum(1 for t in two_hop if t["path"] > 0)
@@ -221,6 +258,23 @@ def compute(ctx) -> None:
         "overlap_late": overlap.get("late (18–25)", -1),
         "error_share_median": float(np.median([g["error_share_into_logits"] for g in graphs])) if graphs else -1,
     }
+    # Pre-stated specificity test (review follow-ups): correct path with p < 0.05 under the label-permutation null in
+    # all graphs, and wrong-intermediate paths in at most 1 of 9 checks.
+    n_spec = sum(1 for t in two_hop if t["path"] > 0 and t["p_label_null"] < 0.05)
+    n_wrong = sum(1 for t in two_hop for v in t["wrong"].values() if v > 0)
+    n_wrong_total = sum(len(t["wrong"]) for t in two_hop)
+    ctrl_mid = overlap_ctrl.get("middle (8–17)", float("nan"))
+    ml_bands = summary["overlap_middle"] > max(summary["overlap_early"], summary["overlap_late"])
+    ml_ctrl = summary["overlap_middle"] >= ctrl_mid + 0.05
+    summary.update({
+        "two_hop_specific": n_spec,
+        "wrong_paths_found": n_wrong,
+        "wrong_paths_total": n_wrong_total,
+        "label_null_p": ", ".join(f"{t['slug'].split('-')[2].title()} {t['p_label_null']:.3f}" for t in two_hop),
+        "overlap_ctrl_early": overlap_ctrl.get("early (0–7)", -1),
+        "overlap_ctrl_middle": ctrl_mid,
+        "overlap_ctrl_late": overlap_ctrl.get("late (18–25)", -1),
+    })
     repl = [
         verdict_row(
             "Two-hop factual recall goes through an intermediate concept",
@@ -237,6 +291,24 @@ def compute(ctx) -> None:
             "middle-layer overlap higher than both early and late",
             summary["overlap_middle"] > max(summary["overlap_early"], summary["overlap_late"]),
         ),
+        verdict_row(
+            "Confirmatory: the two-hop path runs through the right intermediate",
+            "Dallas → Texas → Austin (Claude 3.5 Haiku); the path should not appear for a wrong intermediate",
+            f"path specific to the intermediate (label-permutation p < 0.05) in {n_spec}/{len(two_hop)} graphs (p: {summary['label_null_p']}); "
+            f"paths through wrong intermediates found in {n_wrong}/{n_wrong_total} checks",
+            "specific in all 3 graphs and wrong-intermediate paths in ≤ 1 of 9 (pre-stated 2026-11-28)",
+            n_spec == len(two_hop) == 3 and n_wrong <= 1,
+            partial=n_spec >= 1,
+        ),
+        verdict_row(
+            "Confirmatory: middle-layer overlap is specific to the multilingual graphs",
+            "language-independent features concentrate in the middle layers (Claude)",
+            f"middle-band Jaccard: multilingual {summary['overlap_middle']:.2f} vs unrelated-graph control {ctrl_mid:.2f} "
+            f"(multilingual early {summary['overlap_early']:.2f}, late {summary['overlap_late']:.2f})",
+            "middle > early and late, and ≥ control middle + 0.05; partial if one holds (pre-stated 2026-11-28)",
+            ml_bands and ml_ctrl,
+            partial=ml_bands or ml_ctrl,
+        ),
     ]
-    write_entry(SLUG, {"graphs": graphs, "two_hop": two_hop, "overlap": overlap, "model": MODEL}, summary, repl, models=["gemma-2-2b (Neuronpedia public graphs)"], runtime_s=time.time() - t0, ndigits=3)
+    write_entry(SLUG, {"graphs": graphs, "two_hop": two_hop, "overlap": overlap, "overlap_ctrl": overlap_ctrl, "model": MODEL}, summary, repl, models=["gemma-2-2b (Neuronpedia public graphs)"], runtime_s=time.time() - t0, ndigits=3)
     log.info("attribution graphs summary: %s", summary)

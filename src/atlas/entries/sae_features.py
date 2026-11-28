@@ -26,11 +26,13 @@ import torch
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
 from ..common.models import hooked
+from ..common.stats import rate_str
 
 log = get_logger()
 SLUG = "sae-features"
 LAYER = 8
 HOOK = f"blocks.{LAYER}.hook_resid_pre"
+N_SAMPLES = 16  # steering samples per prompt (3 prompts -> 48 per cell; review follow-ups 2026-11-28, was 4)
 # Each concept has three probe texts; a feature is chosen by its *weakest* peak activation across them (it must fire on
 # every probe), relative to how strongly it fires on ordinary WikiText. One focus token per concept picked word-sense
 # features in the smoke test (French " pain" = bread was read as English "pain" -> a violence feature).
@@ -158,17 +160,21 @@ def compute(ctx) -> None:
 
                 comps = []
                 for p in NEUTRAL:
-                    for k in range(2 if ctx.quick else 4):
-                        torch.manual_seed(ctx.seed + k)
-                        with model.hooks(fwd_hooks=[(HOOK, hook)] if alpha else []):
-                            o = model.generate(p, max_new_tokens=30, temperature=0.8, top_p=0.9, verbose=False, use_past_kv_cache=False)
-                        comps.append(o[len(p) :])
+                    # N_SAMPLES samples per prompt in one batch (same prompt, so no padding); 3 prompts × 16 = 48 per
+                    # cell (review follow-ups: was 12).
+                    torch.manual_seed(ctx.seed)
+                    toks = model.to_tokens([p] * (4 if ctx.quick else N_SAMPLES))
+                    with model.hooks(fwd_hooks=[(HOOK, hook)] if alpha else []):
+                        out = model.generate(toks, max_new_tokens=30, temperature=0.8, top_p=0.9, verbose=False, use_past_kv_cache=False)
+                    for row in out:
+                        comps.append(model.tokenizer.decode(row[toks.shape[1] :]).replace("<|endoftext|>", ""))
                         log.info("SAE steer %s α=%s %s | %s ||| %s", name, alpha, kind, p, comps[-1].replace("\n", " "))
-                rate = float(np.mean([any(kw in c.lower() for kw in spec["keywords"]) for c in comps]))
+                k_on = int(sum(any(kw in c.lower() for kw in spec["keywords"]) for c in comps))
                 # Concept-specific mentions (e.g. "Golden Gate" / "San Francisco", not just "bridge"); added after the
                 # methods review showed the selected feature is a generic bridge feature.
-                specific = float(np.mean([any(kw in c.lower() for kw in spec.get("specific", spec["keywords"])) for c in comps]))
-                steer.append({"alpha": alpha, "kind": kind, "on_topic": rate, "specific": specific, "examples": comps[:3]})
+                k_sp = int(sum(any(kw in c.lower() for kw in spec.get("specific", spec["keywords"])) for c in comps))
+                steer.append({"alpha": alpha, "kind": kind, "on_topic": k_on / len(comps), "specific": k_sp / len(comps), "n": len(comps),
+                              "k_on": k_on, "k_specific": k_sp, "examples": comps[:3]})
         results[name] = {
             "feature": fid,
             "label": label,  # Neuronpedia auto-interp label ("" when the activation fallback was used)
@@ -187,7 +193,10 @@ def compute(ctx) -> None:
     on = lambda rows, a, k: next((r["on_topic"] for r in rows if r["alpha"] == a and r["kind"] == k), float("nan"))  # noqa: E731
     a_hi = 40
     lifts = [on(r["steer"], a_hi, "feature") - max(on(r["steer"], 0, "feature"), on(r["steer"], a_hi, "random")) for r in results.values()]
+    cell = lambda rows, a, k: next(r for r in rows if r["alpha"] == a and r["kind"] == k)  # noqa: E731
+    ci = lambda a, k, key="k_on": rate_str(cell(gg, a, k)[key], cell(gg, a, k)["n"])  # noqa: E731  Wilson 95% CI
     summary = {
+        "n_per_cell": cell(gg, a_hi, "feature")["n"],
         "gg_feature": results["Golden Gate Bridge"]["feature"],
         "gg_base": on(gg, 0, "feature"),
         "gg_steer": on(gg, a_hi, "feature"),
@@ -202,8 +211,9 @@ def compute(ctx) -> None:
         verdict_row(
             "Adding an SAE feature's direction steers generation toward its concept (a bridge feature; Golden Gate analogue)",
             "clamping the Golden Gate Bridge feature makes Claude 3 Sonnet obsessed with the bridge (Templeton et al. 2024)",
-            f"GPT-2 small layer 8, feature #{summary['gg_feature']}: completions mentioning the bridge {summary['gg_base'] * 100:.0f}% → {summary['gg_steer'] * 100:.0f}% at α = {a_hi} (random direction {summary['gg_random'] * 100:.0f}%); "
-            f"'Golden Gate' or 'San Francisco' named in {summary['gg_specific'] * 100:.0f}%",
+            f"GPT-2 small layer 8, feature #{summary['gg_feature']}: completions mentioning the bridge {ci(0, 'feature')} → {ci(a_hi, 'feature')} at α = {a_hi} "
+            f"(random direction {ci(a_hi, 'random')}); 'Golden Gate' or 'San Francisco' named in {ci(a_hi, 'feature', 'k_specific')} "
+            f"(n = {summary['n_per_cell']} per cell; Wilson 95% CIs)",
             "≥ 50% on-topic and ≥ 30 points above baseline and random",
             summary["gg_steer"] >= 0.5 and summary["gg_steer"] - max(summary["gg_base"], summary["gg_random"]) >= 0.3,
             partial=summary["gg_steer"] - max(summary["gg_base"], summary["gg_random"]) >= 0.15,
@@ -211,7 +221,8 @@ def compute(ctx) -> None:
         verdict_row(
             "Feature steering generalizes across concepts",
             "many features steer behaviour (feature steering section)",
-            f"{summary['n_lift']}/{len(results)} concepts gain ≥ 30 points of on-topic completions at α = {a_hi} (median lift {summary['median_lift'] * 100:.0f} points)",
+            f"{summary['n_lift']}/{len(results)} concepts gain ≥ 30 points of on-topic completions at α = {a_hi} (median lift {summary['median_lift'] * 100:.0f} points; "
+            "steered on-topic rates: " + ", ".join(f"{k} {rate_str(cell(r['steer'], a_hi, 'feature')['k_on'], cell(r['steer'], a_hi, 'feature')['n'])}" for k, r in results.items()) + ")",
             "≥ 3 of 5 concepts",
             summary["n_lift"] >= 3,
             partial=summary["n_lift"] >= 2,

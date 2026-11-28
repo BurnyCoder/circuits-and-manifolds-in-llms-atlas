@@ -167,7 +167,7 @@ def compute(ctx) -> None:
         "velocity from GRU state (untrained)": ridge_r2(Hu[tr], vel[tr, None], Hu[~tr], vel[~tr, None]),
     }
     log.info("world model probes: %s", probes)
-    def manifold(Zm):
+    def manifold(Zm, pos=pos):
         """Smoothing spline (per latent coordinate) through 100 position-bin means, and its isometry over 50 anchors:
         correlation of |Δ arc length| (along the spline) and of chord length with |Δ position|."""
         edges = np.quantile(pos, np.linspace(0, 1, 101))
@@ -200,6 +200,18 @@ def compute(ctx) -> None:
     # informative if the untrained encoder scores lower.
     _, r_arc_untrained, r_chord_untrained = manifold(Zu)
     log.info("isometry: trained arc r %.3f chord r %.3f | untrained arc r %.3f chord r %.3f", r_arc, r_chord, r_arc_untrained, r_chord_untrained)
+    # Bootstrap over rollouts (review follow-ups, M8): resample whole rollouts, refit bin means and splines, and recompute
+    # trained r_arc and the control contrast (trained − untrained) of (r_arc − r_chord).
+    def contrast(idx):
+        _, a_t, c_t = manifold(Z[idx], pos[idx])
+        _, a_u, c_u = manifold(Zu[idx], pos[idx])
+        return a_t, (a_t - c_t) - (a_u - c_u)
+
+    brng = np.random.default_rng(ctx.seed)
+    rows = {r: np.where(rid == r)[0] for r in np.unique(rid)}
+    boots = np.array([contrast(np.concatenate([rows[r] for r in brng.choice(list(rows), len(rows))])) for _ in range(20 if ctx.quick else 200)])
+    (arc_lo, ctr_lo), (arc_hi, ctr_hi) = np.quantile(boots, [0.025, 0.975], axis=0)
+    log.info("isometry bootstrap over rollouts: trained r_arc [%.3f, %.3f]; control contrast [%.3f, %.3f]", arc_lo, arc_hi, ctr_lo, ctr_hi)
     # Decode frames along the manifold vs the straight chord between two positions.
     p0, p1 = -0.9, 0.3
     K = 10
@@ -228,6 +240,11 @@ def compute(ctx) -> None:
         "r_chord": r_chord,
         "r_arc_untrained": r_arc_untrained,
         "r_chord_untrained": r_chord_untrained,
+        "r_arc_lo": arc_lo,
+        "r_arc_hi": arc_hi,
+        "contrast": (r_arc - r_chord) - (r_arc_untrained - r_chord_untrained),
+        "contrast_lo": ctr_lo,
+        "contrast_hi": ctr_hi,
         "void_manifold": void(man),
         "void_linear": void(lin),
         "n_frames": int(len(Z)),
@@ -244,7 +261,7 @@ def compute(ctx) -> None:
         verdict_row(
             "Distances along the manifold match distances in the world; straight lines don't",
             "arc-length r = 0.996 (manifold) vs 0.06 (chord)",
-            f"r = {r_arc:.3f} along the spline vs {r_chord:.3f} for straight chords (50 anchors, 1,225 pairs)",
+            f"r = {r_arc:.3f} [{arc_lo:.3f}, {arc_hi:.3f}] along the spline vs {r_chord:.3f} for straight chords (50 anchors, 1,225 pairs; 95% CI over rollouts)",
             "manifold r ≥ 0.9 and > chord r",
             r_arc >= 0.9 and r_arc > r_chord,
             partial=r_arc > r_chord,
@@ -252,7 +269,8 @@ def compute(ctx) -> None:
         verdict_row(
             "Control: the isometry is specific to the trained model",
             "the manifold reflects learned world structure",
-            f"untrained encoder: arc r = {r_arc_untrained:.3f}, chord r = {r_chord_untrained:.3f} (trained: {r_arc:.3f} / {r_chord:.3f})",
+            f"untrained encoder: arc r = {r_arc_untrained:.3f}, chord r = {r_chord_untrained:.3f} (trained: {r_arc:.3f} / {r_chord:.3f}); "
+            f"contrast {(r_arc - r_chord) - (r_arc_untrained - r_chord_untrained):.3f} [{ctr_lo:.3f}, {ctr_hi:.3f}] (95% CI over rollouts)",
             "trained arc-minus-chord gap ≥ 0.2 larger than the untrained encoder's",
             (r_arc - r_chord) - (r_arc_untrained - r_chord_untrained) >= 0.2,
         ),

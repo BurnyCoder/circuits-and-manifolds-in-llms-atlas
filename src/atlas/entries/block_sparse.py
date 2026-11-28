@@ -66,8 +66,10 @@ class TopK(torch.nn.Module):
         return self.codes(x) @ self.dec + self.b_dec
 
 
-def toy(ctx) -> dict:
-    g = torch.Generator(device=ctx.device).manual_seed(ctx.seed)
+def toy(ctx, seed: int) -> tuple[dict, dict]:
+    """Train a BSF and a TopK SAE on the toy; return per-concept R² with each concept shown alone (original analysis)
+    and on superposed, in-distribution inputs (pre-stated 2026-11-28, consistent with the sae-manifolds entry)."""
+    g = torch.Generator(device=ctx.device).manual_seed(seed)
     V = torch.linalg.qr(torch.randn(M, D, 3, generator=g, device=ctx.device))[0]  # [M, D, 3] orthonormal subspaces
 
     def batch(n):
@@ -105,16 +107,37 @@ def toy(ctx) -> dict:
                     rec = z[:, top] @ mdl.dec[top] + mdl.b_dec
                 r2 = 1 - ((x - rec) ** 2).sum() / ((x - x.mean(0)) ** 2).sum()
                 res[name].append(float(r2))
-    return {k: v for k, v in res.items()}
+        # Superposed evaluation: rows where concept c is active (with L0 − 1 others), its true component there; decode
+        # only the concept's best block (BSF) / its 4 most active atoms (TopK), without the shared decoder bias.
+        x, idx, comp = batch(20000)
+        sup = {name: [] for name in models}
+        Z = {name: mdl.codes(x) for name, mdl in models.items()}
+        for c in range(M):
+            rows, slot = torch.where(idx == c)
+            target = comp[rows, slot]
+            for name, mdl in models.items():
+                z = Z[name][rows]
+                if isinstance(mdl, BSF):
+                    blk = z.norm(dim=-1).mean(0).argmax()
+                    rec = z[:, blk] @ mdl.dec.view(mdl.g, mdl.b, D)[blk]
+                else:
+                    top = z.mean(0).topk(B).indices
+                    rec = z[:, top] @ mdl.dec[top]
+                sup[name].append(float(1 - ((target - rec) ** 2).sum() / ((target - target.mean(0)) ** 2).sum()))
+    return res, sup
 
 
 @torch.no_grad()
-def curve_block(ctx) -> dict:
+def curve_block(ctx, pretrained: bool = True) -> dict:
     from lucent.modelzoo import inceptionv1
 
     from .curve_detectors import ORIENTS, RADII, arc_image
 
-    model = inceptionv1(pretrained=True).to(ctx.device).eval()
+    if not pretrained:
+        torch.manual_seed(ctx.seed)
+    model = inceptionv1(pretrained=pretrained).to(ctx.device).eval()
+    if not pretrained:  # the review's M1 lesson: make sure a "random-init" control is not an all-zero network
+        assert float(model.mixed3b_3x3_bottleneck_pre_relu_conv.weight.std()) > 0, "random-init InceptionV1 has constant weights"
     store = {}
     h = model.mixed3b.register_forward_hook(lambda m, i, o: store.__setitem__("a", o))
     feats, ors = [], []
@@ -144,6 +167,19 @@ def curve_block(ctx) -> dict:
         return out
 
     per = harm_r2(th)
+    if not pretrained:
+        return {"harmonics": per, "total": float(sum(per))}
+    # Per-channel circular-shift null (reported, no verdict): shift each channel's orientation tuning by its own random
+    # offset (same for all radii), keeping every channel's smoothness but breaking cross-channel alignment.
+    R3 = Xc.reshape(len(RADII), len(ORIENTS), -1)
+    shift_null = []
+    rng_s = np.random.default_rng(1)
+    for _ in range(20):
+        off = rng_s.integers(0, len(ORIENTS), R3.shape[-1])
+        Xs = np.stack([np.roll(R3[:, :, ch], off[ch], axis=1) for ch in range(R3.shape[-1])], -1).reshape(Xc.shape)
+        Xs = Xs - Xs.mean(0)
+        Zs = Xs @ np.linalg.svd(Xs, full_matrices=False)[2][:16].T
+        shift_null.append(sum(harm_r2(th, Zs)))
     rng = np.random.default_rng(0)
     null = [sum(harm_r2(rng.permutation(th))) for _ in range(50)]
     # Control (added after the methods review): the shuffled-orientation null cannot fail for orientation-dependent
@@ -154,16 +190,25 @@ def curve_block(ctx) -> dict:
     rand_ch = rng.choice(others, len(CURVE_NEURONS), replace=False)
     share = lambda cols: float(sum(harm_r2(th, Xc[:, cols])))  # noqa: E731
     return {"harmonics": per, "total": float(sum(per)), "null_mean": float(np.mean(null)), "null_p95": float(np.quantile(null, 0.95)),
-            "curve_share": share(CURVE_NEURONS), "random_share": share(rand_ch), "ring": Zb[:, :2], "orient_deg": np.degrees(th)}
+            "curve_share": share(CURVE_NEURONS), "random_share": share(rand_ch), "ring": Zb[:, :2], "orient_deg": np.degrees(th),
+            "shift_null_mean": float(np.mean(shift_null))}
 
 
 def compute(ctx) -> None:
     t0 = time.time()
     seed_everything(ctx.seed)
-    t = toy(ctx)
+    seeds = [ctx.seed, ctx.seed + 1, ctx.seed + 2]
+    runs = [toy(ctx, sd) for sd in (seeds[:1] if ctx.quick else seeds)]
+    t = runs[0][0]  # isolated-concept analysis from the original seed (unchanged rows)
     cb = curve_block(ctx)
+    cb_rand = curve_block(ctx, pretrained=False)
     names = list(t)
     bsf, sae = np.array(t[names[0]]), np.array(t[names[1]])
+    sup_b = [float(np.median(r[1][names[0]])) for r in runs]  # superposed: median over concepts, per seed
+    sup_s = [float(np.median(r[1][names[1]])) for r in runs]
+    sb, ss = float(np.mean(sup_b)), float(np.mean(sup_s))
+    log.info("superposed toy: BSF medians %s, TopK medians %s; random-init InceptionV1 harmonic share %.3f (trained %.3f); shift null %.3f",
+             np.round(sup_b, 3), np.round(sup_s, 3), cb_rand["total"], cb["total"], cb["shift_null_mean"])
     summary = {
         "bsf_r2_median": float(np.median(bsf)),
         "sae_r2_median": float(np.median(sae)),
@@ -173,6 +218,12 @@ def compute(ctx) -> None:
         "curve_null_p95": cb["null_p95"],
         "curve_neurons_harm_share": cb["curve_share"],
         "random_channels_harm_share": cb["random_share"],
+        "sup_bsf": sb,
+        "sup_sae": ss,
+        "sup_n_seeds": len(runs),
+        "sup_bsf_wins": int(sum(b > a for b, a in zip(sup_b, sup_s))),
+        "randinit_h123": cb_rand["total"],
+        "shift_null_h123": cb["shift_null_mean"],
     }
     repl = [
         verdict_row(
@@ -199,6 +250,22 @@ def compute(ctx) -> None:
             "curve neurons ≥ random channels + 10 points",
             cb["curve_share"] >= cb["random_share"] + 0.10,
         ),
+        verdict_row(
+            "Confirmatory: blocks beat a TopK SAE on superposed (in-distribution) inputs",
+            "per-block R²: BSF 0.93–0.97 vs TopK SAE ≈ 0.53 (toy, Fel et al. 2026)",
+            f"median per-concept R² on superposed inputs (L0 = {L0}), mean over {len(runs)} seeds: BSF {sb:.2f} vs TopK SAE {ss:.2f}; BSF ahead in {summary['sup_bsf_wins']}/{len(runs)} seeds",
+            "BSF ≥ 0.8 and ≥ TopK + 0.2 with BSF ahead in all seeds; partial if BSF > TopK on average (pre-stated 2026-11-28)",
+            sb >= 0.8 and sb - ss >= 0.2 and summary["sup_bsf_wins"] == len(runs) == 3,
+            partial=sb > ss,
+        ),
+        verdict_row(
+            "Confirmatory control: the orientation ring is learned (random-init InceptionV1)",
+            "the curve block reflects learned curve detectors",
+            f"harmonics 1–3 of the top-16 PCs: trained {cb['total'] * 100:.0f}% vs random-init network {cb_rand['total'] * 100:.0f}% "
+            f"(per-channel circular-shift null {cb['shift_null_mean'] * 100:.0f}%, reported)",
+            "trained ≥ random-init + 10 points (pre-stated 2026-11-28)",
+            cb["total"] >= cb_rand["total"] + 0.10,
+        ),
     ]
-    write_entry(SLUG, {"toy": t, "curve": cb}, summary, repl, models=["BSF / TopK SAE (trained here)", "InceptionV1"], runtime_s=time.time() - t0, ndigits=3)
+    write_entry(SLUG, {"toy": t, "toy_superposed": {"bsf": sup_b, "sae": sup_s, "per_concept": runs[0][1]}, "curve": cb, "curve_randinit": cb_rand}, summary, repl, models=["BSF / TopK SAE (trained here)", "InceptionV1"], runtime_s=time.time() - t0, ndigits=3)
     log.info("BSF summary: %s", summary)

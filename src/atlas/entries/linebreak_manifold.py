@@ -21,9 +21,10 @@ import time
 import numpy as np
 import torch
 
-from ..common.geometry import pca, ridge_r2
+from ..common.geometry import pca, ridge_r2, validated_probe
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
+from ..common.stats import ci_rule
 
 log = get_logger()
 SLUG = "linebreak-manifold"
@@ -32,13 +33,20 @@ MAXC = 150
 ALPHAS = [1e0, 1e1, 1e2, 1e3, 1e4, 1e5]  # ridge grid, chosen per layer on held-out training documents
 
 
-def wrapped_docs(n_docs: int, seed: int) -> list[tuple[str, int]]:
-    """WikiText-103 paragraphs (≥ 600 chars) hard-wrapped with textwrap at a random width from WIDTHS."""
+def wrapped_docs(n_docs: int, seed: int, fresh: bool = False) -> list[tuple[str, int]]:
+    """WikiText-103 paragraphs (≥ 600 chars) hard-wrapped with textwrap at a random width from WIDTHS.
+
+    fresh=True: paragraphs *not* drawn by the main run (same n_docs, same seed), sampled with seed + 1 — the confirmatory
+    data of the review follow-ups (reports/planned-runs.md, 2026-11-28)."""
     from datasets import load_dataset
 
     paras = [t.strip() for t in load_dataset("Salesforce/wikitext", "wikitext-103-raw-v1", split="test")["text"] if len(t.strip()) > 600 and not t.strip().startswith("=")]
     rng = np.random.default_rng(seed)
     idx = rng.choice(len(paras), size=min(n_docs, len(paras)), replace=False)
+    if fresh:
+        rest = np.setdiff1d(np.arange(len(paras)), idx)
+        rng = np.random.default_rng(seed + 1)
+        idx = rng.choice(rest, size=min(n_docs, len(rest)), replace=False)
     out = []
     for i in idx:
         w = int(rng.choice(WIDTHS))
@@ -61,7 +69,7 @@ def char_counts(text: str, offsets: list[tuple[int, int]]) -> np.ndarray:
 
 
 @torch.no_grad()
-def analyze(model_name: str, ctx, n_docs: int) -> dict:
+def analyze(model_name: str, ctx, n_docs: int, fresh: bool = False) -> dict:
     from sklearn.metrics import roc_auc_score
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -77,7 +85,7 @@ def analyze(model_name: str, ctx, n_docs: int) -> dict:
     labels, docs_of = [], []
     p_nl, is_nl = [], []
     rng = np.random.default_rng(ctx.seed)
-    docs = wrapped_docs(n_docs, ctx.seed)
+    docs = wrapped_docs(n_docs, ctx.seed, fresh)
     for di, (text, w) in enumerate(docs):
         enc = tok(text, return_offsets_mapping=True, add_special_tokens=False, truncation=True, max_length=512)
         ids = torch.tensor([enc.input_ids], device=ctx.device)
@@ -131,7 +139,11 @@ def analyze(model_name: str, ctx, n_docs: int) -> dict:
     log.info("%s: best probe layer %d, newline AUC %.3f", model_name, best, auc)
     del model
     torch.cuda.empty_cache()
-    return {"name": model_name, "n_layers": n_layers, "probe": probe, "best_layer": best, "geo": geo, "newline_auc": auc, "n_tokens": int(cnt.sum())}
+    out = {"name": model_name, "n_layers": n_layers, "probe": probe, "best_layer": best, "geo": geo, "newline_auc": auc, "n_tokens": int(cnt.sum())}
+    if fresh:
+        X = {L: np.concatenate(samples[L]).astype(np.float32) for L in probe_layers}
+        out["confirm"] = validated_probe(X, labels[:, None], docs_of, ALPHAS, ctx.seed, early_max=2, y_shuf=shuffled[:, None])
+    return out
 
 
 def compute(ctx) -> None:
@@ -139,6 +151,10 @@ def compute(ctx) -> None:
     n = 40 if ctx.quick else 400
     q = analyze("Qwen/Qwen3-1.7B", ctx, n)
     g = analyze("gpt2", ctx, n)
+    qf = analyze("Qwen/Qwen3-1.7B", ctx, n, fresh=True)["confirm"]  # confirmatory runs on fresh documents
+    gf = analyze("gpt2", ctx, n, fresh=True)["confirm"]
+    log.info("confirmatory (fresh documents): Qwen3 layer %d R² %.3f [%.3f, %.3f] (shuffled %.3f), early L%d ratio %.3f [%.3f, %.3f]; GPT-2 layer %d R² %.3f [%.3f, %.3f]",
+             qf["layer"], qf["r2"], qf["r2_lo"], qf["r2_hi"], qf["r2_shuffled"], qf["early_layer"], qf["ratio"], qf["ratio_lo"], qf["ratio_hi"], gf["layer"], gf["r2"], gf["r2_lo"], gf["r2_hi"])
     qb = max(q["probe"], key=lambda p: p["r2"])
     gb = max(g["probe"], key=lambda p: p["r2"])
     qgeo = q["geo"][str(q["best_layer"])]
@@ -156,7 +172,22 @@ def compute(ctx) -> None:
         "g_best_r2": gb["r2"],
         "g_auc": g["newline_auc"],
         "q_tokens": q["n_tokens"],
+        "qf_layer": qf["layer"],
+        "qf_r2": qf["r2"],
+        "qf_r2_lo": qf["r2_lo"],
+        "qf_r2_hi": qf["r2_hi"],
+        "qf_r2_shuffled": qf["r2_shuffled"],
+        "qf_early_layer": qf["early_layer"],
+        "qf_ratio": qf["ratio"],
+        "qf_ratio_lo": qf["ratio_lo"],
+        "qf_ratio_hi": qf["ratio_hi"],
+        "gf_layer": gf["layer"],
+        "gf_r2": gf["r2"],
+        "gf_r2_lo": gf["r2_lo"],
+        "gf_r2_hi": gf["r2_hi"],
     }
+    p1, part1 = ci_rule(qf["r2_lo"], qf["r2_hi"], 0.7)
+    p3, part3 = ci_rule(qf["ratio_lo"], qf["ratio_hi"], 0.9)
     repl = [
         verdict_row(
             "Character count since the last newline is linearly decodable",
@@ -185,6 +216,23 @@ def compute(ctx) -> None:
             f"AUC of P(newline) for true line breaks: Qwen3-1.7B {q['newline_auc']:.3f}, GPT-2 small {g['newline_auc']:.3f}",
             "Qwen3-1.7B AUC ≥ 0.9",
             q["newline_auc"] >= 0.9,
+        ),
+        verdict_row(
+            "Confirmatory: character count is linearly decodable (fresh documents)",
+            "Haiku: probe R² 0.985 after layer 1; open models (T-Tech): Qwen3-8B 0.852 at L5",
+            f"Qwen3-1.7B, {qf['n_test_groups']} fresh test documents: R² {qf['r2']:.3f} [{qf['r2_lo']:.3f}, {qf['r2_hi']:.3f}] at validation-chosen layer {qf['layer']} "
+            f"(shuffled {qf['r2_shuffled']:.3f}); GPT-2 small {gf['r2']:.3f} [{gf['r2_lo']:.3f}, {gf['r2_hi']:.3f}] at layer {gf['layer']}",
+            "CI rule at 0.7, and R² − shuffled ≥ 0.5 for a pass (pre-stated 2026-11-28)",
+            p1 and qf["r2"] - qf["r2_shuffled"] >= 0.5,
+            partial=part1,
+        ),
+        verdict_row(
+            "Confirmatory: the count is already represented in the first layers (fresh documents)",
+            "Haiku: R² 0.985 already after layer 1 (T-Tech: early peak not replicated in open models)",
+            f"Qwen3-1.7B: R²(layer {qf['early_layer']}) / R²(layer {qf['layer']}) = {qf['ratio']:.3f} [{qf['ratio_lo']:.3f}, {qf['ratio_hi']:.3f}]",
+            "CI rule at 0.9 (pre-stated 2026-11-28)",
+            p3,
+            partial=part3,
         ),
     ]
     write_entry(SLUG, {"qwen": q, "gpt2": g, "widths": WIDTHS}, summary, repl, models=["Qwen/Qwen3-1.7B", "gpt2"], runtime_s=time.time() - t0, ndigits=3)

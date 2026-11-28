@@ -133,6 +133,13 @@ def compute(ctx) -> None:
     max_gap = float(gaps.max())
     sel_c = float(np.median([p["selectivity"] for p in cur]))
     sel_n = float(np.median([p["selectivity"] for p in ctl]))
+    # Review m2: silent control neurons get selectivity 0 by definition; also report responsive controls only, and a
+    # two-sample bootstrap CI of the curve − control median difference (neurons resampled within each group).
+    sc, sn = np.array([p["selectivity"] for p in cur]), np.array([p["selectivity"] for p in ctl])
+    sn_resp = np.array([p["selectivity"] for p in ctl if p["tuning"].max() > 0])
+    brng = np.random.default_rng(ctx.seed)
+    boots = [np.median(brng.choice(sc, len(sc))) - np.median(brng.choice(sn, len(sn))) for _ in range(2000)]
+    diff_lo, diff_hi = (float(x) for x in np.quantile(boots, [0.025, 0.975]))
     n_curve_gt_line = sum(p["curve_over_line"] > 1.5 for p in cur)
     fv = feature_vis(model, CURVE_NEURONS, ctx.device, 64 if ctx.quick else 512)
     log.info("curve detectors: selectivity curve %.2f vs control %.2f; max gap %.0f°; curve>1.5×line %d/10", sel_c, sel_n, max_gap, n_curve_gt_line)
@@ -143,12 +150,17 @@ def compute(ctx) -> None:
         "max_orient_gap": max_gap,
         "n_curve_gt_line": n_curve_gt_line,
         "n_controls": len(ctl),
+        "sel_control_resp_median": float(np.median(sn_resp)) if len(sn_resp) else float("nan"),
+        "n_controls_resp": int(len(sn_resp)),
+        "sel_diff_lo": diff_lo,
+        "sel_diff_hi": diff_hi,
     }
     repl = [
         verdict_row(
             "Curve neurons are tuned to one orientation",
             "each curve detector responds to curves in a narrow orientation band (radial tuning curves)",
-            f"median orientation selectivity {sel_c:.2f} vs {sel_n:.2f} for 20 random mixed3b neurons",
+            f"median orientation selectivity {sel_c:.2f} vs {sel_n:.2f} for 20 random mixed3b neurons (difference 95% CI [{diff_lo:.2f}, {diff_hi:.2f}]); "
+            f"{summary['sel_control_resp_median']:.2f} over the {len(sn_resp)} responsive controls",
             "curve median ≥ control median + 0.2",
             sel_c >= sel_n + 0.2,
         ),

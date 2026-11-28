@@ -25,6 +25,7 @@ import torch
 
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
+from ..common.stats import bootstrap_ci
 
 log = get_logger()
 SLUG = "neuron-basis"
@@ -70,7 +71,7 @@ class Sparsifier:
 
 
 @torch.no_grad()
-def eval_loss(model, seqs, sp=None) -> tuple[float, float]:
+def eval_loss(model, seqs, sp=None) -> tuple[float, float, np.ndarray]:
     """Mean next-token loss under the Sparsifier's current mode, and mean KL(intact ‖ sparsified) per token.
 
     The intact (reference) distribution is recomputed per sequence with the hooks switched off instead of being cached:
@@ -85,7 +86,7 @@ def eval_loss(model, seqs, sp=None) -> tuple[float, float]:
             ref = model(s[None]).logits[0, :-1].float().log_softmax(-1)
             sp.mode = mode
             kls.append((ref.exp() * (ref - lp)).sum(-1).mean().item())
-    return float(np.mean(losses)), (float(np.mean(kls)) if kls else 0.0)
+    return float(np.mean(losses)), (float(np.mean(kls)) if kls else 0.0), np.array(losses)  # last: per-sequence losses (for CIs)
 
 
 def compute(ctx) -> None:
@@ -102,12 +103,14 @@ def compute(ctx) -> None:
     seqs = [ids[i * L : (i + 1) * L].to(ctx.device) for i in range(n_seq)]
     sp = Sparsifier(model)
 
-    base_loss, _ = eval_loss(model, seqs, sp)  # sp.mode is None: the intact model
+    base_loss, _, base_seq = eval_loss(model, seqs, sp)  # sp.mode is None: the intact model
     curve = []
     for k in KS[1:] if not ctx.quick else [1536, 480, 128]:
         sp.mode, sp.k = "topk", k
-        loss, kl = eval_loss(model, seqs, sp)
+        loss, kl, seq_l = eval_loss(model, seqs, sp)
         curve.append({"k": k, "frac_ablated": 1 - k / 6144, "loss": loss, "kl": kl})
+        if k == 480:
+            k480_seq = seq_l
         log.info("top-%d per token per layer (%.1f%% ablated): loss %.4f (base %.4f), KL %.4f", k, 100 * (1 - k / 6144), loss, base_loss, kl)
     controls = {}
     for mode in ("random", "drop_topk"):
@@ -184,10 +187,14 @@ def compute(ctx) -> None:
     attr_frac = attr_q / attr_q.sum()
     all_frac = census.sum(0) / census.sum()
     k480 = next(c for c in curve if c["k"] == 480)
+    # Bootstrap CI over sequences of the relative loss increase at k = 480 (paired; review follow-ups, M8).
+    rel_ci = bootstrap_ci(np.arange(len(seqs)), stat=lambda i: k480_seq[i.astype(int)].mean() / base_seq[i.astype(int)].mean() - 1)
     summary = {
         "base_loss": base_loss,
         "k480_loss": k480["loss"],
         "k480_rel": k480["loss"] / base_loss - 1,
+        "k480_rel_lo": rel_ci[1],
+        "k480_rel_hi": rel_ci[2],
         "k480_kl": k480["kl"],
         "random480_loss": controls["random"]["loss"],
         "drop480_loss": controls["drop_topk"]["loss"],
@@ -203,7 +210,7 @@ def compute(ctx) -> None:
         verdict_row(
             "Most neuron activations can be zeroed per token with little damage",
             "keep 320/4,096 (92.2% ablated): loss 1.886 → 1.940 (+2.9%), KL 0.140 (Qwen3.6-35B-A3B MoE); open Qwen3-1.7B replication: KL ≈ 0.80",
-            f"keep 480/6,144 (92.2% ablated): loss {base_loss:.3f} → {k480['loss']:.3f} ({summary['k480_rel'] * 100:+.1f}%), KL {k480['kl']:.3f}; random-480 → {controls['random']['loss']:.3f}",
+            f"keep 480/6,144 (92.2% ablated): loss {base_loss:.3f} → {k480['loss']:.3f} ({summary['k480_rel'] * 100:+.1f}% [{rel_ci[1] * 100:+.1f}, {rel_ci[2] * 100:+.1f}], 95% CI over {len(seqs)} sequences), KL {k480['kl']:.3f}; random-480 → {controls['random']['loss']:.3f}",
             "relative loss increase < 25% and KL < 1.0, and the random-480 control at least 3× worse in loss increase",
             summary["k480_rel"] < 0.25 and k480["kl"] < 1.0 and (controls["random"]["loss"] - base_loss) > 3 * (k480["loss"] - base_loss),
             partial=(controls["random"]["loss"] - base_loss) > 3 * (k480["loss"] - base_loss),

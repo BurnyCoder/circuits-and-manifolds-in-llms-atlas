@@ -24,6 +24,7 @@ import torch
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
 from ..common.models import hooked
+from ..common.stats import rate_str
 
 log = get_logger()
 SLUG = "copy-suppression"
@@ -38,6 +39,23 @@ PROMPTS = [
     ("The password is secret. Never share the", " secret"),
     ("I like tea. My brother likes coffee. My sister likes", " tea"),
     ("Monday came before Tuesday, and Tuesday came before", " Tuesday"),
+    # 16 more, written before running (reports/planned-runs.md, review follow-ups 2026-11-28).
+    ("I went to the bank, and after the bank I went to the", " bank"),
+    ("Alice gave Bob a book, and then Bob gave the book back to", " Bob"),
+    ("The river flows into the sea, and the sea meets the", " sea"),
+    ("We ate pizza on Friday and pizza again on", " pizza"),
+    ("London is in England. Rome is in Italy. Dublin is in", " England"),
+    ("My favourite colour is blue, and my sister's favourite colour is", " blue"),
+    ("He opened the door, walked through the door, and closed the", " door"),
+    ("Cats chase mice, dogs chase cats, and mice chase", " mice"),
+    ("The teacher asked the student, and the student asked the", " student"),
+    ("First comes winter, then spring, then summer, then", " spring"),
+    ("She sang a song, then another song, and finally a", " song"),
+    ("Coffee in the morning, coffee at noon, and tea in the", " morning"),
+    ("The king and the queen met the", " king"),
+    ("Water is wet and fire is", " wet"),
+    ("Up is the opposite of down, and left is the opposite of", " down"),
+    ("He likes dogs more than cats, but she likes cats more than", " cats"),
 ]
 
 
@@ -115,7 +133,12 @@ def compute(ctx) -> None:
         p_abl = model.run_with_hooks(toks, fwd_hooks=[(f"blocks.{HEAD[0]}.attn.hook_z", zero)])[0, -1].softmax(-1)[tid].item()
         pat = cache["pattern", HEAD[0]][0, HEAD[1], -1].cpu().numpy()
         z = cache["z", HEAD[0]][0, -1, HEAD[1]]
-        direct = ((z @ model.W_O[HEAD[0], HEAD[1]]) / cache["ln_final.hook_scale"][0, -1]) @ model.W_U[:, tid]
+        head_out = (z @ model.W_O[HEAD[0], HEAD[1]]) / cache["ln_final.hook_scale"][0, -1]
+        direct = head_out @ model.W_U[:, tid]
+        # Control token (review m5): the most probable next token that does not occur in the prompt.
+        present = set(toks[0].tolist())
+        ctrl = next(int(t) for t in logits[0, -1].argsort(descending=True).tolist() if int(t) not in present)
+        direct_ctrl = (head_out @ model.W_U[:, ctrl]).item()
         str_toks = [model.tokenizer.decode([t]) for t in toks[0].tolist()]
         src_pos = [i for i, t in enumerate(toks[0].tolist()) if t == tid]
         examples.append(
@@ -127,6 +150,8 @@ def compute(ctx) -> None:
                 "copy_pos": src_pos,
                 "attn_to_copy": float(pat[src_pos].sum()) if src_pos else 0.0,
                 "direct_effect": direct.item(),
+                "control_token": model.tokenizer.decode([ctrl]),
+                "direct_control": direct_ctrl,
                 "p_clean": p_clean,
                 "p_ablated": p_abl,
             }
@@ -134,7 +159,10 @@ def compute(ctx) -> None:
         log.info("%-60s target %-10r attn %.2f direct %.2f p %.4f -> %.4f (ablated)", text, target, examples[-1]["attn_to_copy"], direct.item(), p_clean, p_abl)
 
     n_neg = sum(e["direct_effect"] < 0 for e in examples)
+    n_below_ctrl = sum(e["direct_effect"] < e["direct_control"] for e in examples)
     n_up = sum(e["p_ablated"] > e["p_clean"] for e in examples)
+    orig = examples[:8]  # the original pre-stated row keeps its original 8 prompts
+    n_neg8, n_up8 = sum(e["direct_effect"] < 0 for e in orig), sum(e["p_ablated"] > e["p_clean"] for e in orig)
     hist, edges = np.histogram(np.log10(main["rank"]), bins=40, range=(0, np.log10(model.cfg.d_vocab)))
     summary = {
         "n_tokens": n,
@@ -144,10 +172,14 @@ def compute(ctx) -> None:
         "ctrl_top10_median": float(np.median(ctrl_top10)),
         "ctrl_top10_max": float(np.max(ctrl_top10)),
         "ctrl_top10_argmax": max(controls, key=lambda k: controls[k]["frac_top10"]),
-        "n_prompts": len(examples),
-        "n_neg_direct": n_neg,
-        "n_ablation_up": n_up,
+        "n_prompts": len(orig),
+        "n_prompts_all": len(examples),
+        "n_neg_direct": n_neg8,
+        "n_ablation_up": n_up8,
+        "n_neg_direct_all": n_neg,
+        "n_ablation_up_all": n_up,
         "mean_attn_copy": float(np.mean([e["attn_to_copy"] for e in examples])),
+        "n_below_control": n_below_ctrl,
     }
     repl = [
         verdict_row(
@@ -169,9 +201,18 @@ def compute(ctx) -> None:
         verdict_row(
             "On natural prompts L10H7 lowers the logit of a copied token",
             "worked examples, e.g. 'All's fair in love and' (Table 1)",
-            f"negative direct effect on {n_neg}/{len(examples)} prompts; ablation raises the copied token's probability on {n_up}/{len(examples)}",
+            f"negative direct effect on {n_neg8}/{len(orig)} prompts; ablation raises the copied token's probability on {n_up8}/{len(orig)}",
             "negative direct effect on ≥ 75% of prompts",
-            n_neg >= 0.75 * len(examples),
+            n_neg8 >= 0.75 * len(orig),
+        ),
+        verdict_row(
+            "Confirmatory: L10H7 suppresses the copied token specifically",
+            "copy suppression lowers the logit of tokens that appear earlier in the context (McDougall et al.)",
+            f"direct effect lower on the copied token than on a control token (most probable next token not in the prompt) on "
+            f"{rate_str(n_below_ctrl, len(examples))} of {len(examples)} prompts; negative on {rate_str(n_neg, len(examples))} (Wilson 95% CIs)",
+            "both ≥ 75% of the 24 prompts; partial if one holds (pre-stated 2026-11-28)",
+            n_below_ctrl >= 0.75 * len(examples) and n_neg >= 0.75 * len(examples),
+            partial=n_below_ctrl >= 0.75 * len(examples) or n_neg >= 0.75 * len(examples),
         ),
     ]
     payload = {"rank_hist": hist, "rank_edges": edges, "controls": controls, "examples": examples}

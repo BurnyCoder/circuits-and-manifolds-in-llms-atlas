@@ -31,7 +31,14 @@ log = get_logger()
 SLUG = "calendar-circles"
 DAYS = [" Monday", " Tuesday", " Wednesday", " Thursday", " Friday", " Saturday", " Sunday"]
 MONTHS = [" January", " February", " March", " April", " May", " June", " July", " August", " September", " October", " November", " December"]
-CONTROL_WORDS = " apple river chair window garden doctor bottle mountain pencil yellow castle engine ocean ticket violin basket rabbit summer silver forest".split()
+# Random-word control pool (review m3: was 20 words, so the 40 sets overlapped heavily). Filtered to single GPT-2 tokens at
+# run time (93 of these 94 are; "parrot" is not), as pre-stated in reports/planned-runs.md (review follow-ups 2026-11-28).
+CONTROL_WORDS = (" apple river chair window garden doctor bottle mountain pencil yellow castle engine ocean ticket violin basket rabbit summer"
+                 " silver forest table lamp horse bread cloud stone paper glass music island bridge flower kitchen wallet camera jacket guitar"
+                 " planet market letter candle pocket hammer mirror button carpet tiger desert valley village school church garage butter cheese"
+                 " coffee orange lemon cotton copper marble shadow thunder winter feather pillow ladder bucket rocket circle square corner finger"
+                 " shoulder blanket captain farmer singer driver dragon monkey turtle spider parrot salmon tomato potato cookie pepper sugar ribbon"
+                 " helmet tunnel harbor").split()
 TEMPLATES = [
     "I will see you on{X}.",
     "The meeting was moved to{X}.",
@@ -103,7 +110,11 @@ def circle_stats(X: np.ndarray, y: np.ndarray, g: np.ndarray, n_cls: int) -> dic
     means = np.stack([scores[y == c, :2].mean(0) for c in range(n_cls)])
     ang = np.arctan2(means[:, 1], means[:, 0])
     s = cyclic_order_score(ang)
-    return {"points": scores, "labels": y, "means": means, "var": var, "score": s, "p": cyclic_order_pvalue(s, n_cls, 5000), "comps": comps, "mu": mu}
+    # Geometric comparison (review m3, reported): share of the class means' variance in their own top-2 PCs.
+    full_means = np.stack([Xc[y == c].mean(0) for c in range(n_cls)])
+    var2 = float(pca(full_means, 2)[2].sum())
+    return {"points": scores, "labels": y, "means": means, "var": var, "score": s, "p": cyclic_order_pvalue(s, n_cls, 5000), "comps": comps, "mu": mu,
+            "var2_means": var2}
 
 
 def gpt2_part(ctx) -> dict:
@@ -125,13 +136,16 @@ def gpt2_part(ctx) -> dict:
     # Control: random word sets of the same sizes.
     rng = np.random.default_rng(ctx.seed)
     ctrl = []
+    pool = [w for w in CONTROL_WORDS if _single(tok, [" " + w])]
+    log.info("random-word control pool: %d single-token words", len(pool))
     for n in (7, 12):
         for _ in range(5 if ctx.quick else 20):
-            words = [" " + w for w in rng.choice(CONTROL_WORDS, n, replace=False)]
+            words = [" " + w for w in rng.choice(pool, n, replace=False)]
             X, y, g = activations(fwd, tok, words, 7, ctx.device, bos=True)
             st = circle_stats(X, y, g, n)
-            ctrl.append({"n": n, "score": st["score"], "p": st["p"]})
+            ctrl.append({"n": n, "score": st["score"], "p": st["p"], "var2_means": st["var2_means"]})
     out["control"] = ctrl
+    out["pool_size"] = len(pool)
 
     # SAE view: GPT-2 small layer-7 residual SAE (Bloom 2024, via SAELens).
     from sae_lens import SAE
@@ -266,6 +280,10 @@ def compute(ctx) -> None:
         "g2_sae_months_score": g2["months"]["sae"]["score"],
         "g2_sae_days_n": len(g2["days"]["sae"]["features"]),
         "ctrl_sig_rate": ctrl_rate,
+        "g2_days_var2": g2["days"]["var2_means"],
+        "g2_months_var2": g2["months"]["var2_means"],
+        "ctrl_var2_p95_7": float(np.quantile([c["var2_means"] for c in ctrl if c["n"] == 7], 0.95)),
+        "ctrl_var2_p95_12": float(np.quantile([c["var2_means"] for c in ctrl if c["n"] == 12], 0.95)),
         "n_ctrl": len(ctrl),
         "q_days_best_score": best_days["score"],
         "q_days_best_layer": best_days["layer"],
@@ -282,7 +300,9 @@ def compute(ctx) -> None:
             "Days and months are arranged in cyclic order (GPT-2 small, layer 7)",
             "circles for days, months, years in GPT-2 L7 (Fig. 1)",
             f"days order {g2['days']['score']:.2f} (p = {g2['days']['p']:.3f}); months {g2['months']['score']:.2f} (p = {g2['months']['p']:.4f}); "
-            f"random-word control significant in {ctrl_rate * 100:.0f}% of {len(ctrl)} sets",
+            f"random-word control significant in {ctrl_rate * 100:.0f}% of {len(ctrl)} sets ({g2['pool_size']}-word pool); "
+            f"class-mean variance in 2 PCs: days {g2['days']['var2_means']:.2f}, months {g2['months']['var2_means']:.2f} vs random-set 95th pct "
+            f"{summary['ctrl_var2_p95_7']:.2f} (7 words), {summary['ctrl_var2_p95_12']:.2f} (12 words)",
             "both p < 0.05 and control false-positive rate ≤ 10%",
             g2["days"]["p"] < 0.05 and g2["months"]["p"] < 0.05 and ctrl_rate <= 0.10,
             partial=(g2["days"]["p"] < 0.05) != (g2["months"]["p"] < 0.05),
