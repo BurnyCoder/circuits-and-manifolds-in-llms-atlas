@@ -145,17 +145,23 @@ def compute(ctx) -> None:
     log.info("refusal: base log-odds harmful %.2f harmless %.2f; selected layer %d (bypass %.2f, induce %.2f)", base_h, base_s, L, best["bypass"], best["induce"])
 
     @torch.no_grad()
-    def generate(prompts, n_new=40, condition="", log_text=True):
-        """Greedy completions; every prompt and output is logged in full, except completions of harmful prompts with the
-        refusal direction ablated (log_text=False): for those only the prompt and the refusal flag are logged, so no
-        harmful text is written anywhere (safety exception to the log-everything rule)."""
+    def generate(prompts, n_new=40, condition="", log_text=True, harmful=False):
+        """Greedy completions; every prompt and output is logged in full, with two safety exceptions to the
+        log-everything rule: completions of harmful prompts with the refusal direction ablated (log_text=False) are never
+        logged, and for any other harmful-prompt condition (harmful=True) only refusals are logged; a completion that
+        does not refuse is replaced by a placeholder. Only the prompt and the refusal flag are kept for those."""
         texts = []
         for i in range(0, len(prompts), 16):
             b = tok(fmt(prompts[i : i + 16]), return_tensors="pt", padding=True, add_special_tokens=False).to(ctx.device)
             out = model.generate(**b, max_new_tokens=n_new, do_sample=False, pad_token_id=tok.eos_token_id)
             batch = tok.batch_decode(out[:, b.input_ids.shape[1] :], skip_special_tokens=True)
             for q, ans in zip(prompts[i : i + 16], batch):
-                shown = ans.replace("\n", " ") if log_text else "[withheld: refusal direction ablated on a harmful prompt]"
+                if not log_text:
+                    shown = "[withheld: refusal direction ablated on a harmful prompt]"
+                elif harmful and not refused(ans):
+                    shown = "[withheld: harmful prompt, no refusal]"
+                else:
+                    shown = ans.replace("\n", " ")
                 log.info("generate [%s] | prompt: %s | refused: %s | output: %s", condition, q, refused(ans), shown)
             texts += batch
         return texts
@@ -171,16 +177,16 @@ def compute(ctx) -> None:
     shuf = (Hall[perm[: len(Hh)]].mean(0) - Hall[perm[len(Hh) :]].mean(0)).to(ctx.device, torch.bfloat16)
     shuf = shuf / shuf.norm() * r.norm()
     res = {}
-    res["harmful · baseline"] = [refused(t) for t in generate(harm_te, condition="harmful · baseline")]
+    res["harmful · baseline"] = [refused(t) for t in generate(harm_te, condition="harmful · baseline", harmful=True)]
     hooks.ablate(r / r.norm())
     abl_texts = generate(harm_te, condition="harmful · ablated", log_text=False)  # kept in memory only, never logged or saved (safety)
     res["harmful · refusal direction ablated"] = [refused(t) for t in abl_texts]
     hooks.clear()
     hooks.ablate(rand / rand.norm())
-    res["harmful · random direction ablated"] = [refused(t) for t in generate(harm_te, condition="harmful · random ablated")]
+    res["harmful · random direction ablated"] = [refused(t) for t in generate(harm_te, condition="harmful · random ablated", harmful=True)]
     hooks.clear()
     hooks.ablate(shuf / shuf.norm())
-    res["harmful · shuffled-label direction ablated"] = [refused(t) for t in generate(harm_te, condition="harmful · shuffled-label ablated")]
+    res["harmful · shuffled-label direction ablated"] = [refused(t) for t in generate(harm_te, condition="harmful · shuffled-label ablated", harmful=True)]
     hooks.clear()
     safe_base = generate(safe_te, condition="harmless · baseline")
     res["harmless · baseline"] = [refused(t) for t in safe_base]

@@ -18,6 +18,7 @@ site/.vite/
 
 # Large or regenerable artifacts
 logs/*.log
+logs/*.txt
 results/**/*.pt
 results/**/*.npy
 results/**/*.npz

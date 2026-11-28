@@ -98,6 +98,9 @@ def compute(ctx) -> None:
         "rand_r_hue": bc_rand["r_hue"],
         "rand_r_sat": bc_rand["r_sat"],
         "rgb_min_r": bc_rgb["min_r"],
+        "rgb_r_light": bc_rgb["r_light"],
+        "rgb_r_hue": bc_rgb["r_hue"],
+        "rgb_r_sat": bc_rgb["r_sat"],
     }
     repl = [
         verdict_row(
