@@ -132,20 +132,29 @@ def curve_block(ctx) -> dict:
     U, S, Vt = np.linalg.svd(Xc, full_matrices=False)
     Zb = Xc @ Vt[:16].T  # 16-D "block" stand-in
 
-    def harm_r2(theta):
+    def harm_r2(theta, Zm=Zb):
+        """Share of the variance of Zm explained by orientation harmonics 1, 2, 3 (each separately)."""
         Hb = np.c_[[f(m * theta) for m in (1, 2, 3) for f in (np.cos, np.sin)]].T
         Hb = np.c_[Hb, np.ones(len(theta))]
-        W, *_ = np.linalg.lstsq(Hb, Zb, rcond=None)
+        W, *_ = np.linalg.lstsq(Hb, Zm, rcond=None)
         out = []
         for m in range(3):
             cols = [2 * m, 2 * m + 1]
-            out.append(float(((Hb[:, cols] @ W[cols]) ** 2).sum() / (Zb**2).sum()))
+            out.append(float(((Hb[:, cols] @ W[cols]) ** 2).sum() / (Zm**2).sum()))
         return out
 
     per = harm_r2(th)
     rng = np.random.default_rng(0)
     null = [sum(harm_r2(rng.permutation(th))) for _ in range(50)]
-    return {"harmonics": per, "total": float(sum(per)), "null_mean": float(np.mean(null)), "null_p95": float(np.quantile(null, 0.95)), "ring": Zb[:, :2], "orient_deg": np.degrees(th)}
+    # Control (added after the methods review): the shuffled-orientation null cannot fail for orientation-dependent
+    # stimuli. Compare the 10 curve neurons' responses with 10 random non-curve channels instead.
+    from .curve_detectors import CURVE_NEURONS
+
+    others = [n for n in range(X.shape[1]) if n not in CURVE_NEURONS]
+    rand_ch = rng.choice(others, len(CURVE_NEURONS), replace=False)
+    share = lambda cols: float(sum(harm_r2(th, Xc[:, cols])))  # noqa: E731
+    return {"harmonics": per, "total": float(sum(per)), "null_mean": float(np.mean(null)), "null_p95": float(np.quantile(null, 0.95)),
+            "curve_share": share(CURVE_NEURONS), "random_share": share(rand_ch), "ring": Zb[:, :2], "orient_deg": np.degrees(th)}
 
 
 def compute(ctx) -> None:
@@ -162,6 +171,8 @@ def compute(ctx) -> None:
         "curve_h1": cb["harmonics"][0],
         "curve_h123": cb["total"],
         "curve_null_p95": cb["null_p95"],
+        "curve_neurons_harm_share": cb["curve_share"],
+        "random_channels_harm_share": cb["random_share"],
     }
     repl = [
         verdict_row(
@@ -180,6 +191,13 @@ def compute(ctx) -> None:
             "harmonics 1–3 ≥ 50% and above the null's 95th percentile",
             cb["total"] >= 0.5 and cb["total"] > cb["null_p95"],
             partial=cb["total"] > cb["null_p95"],
+        ),
+        verdict_row(
+            "Control: random mixed3b channels are less harmonic than the curve neurons",
+            "the orientation ring is specific to the curve family",
+            f"orientation harmonics 1–3 explain {cb['curve_share'] * 100:.0f}% of the 10 curve neurons' responses vs {cb['random_share'] * 100:.0f}% for 10 random non-curve channels",
+            "curve neurons ≥ random channels + 10 points",
+            cb["curve_share"] >= cb["random_share"] + 0.10,
         ),
     ]
     write_entry(SLUG, {"toy": t, "curve": cb}, summary, repl, models=["BSF / TopK SAE (trained here)", "InceptionV1"], runtime_s=time.time() - t0, ndigits=3)

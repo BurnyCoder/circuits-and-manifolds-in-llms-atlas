@@ -231,8 +231,10 @@ def qwen_part(ctx) -> dict:
             j = int(rng.integers(1, 7))  # shift the start day by j
             target = (d + j + k) % 7
             pos = len(tok(text[: text.index(DAYS[d])], add_special_tokens=False).input_ids)  # index of the start-day token
-            for P, M, acc_list in ((P2, m_circle, succ), (R, m_rand, succ_rand)):
-                delta = P.T @ (M[(d + j) % 7] - M[d])  # move along the plane from day d's mean to day d+j's mean
+            d_circle = P2.T @ (m_circle[(d + j) % 7] - m_circle[d])  # move along the circle from day d to day d + j
+            d_rand = R.T @ (m_rand[(d + j) % 7] - m_rand[d])
+            d_rand = d_rand / (np.linalg.norm(d_rand) + 1e-8) * np.linalg.norm(d_circle)  # same displacement, random plane
+            for delta, acc_list in ((d_circle, succ), (d_rand, succ_rand)):
                 acc_list.append(answer(text, L, pos, torch.tensor(delta, device=ctx.device)) == target)
         causal.append({"layer": L, "success": float(np.mean(succ)) if succ else 0.0, "success_random_plane": float(np.mean(succ_rand)) if succ_rand else 0.0, "n": len(succ)})
         log.info("Qwen3 L%d causal circle patch: %.3f (random plane %.3f, n=%d)", L, causal[-1]["success"], causal[-1]["success_random_plane"], len(succ))

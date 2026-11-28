@@ -14,6 +14,7 @@ induction-heads/index.html and Elhage et al. 2021, https://transformer-circuits.
 
 from __future__ import annotations
 
+import copy
 import time
 
 import numpy as np
@@ -101,7 +102,11 @@ def attn_only_2l(ctx) -> dict:
     )
 
     # Control: random-init model with identical architecture.
-    rand = HookedTransformer(model.cfg)
+    # Pretrained TransformerLens configs carry init_weights=False; without re-enabling it the "random" model's attention
+    # weights are all zero (found by the methods review). Copy the config and initialise properly.
+    rand_cfg = copy.deepcopy(model.cfg)
+    rand_cfg.init_weights = True
+    rand = HookedTransformer(rand_cfg)
     rand.to(ctx.device).eval()
     rand_scores, _ = _scores_and_patterns(rand, tok, L)
 

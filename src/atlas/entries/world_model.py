@@ -167,30 +167,39 @@ def compute(ctx) -> None:
         "velocity from GRU state (untrained)": ridge_r2(Hu[tr], vel[tr, None], Hu[~tr], vel[~tr, None]),
     }
     log.info("world model probes: %s", probes)
-    # Manifold: smoothing spline (per latent coordinate) through 100 position-bin means.
-    edges = np.quantile(pos, np.linspace(0, 1, 101))
-    centers, means = [], []
-    for a, b in zip(edges[:-1], edges[1:]):
-        m = (pos >= a) & (pos <= b)
-        if m.sum() >= 3:
-            centers.append(pos[m].mean())
-            means.append(Z[m].mean(0))
-    centers, means = np.array(centers), np.stack(means)
-    order = np.argsort(centers)
-    centers, means = centers[order], means[order]
-    splines = [make_smoothing_spline(centers, means[:, k], lam=None) for k in range(64)]
-    curve = lambda p: np.stack([s(p) for s in splines], -1)  # noqa: E731
-    # Isometry over 50 anchors: arc length along the spline / chord length vs true position difference.
-    anchors = np.linspace(-0.9, 0.4, 50)
-    fine = np.linspace(-1.1, 0.5, 2000)
-    cf = curve(fine)
-    arc = np.r_[0, np.cumsum(np.linalg.norm(np.diff(cf, axis=0), axis=1))]
-    arc_at = np.interp(anchors, fine, arc)
-    pa = curve(anchors)
-    i, j = np.triu_indices(50, 1)
-    dpos = np.abs(anchors[i] - anchors[j])
-    r_arc = float(np.corrcoef(np.abs(arc_at[i] - arc_at[j]), dpos)[0, 1])
-    r_chord = float(np.corrcoef(np.linalg.norm(pa[i] - pa[j], axis=1), dpos)[0, 1])
+    def manifold(Zm):
+        """Smoothing spline (per latent coordinate) through 100 position-bin means, and its isometry over 50 anchors:
+        correlation of |Δ arc length| (along the spline) and of chord length with |Δ position|."""
+        edges = np.quantile(pos, np.linspace(0, 1, 101))
+        centers, means = [], []
+        for a, b in zip(edges[:-1], edges[1:]):
+            m = (pos >= a) & (pos <= b)
+            if m.sum() >= 3:
+                centers.append(pos[m].mean())
+                means.append(Zm[m].mean(0))
+        centers, means = np.array(centers), np.stack(means)
+        order = np.argsort(centers)
+        centers, means = centers[order], means[order]
+        splines = [make_smoothing_spline(centers, means[:, k], lam=None) for k in range(Zm.shape[1])]
+        curve_ = lambda p: np.stack([s(p) for s in splines], -1)  # noqa: E731
+        anchors = np.linspace(-0.9, 0.4, 50)
+        fine = np.linspace(-1.1, 0.5, 2000)
+        cf = curve_(fine)
+        arc = np.r_[0, np.cumsum(np.linalg.norm(np.diff(cf, axis=0), axis=1))]
+        arc_at = np.interp(anchors, fine, arc)
+        pa = curve_(anchors)
+        i, j = np.triu_indices(50, 1)
+        dpos = np.abs(anchors[i] - anchors[j])
+        r_a = float(np.corrcoef(np.abs(arc_at[i] - arc_at[j]), dpos)[0, 1])
+        r_c = float(np.corrcoef(np.linalg.norm(pa[i] - pa[j], axis=1), dpos)[0, 1])
+        return curve_, r_a, r_c
+
+    curve, r_arc, r_chord = manifold(Z)
+    # Control (added after the methods review): the same isometry on the untrained encoder's latents. Arc length along
+    # a spline through position-ordered means is close to monotone in position by construction, so a high r is only
+    # informative if the untrained encoder scores lower.
+    _, r_arc_untrained, r_chord_untrained = manifold(Zu)
+    log.info("isometry: trained arc r %.3f chord r %.3f | untrained arc r %.3f chord r %.3f", r_arc, r_chord, r_arc_untrained, r_chord_untrained)
     # Decode frames along the manifold vs the straight chord between two positions.
     p0, p1 = -0.9, 0.3
     K = 10
@@ -217,6 +226,8 @@ def compute(ctx) -> None:
         "r2_velocity_gru_untrained": probes["velocity from GRU state (untrained)"],
         "r_arc": r_arc,
         "r_chord": r_chord,
+        "r_arc_untrained": r_arc_untrained,
+        "r_chord_untrained": r_chord_untrained,
         "void_manifold": void(man),
         "void_linear": void(lin),
         "n_frames": int(len(Z)),
@@ -237,6 +248,13 @@ def compute(ctx) -> None:
             "manifold r ≥ 0.9 and > chord r",
             r_arc >= 0.9 and r_arc > r_chord,
             partial=r_arc > r_chord,
+        ),
+        verdict_row(
+            "Control: the isometry is specific to the trained model",
+            "the manifold reflects learned world structure",
+            f"untrained encoder: arc r = {r_arc_untrained:.3f}, chord r = {r_chord_untrained:.3f} (trained: {r_arc:.3f} / {r_chord:.3f})",
+            "trained arc-minus-chord gap ≥ 0.2 larger than the untrained encoder's",
+            (r_arc - r_chord) - (r_arc_untrained - r_chord_untrained) >= 0.2,
         ),
     ]
     payload = {
