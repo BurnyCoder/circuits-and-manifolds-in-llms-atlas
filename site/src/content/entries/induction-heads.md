@@ -42,7 +42,7 @@ citations:
     url: https://github.com/TransformerLensOrg/TransformerLens
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/induction_heads.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/induction_heads.py
     model: attn-only-2l, GPT-2 small, Pythia-160M checkpoints
     outcome: ours
     note: Head scores, zero-ablation causal test with a random-head control, and the training-time phase change (table below).

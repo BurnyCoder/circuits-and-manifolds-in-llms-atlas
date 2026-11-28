@@ -46,7 +46,7 @@ citations:
     url: https://www.lesswrong.com/posts/vwdHTmorDPFB8vFQq/clt-features-sharpen-the-cyclical-day-of-week-manifold-in
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/calendar_circles.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/calendar_circles.py
     model: GPT-2 small (raw + SAE) and Qwen3-1.7B (layer sweep + causal patch)
     outcome: ours
     note: Cyclic-order permutation tests against random-word controls, SAE latent tiling, and circle-plane patching with a random-plane control.

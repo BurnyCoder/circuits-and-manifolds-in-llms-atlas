@@ -75,7 +75,7 @@ export default function App() {
       </main>
       <footer className="footer">
         Atlas of Circuits &amp; Manifolds · by Libor “Burny” Burian ·{' '}
-        <a href="https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas" target="_blank" rel="noopener">
+        <a href="https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas" target="_blank" rel="noopener">
           source &amp; data on GitHub
         </a>{' '}
         · every claim links to its source

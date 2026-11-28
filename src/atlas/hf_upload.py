@@ -20,8 +20,8 @@ from pathlib import Path
 
 from .common.env import RESULTS, setup
 
-REPO_URL = "https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas"
-SITE_URL = "https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/"
+REPO_URL = "https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas"
+SITE_URL = "https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/"
 COLLECTION = "Circuits & Manifolds Atlas"
 MODULE = {"grokking": "grokking", "belief": "belief_fractal", "world-model": "world_model"}  # code that defines each model
 

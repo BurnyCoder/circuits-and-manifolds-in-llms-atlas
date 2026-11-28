@@ -33,7 +33,7 @@ LEDGER = RESULTS / "runpod" / "spend.json"
 REPORT = ROOT / "reports" / "runpod-spend.md"
 IMAGE = "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04"  # has git, curl, python3; uv brings its own Python
 GPU_CANDIDATES = ["NVIDIA GeForce RTX 4090", "NVIDIA RTX A5000", "NVIDIA L4", "NVIDIA RTX A6000", "NVIDIA L40S", "NVIDIA A40"]
-REPO = "https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas"
+REPO = "https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas"
 
 
 def ledger() -> list[dict]:

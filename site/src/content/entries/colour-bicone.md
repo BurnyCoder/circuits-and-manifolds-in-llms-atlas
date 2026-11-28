@@ -38,7 +38,7 @@ citations:
     url: https://huggingface.co/diffusers/FLUX.1-vae
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/colour_bicone.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/colour_bicone.py
     model: FLUX.1 VAE (diffusers/FLUX.1-vae)
     outcome: ours
     note: Solid-color PCA with a random-noise control and correlations of each axis with lightness, hue and chroma.

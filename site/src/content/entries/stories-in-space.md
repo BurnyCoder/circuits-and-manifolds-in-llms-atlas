@@ -41,7 +41,7 @@ citations:
     url: https://link.springer.com/article/10.3758/s13428-012-0314-x
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/stories_in_space.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/stories_in_space.py
     model: Qwen2.5-1.5B-Instruct
     outcome: ours
     note: Per-sentence rating readout, layer-sweep ridge probes on held-out stories, behaviour–activation distance correlation, valence–arousal trajectories.

@@ -33,7 +33,7 @@ citations:
     url: https://arxiv.org/abs/2610.37796
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/manifold_steering.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/manifold_steering.py
     model: Qwen3-1.7B
     outcome: ours
     note: Periodic spline through the 7 answer centroids (in their 6-D span; layers 22–26), along-manifold vs chord paths for all day pairs 2–3 apart, behaviour-manifold energy. Both original rows are post-hoc (layers chosen after failing runs at 12–20); a pre-stated confirmatory test against a piecewise-linear path through the same centroids fails at all three layers.

@@ -64,7 +64,7 @@ citations:
     url: https://arxiv.org/abs/2310.04625
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/ioi.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/ioi.py
     model: GPT-2 small
     outcome: ours
     note: Logit difference, direct logit attribution, activation noising, all 128 class knockouts, faithfulness and a random-head control on our own templates.

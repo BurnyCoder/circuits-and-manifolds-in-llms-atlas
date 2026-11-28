@@ -32,7 +32,7 @@ citations:
     url: https://transformer-circuits.pub/2026/emotions/onpolicy/index.html?t=Blackmail
 replications:
   - who: This atlas (Qwen3-1.7B)
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/emotions.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/emotions.py
     model: Qwen3-1.7B
     outcome: ours
     note: Valence/arousal geometry, dose sweep and preference steering on an open model (see the open entry).

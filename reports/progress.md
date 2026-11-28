@@ -2,7 +2,7 @@
 
 Updated 2026-11-28 09:15 (local time, WET). Plan: [plan.md](plan.md) · pre-stated criteria and dated amendments:
 [planned-runs.md](planned-runs.md) · results: [experiments/experiments.md](experiments/experiments.md) · live site:
-https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/
+https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/
 
 ## Status at a glance
 

@@ -37,7 +37,7 @@ citations:
     url: https://github.com/goodfire-ai/block-sparse-featurizer
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/block_sparse.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/block_sparse.py
     model: toy concept manifolds; InceptionV1 mixed3b
     outcome: ours
     note: BSF vs TopK SAE on sphere-valued toy concepts; harmonic analysis of the curve-response block (top-16 PCs as a stand-in for a learned block); confirmatory superposed-input evaluation and a random-init InceptionV1 control.

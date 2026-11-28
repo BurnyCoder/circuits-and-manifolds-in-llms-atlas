@@ -42,7 +42,7 @@ citations:
     url: https://github.com/greentfrapp/lucent
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/curve_detectors.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/curve_detectors.py
     model: InceptionV1 (Lucid weights via Lucent)
     outcome: ours
     note: Synthetic arcs at 72 orientations × 4 radii plus straight lines, 20 random control neurons, and our own feature visualizations.

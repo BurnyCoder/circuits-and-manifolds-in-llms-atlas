@@ -34,7 +34,7 @@ citations:
     url: https://link.springer.com/article/10.3758/s13428-012-0314-x
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/emotions.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/emotions.py
     model: Qwen3-1.7B (writes its own stories)
     outcome: ours
     note: 80 emotions with human norms, neutral-PC projection, shuffled-label control, dose sweep (confirmatory version with 8 phrasings and a sugar control) and a preference-steering test with a random-vector control.

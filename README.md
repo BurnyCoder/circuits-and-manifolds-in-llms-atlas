@@ -6,7 +6,7 @@ attribution graphs and lenses. Wherever an open model exists, the data is **reco
 code**, and each recomputation is scored against criteria meant to be written down before it ran (an audit found
 exceptions; those rows are flagged post-hoc and not counted).
 
-🌐 **Website:** https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/ · **Author:** Libor "Burny" Burian ·
+🌐 **Website:** https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/ · **Author:** Libor "Burny" Burian ·
 **Code:** MIT
 
 - **In plain words.** Researchers keep finding small, readable "mechanisms" inside AI models. Two attention heads copy
@@ -211,39 +211,39 @@ Data badges: 🟢 recomputed here · 🔵 open replication (by others, re-render
 <!-- table:catalogue -->
 | Entry | Category | Models | Data | Evidence |
 |---|---|---|---|---|
-| [Toy models of superposition (live)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/toy-superposition) | feature | toy ReLU autoencoder (in your browser) | 🟢 recomputed | causal |
-| [Induction heads](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/induction-heads) | circuit | attn-only-2l, GPT-2 small, Pythia-160M | 🟢 recomputed | mixed |
-| [Indirect object identification (IOI) circuit](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/ioi) | circuit | GPT-2 small | 🟢 recomputed | causal |
-| [Copy suppression (GPT-2 head 10.7)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/copy-suppression) | circuit | GPT-2 small | 🟢 recomputed | causal |
-| [Greater-than circuit](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/greater-than) | circuit | GPT-2 small | 🟢 recomputed | causal |
-| [Grokking modular addition (Fourier multiplication)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/grokking) | circuit | 1-layer transformer (trained here) | 🟢 recomputed | causal |
-| [Othello-GPT's world model (mine vs. theirs)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/othello-gpt) | manifold | Othello-GPT | 🟢 recomputed | mixed |
-| [Curve detectors (InceptionV1)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/curve-detectors) | neuron | InceptionV1 | 🟢 recomputed | correlational |
-| [Calendar circles (days and months)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/calendar-circles) | manifold | GPT-2 small, Qwen3-1.7B | 🟢 recomputed | mixed |
-| [The number helix (trigonometric addition)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/number-helix) | manifold | Pythia-160M, Pythia-410M, Pythia-1B, Pythia-1.4B, Pythia-2.8B | 🟢 recomputed | mixed |
-| [The character-counting manifold (line breaking)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/linebreak-manifold) | manifold | Qwen3-1.7B, GPT-2 small | 🔵 open replication | correlational |
-| [Manipulating manifolds to break lines (Claude 3.5 Haiku)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/linebreaks-claude) | manifold | Claude 3.5 Haiku | 🟠 redrawn | causal |
-| [Belief-state fractals in the residual stream](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/belief-fractal) | manifold | 4-layer transformer (trained here) | 🟢 recomputed | correlational |
-| [The color bicone in an image autoencoder](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/colour-bicone) | manifold | FLUX VAE | 🟢 recomputed | correlational |
-| [Attribution graphs (the "biology" of an LLM, on Gemma-2-2B)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/attribution-graphs) | attribution | Gemma-2-2B | 🔵 open replication | mixed |
-| [On the Biology of a Large Language Model (Claude 3.5 Haiku)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/biology-claude) | attribution | Claude 3.5 Haiku | 🟠 redrawn | causal |
-| [SAE features and "Golden Gate" steering (GPT-2)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/sae-features) | feature | GPT-2 small | 🟢 recomputed | causal |
-| [Scaling monosemanticity and Golden Gate Claude (Claude 3 Sonnet)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/scaling-monosemanticity-claude) | feature | Claude 3 Sonnet | 🟠 redrawn | causal |
-| [Neurons as an interpretable basis (and "already clean")](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/neuron-basis) | neuron | Qwen3-1.7B | 🟢 recomputed | causal |
-| [The refusal direction](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/refusal-direction) | steering | Qwen2.5-1.5B-Instruct | 🟢 recomputed | causal |
-| [Activation addition (steering vectors)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/actadd) | steering | GPT-2-XL | 🟢 recomputed | causal |
-| [Emotion vectors (open model)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/emotions) | steering | Qwen3-1.7B | 🔵 open replication | mixed |
-| [Emotion concepts and their function (Claude Sonnet 4.5)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/emotions-claude) | steering | Claude Sonnet 4.5 | 🟠 redrawn | causal |
-| [Persona vectors](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/persona-vectors-claude) | steering | Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct | 🟠 redrawn | causal |
-| [The Jacobian lens and the global workspace (open model)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/jlens) | lens | Qwen3-1.7B | 🔵 open replication | mixed |
-| [A global workspace in Claude (J-space)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/global-workspace-claude) | lens | Claude Sonnet 4.5, Claude Haiku 4.5, Claude Opus 4.5 | 🟠 redrawn | causal |
-| [The world inside a world model (mountain car)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/world-model) | manifold | mountain-car world model (trained here) | 🟢 recomputed | mixed |
-| [Can SAEs capture neural geometry?](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/sae-manifolds) | feature | TopK SAEs on synthetic manifolds (trained here) | 🟢 recomputed | correlational |
-| [Block-sparse featurizers (multi-dimensional concepts)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/block-sparse-featurizers) | feature | BSF / TopK SAE (trained here), InceptionV1 | 🟢 recomputed | correlational |
-| [Steering along manifolds](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/manifold-steering) | manifold | Qwen3-1.7B | 🟢 recomputed | causal |
-| [A geometric calculator (base-10 circles)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/geometric-calculator) | circuit | Llama-3.1-8B (paper), Pythia-410M/1.4B/2.8B (our probes) | 🔵 open replication | causal |
-| [Meandering on manifolds (stories in emotion space)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/stories-in-space) | manifold | Qwen2.5-1.5B-Instruct | 🟢 recomputed | correlational |
-| [The tree of life inside a DNA model (Evo 2)](https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/phylogeny-manifold) | manifold | Evo 2 | 🟠 redrawn | correlational |
+| [Toy models of superposition (live)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/toy-superposition) | feature | toy ReLU autoencoder (in your browser) | 🟢 recomputed | causal |
+| [Induction heads](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/induction-heads) | circuit | attn-only-2l, GPT-2 small, Pythia-160M | 🟢 recomputed | mixed |
+| [Indirect object identification (IOI) circuit](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/ioi) | circuit | GPT-2 small | 🟢 recomputed | causal |
+| [Copy suppression (GPT-2 head 10.7)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/copy-suppression) | circuit | GPT-2 small | 🟢 recomputed | causal |
+| [Greater-than circuit](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/greater-than) | circuit | GPT-2 small | 🟢 recomputed | causal |
+| [Grokking modular addition (Fourier multiplication)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/grokking) | circuit | 1-layer transformer (trained here) | 🟢 recomputed | causal |
+| [Othello-GPT's world model (mine vs. theirs)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/othello-gpt) | manifold | Othello-GPT | 🟢 recomputed | mixed |
+| [Curve detectors (InceptionV1)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/curve-detectors) | neuron | InceptionV1 | 🟢 recomputed | correlational |
+| [Calendar circles (days and months)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/calendar-circles) | manifold | GPT-2 small, Qwen3-1.7B | 🟢 recomputed | mixed |
+| [The number helix (trigonometric addition)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/number-helix) | manifold | Pythia-160M, Pythia-410M, Pythia-1B, Pythia-1.4B, Pythia-2.8B | 🟢 recomputed | mixed |
+| [The character-counting manifold (line breaking)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/linebreak-manifold) | manifold | Qwen3-1.7B, GPT-2 small | 🔵 open replication | correlational |
+| [Manipulating manifolds to break lines (Claude 3.5 Haiku)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/linebreaks-claude) | manifold | Claude 3.5 Haiku | 🟠 redrawn | causal |
+| [Belief-state fractals in the residual stream](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/belief-fractal) | manifold | 4-layer transformer (trained here) | 🟢 recomputed | correlational |
+| [The color bicone in an image autoencoder](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/colour-bicone) | manifold | FLUX VAE | 🟢 recomputed | correlational |
+| [Attribution graphs (the "biology" of an LLM, on Gemma-2-2B)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/attribution-graphs) | attribution | Gemma-2-2B | 🔵 open replication | mixed |
+| [On the Biology of a Large Language Model (Claude 3.5 Haiku)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/biology-claude) | attribution | Claude 3.5 Haiku | 🟠 redrawn | causal |
+| [SAE features and "Golden Gate" steering (GPT-2)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/sae-features) | feature | GPT-2 small | 🟢 recomputed | causal |
+| [Scaling monosemanticity and Golden Gate Claude (Claude 3 Sonnet)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/scaling-monosemanticity-claude) | feature | Claude 3 Sonnet | 🟠 redrawn | causal |
+| [Neurons as an interpretable basis (and "already clean")](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/neuron-basis) | neuron | Qwen3-1.7B | 🟢 recomputed | causal |
+| [The refusal direction](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/refusal-direction) | steering | Qwen2.5-1.5B-Instruct | 🟢 recomputed | causal |
+| [Activation addition (steering vectors)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/actadd) | steering | GPT-2-XL | 🟢 recomputed | causal |
+| [Emotion vectors (open model)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/emotions) | steering | Qwen3-1.7B | 🔵 open replication | mixed |
+| [Emotion concepts and their function (Claude Sonnet 4.5)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/emotions-claude) | steering | Claude Sonnet 4.5 | 🟠 redrawn | causal |
+| [Persona vectors](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/persona-vectors-claude) | steering | Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct | 🟠 redrawn | causal |
+| [The Jacobian lens and the global workspace (open model)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/jlens) | lens | Qwen3-1.7B | 🔵 open replication | mixed |
+| [A global workspace in Claude (J-space)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/global-workspace-claude) | lens | Claude Sonnet 4.5, Claude Haiku 4.5, Claude Opus 4.5 | 🟠 redrawn | causal |
+| [The world inside a world model (mountain car)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/world-model) | manifold | mountain-car world model (trained here) | 🟢 recomputed | mixed |
+| [Can SAEs capture neural geometry?](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/sae-manifolds) | feature | TopK SAEs on synthetic manifolds (trained here) | 🟢 recomputed | correlational |
+| [Block-sparse featurizers (multi-dimensional concepts)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/block-sparse-featurizers) | feature | BSF / TopK SAE (trained here), InceptionV1 | 🟢 recomputed | correlational |
+| [Steering along manifolds](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/manifold-steering) | manifold | Qwen3-1.7B | 🟢 recomputed | causal |
+| [A geometric calculator (base-10 circles)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/geometric-calculator) | circuit | Llama-3.1-8B (paper), Pythia-410M/1.4B/2.8B (our probes) | 🔵 open replication | causal |
+| [Meandering on manifolds (stories in emotion space)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/stories-in-space) | manifold | Qwen2.5-1.5B-Instruct | 🟢 recomputed | correlational |
+| [The tree of life inside a DNA model (Evo 2)](https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/phylogeny-manifold) | manifold | Evo 2 | 🟠 redrawn | correlational |
 <!-- /table:catalogue -->
 
 ## How it works
@@ -341,8 +341,8 @@ Requirements: an NVIDIA GPU with ≥ 8 GB VRAM for the full pipeline (most entri
 [uv](https://docs.astral.sh/uv/getting-started/installation/), Node.js ≥ 22, Git. About 25 GB of disk for model caches.
 
 ```bash
-git clone https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas
-cd circuits-and-manifolds-in-llms-atlas
+git clone https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas
+cd circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas
 cp .env.example .env        # set HF_HOME / TORCH_HOME to a disk with space; NEURONPEDIA_API_KEY is optional
 uv sync --extra graphs      # creates .venv with Python 3.12 and CUDA torch
 uv run pytest               # synthetic ground-truth tests (Fourier, geometry, Othello rules, belief states)

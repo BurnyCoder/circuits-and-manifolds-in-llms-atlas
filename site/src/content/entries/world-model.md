@@ -33,7 +33,7 @@ citations:
     url: https://gymnasium.farama.org/environments/classic_control/mountain_car/
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/world_model.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/world_model.py
     model: conv encoder + GRU world model (64×64), trained here
     outcome: ours
     note: Same architecture and data recipe at lower resolution, with an auxiliary frame decoder for visualization and an untrained-encoder control.

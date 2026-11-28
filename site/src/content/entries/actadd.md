@@ -29,7 +29,7 @@ citations:
     url: https://arxiv.org/abs/2310.01405
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/actadd.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/actadd.py
     model: GPT-2-XL
     outcome: ours
     note: Coefficient sweeps for two vectors, keyword and sentiment-classifier scoring, random-vector control; all completions shown.

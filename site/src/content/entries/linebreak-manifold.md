@@ -38,7 +38,7 @@ citations:
     url: https://github.com/corl-team/counting_manifolds
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/linebreak_manifold.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/linebreak_manifold.py
     model: Qwen3-1.7B (GPT-2 small control)
     outcome: ours
     note: Probes by layer with a shuffled-label control, per-count mean geometry, cosine ringing, and newline-prediction AUC.

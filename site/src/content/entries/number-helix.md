@@ -37,7 +37,7 @@ citations:
     url: https://arxiv.org/abs/2304.01373
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/number_helix.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/number_helix.py
     model: Pythia 160M → 2.8B
     outcome: ours
     note: First test of the helix below 6B parameters that we know of — embedding spectra, cross-validated helix fits with shuffled controls, and activation patching against PCA-9 and random 9-D subspaces.

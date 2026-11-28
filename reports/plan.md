@@ -14,7 +14,7 @@ User decisions (2026-11-27):
 - **Process**: atlas + replication reports (lit/SoTA review, plan, run matrix, src/tests, README, docs, per-entry
   experiment reports with honest pass/fail vs. published claims, self-review, GitHub + Pages, HF upload of models we
   train). No preregistration / paper.pdf.
-- **Publishing**: public repo `BurnyCoder/circuits-and-manifolds-in-llms-atlas`, GitHub Pages via Actions.
+- **Publishing**: public repo `BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas`, GitHub Pages via Actions.
 - Must cover: all links in the request, open-model **replications of closed-model results by others**, more
   mechinterp results, Anthropic emotions + global-workspace papers, Goodfire neurons/"already clean", and the whole
   **Goodfire Neural Geometry series** (6 posts).
@@ -187,5 +187,5 @@ HF: models we train (modular addition ×3 seeds, Mess3 belief model, mountain-ca
   scoreboard with 95% bootstrap CIs.
 - Visual QA in the Claude browser pane (`preview_start` on vite preview): every entry, every control, console clean,
   light/dark, phone width; screenshots into README.
-- Link check of all citation URLs; https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/ loads and deep
+- Link check of all citation URLs; https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/ loads and deep
   links work; `reports/runpod-spend.md` total ≤ $20.

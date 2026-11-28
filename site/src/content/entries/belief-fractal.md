@@ -23,7 +23,7 @@ citations:
     url: https://arxiv.org/abs/2405.15943
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/belief_fractal.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/belief_fractal.py
     model: 4-layer transformer trained on Mess3
     outcome: ours
     note: Trained from scratch; linear readout of exact Bayesian beliefs across training, with a random-init control and the optimal-loss bound.

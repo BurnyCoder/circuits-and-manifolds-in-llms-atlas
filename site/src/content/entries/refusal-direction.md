@@ -28,7 +28,7 @@ citations:
     url: https://github.com/andyrdt/refusal_direction
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/refusal_direction.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/refusal_direction.py
     model: Qwen2.5-1.5B-Instruct
     outcome: ours
     note: Layer selection on validation prompts, directional ablation and activation addition on held-out test prompts, random-direction controls. Harmful completions are never stored.

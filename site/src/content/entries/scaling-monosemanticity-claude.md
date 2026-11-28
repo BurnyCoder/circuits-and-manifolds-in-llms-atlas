@@ -37,7 +37,7 @@ replications:
     outcome: partial
     note: Clamping an SAE feature reproduces the obsession effect in a narrow coefficient range; a system prompt still does better.
   - who: This atlas — Golden Gate GPT-2
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/sae_features.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/sae_features.py
     model: GPT-2 small
     outcome: ours
     note: Open version with a Golden Gate feature, top activations and steering sweeps.

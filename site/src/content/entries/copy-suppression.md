@@ -35,7 +35,7 @@ citations:
     url: https://copy-suppression.streamlit.app/
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/copy_suppression.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/copy_suppression.py
     model: GPT-2 small
     outcome: ours
     note: OV and QK weight analysis on 5,000 tokens, every other layer-10/11 head as a control, and eight worked prompts with zero-ablation.

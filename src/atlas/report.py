@@ -94,7 +94,7 @@ def headline_table(res: dict[str, dict]) -> str:
 
 CONTENT = ROOT / "site" / "src" / "content" / "entries"
 FIDELITY_ICON = {"recomputed": "🟢 recomputed", "replicated": "🔵 open replication", "redrawn": "🟠 redrawn"}
-SITE_URL = "https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/#/entry/"
+SITE_URL = "https://burnycoder.github.io/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/#/entry/"
 
 
 def catalogue_table() -> str:

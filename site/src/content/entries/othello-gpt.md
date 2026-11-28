@@ -42,7 +42,7 @@ citations:
     url: https://github.com/likenneth/othello_world
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/othello_gpt.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/othello_gpt.py
     model: Othello-GPT (TransformerLens checkpoint)
     outcome: ours
     note: Legal-move rate, linear probes at every layer with three controls, and probe-direction interventions on new synthetic games from our own engine.

@@ -34,7 +34,7 @@ citations:
     url: https://github.com/goodfire-ai/sae-manifold
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/sae_manifolds.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/sae_manifolds.py
     model: TopK SAEs on 16 synthetic manifolds
     outcome: ours
     note: Re-implemented synthetic benchmark (the official repo has no generator); simplified regime classification stated in the text. A confirmatory 6-seed sweep with held-out seeds tests the sparsity optimum.

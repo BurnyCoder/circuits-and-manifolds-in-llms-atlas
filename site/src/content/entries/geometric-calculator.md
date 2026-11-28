@@ -34,7 +34,7 @@ citations:
     url: https://arxiv.org/abs/2502.00873
 replications:
   - who: This atlas — Fourier probes in small models
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/calculator_probes.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/calculator_probes.py
     model: Pythia-410M / 1.4B / 2.8B
     outcome: ours
     note: Same probe design (sin/cos of 2π(a+b)/T, T = 2…150) on small models; the paper reports no small-model evidence. Confirmatory test with a fixed layer, a leak-free pair split, an R² floor and two nulls.

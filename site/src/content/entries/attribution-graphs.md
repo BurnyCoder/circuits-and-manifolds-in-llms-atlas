@@ -45,7 +45,7 @@ citations:
     url: https://www.anthropic.com/research/open-source-circuit-tracing
 replications:
   - who: This atlas
-    url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/attribution_graphs.py
+    url: https://github.com/BurnyCoder/circuits-and-manifolds-from-mechanistic-interpretability-in-llms-and-other-models-atlas/blob/main/src/atlas/entries/attribution_graphs.py
     model: Gemma-2-2B (public Neuronpedia graphs, read-only)
     outcome: ours
     note: Re-renders nine featured graphs at supernode level and checks the two-hop path and multilingual-overlap claims quantitatively, with a label-permutation null and an unrelated-graph control in pre-stated confirmatory tests.
