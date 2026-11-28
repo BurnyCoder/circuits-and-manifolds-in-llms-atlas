@@ -7,7 +7,7 @@ models: [Qwen3-1.7B]
 fidelity: replicated
 evidence: mixed
 order: 500
-summary: A lens that reads what each layer "is about to say" exposes unspoken intermediate steps — and swapping its coordinates swaps the concept.
+summary: A lens that reads what each layer "is about to say" exposes unspoken intermediate steps in Claude, and swapping its coordinates swaps the concept. In Qwen3-1.7B the J-lens beats the logit lens on most of 24 fresh prompts, narrowly missing significance, and the swaps fail.
 viz: jlens
 data: jlens.json
 locations:
@@ -62,7 +62,7 @@ replications:
     url: https://www.lesswrong.com/posts/tgn3pD2gLpZvepkWk/j-lens-a-failed-replication-on-gpt-2
     model: GPT-2 small / medium
     outcome: failed
-    note: The J-lens loses to the logit lens at almost every layer on GPT-2 (weight tying and small scale suspected).
+    note: The J-lens loses to the logit lens at every layer (0/11 on GPT-2 small, 1/23 on medium), and the gap widens with scale; a commenter suggests weight tying.
 ---
 
 ## In plain words
@@ -76,14 +76,22 @@ saying 49 — and editing those concepts changes the answer. We use a lens fitte
 
 $J_\ell = \mathbb{E}\big[\partial h_{\text{late}, t'} / \partial h_{\ell, t}\big]$, averaged over prompts and positions; the
 lens reads $\text{softmax}(W_U\, \text{norm}(J_\ell h_\ell))$ (the logit lens is $J_\ell = I$). In Claude Sonnet 4.5 the readable
-band spans roughly 38–92% of depth with ~25 concepts at a time; swapping the J-lens coordinates of two concepts (France ↔
-China) changes capital, language and currency answers together (59% top-5 success for the J-space component).
+band spans roughly 38–92% of depth with ~25 concepts at a time; swapping the J-lens coordinates of two concepts (France →
+China) changes capital, language and continent answers together (76/192 top-1 across 16 functions; 101/192 at double
+strength). A separate "think of a {category}" swap succeeds in the top 5 for 59% of trials with the J-space component of
+the concept vector vs 5% with the rest.
 
 **What we measured** (Qwen3-1.7B, pre-fitted lens over {{n_layers_lens}} layers):
 
-- For {{n_inter}} unspoken intermediates (Texas, France, 21, 42) the best rank at the last position has median
+- For {{n_inter}} unspoken intermediates (Texas for Dallas; France for Paris and for the Eiffel Tower) the best rank at the last position has median
   {{inter_median_rank_j}} with the J-lens vs {{inter_median_rank_logit}} with the logit lens; {{inter_top10_j}} vs
-  {{inter_top10_logit}} reach the top 10.
+  {{inter_top10_logit}} reach the top 10. This row is post-hoc: the arithmetic prompt (21, 42) was removed after its
+  ranks, which favoured the logit lens, had been seen.
+- **Confirmatory test** (pre-stated before running, 24 fresh two-hop prompts with one-token intermediates): the J-lens
+  ranks the intermediate better on {{confirm_wins_j|int}} prompts, the logit lens on {{confirm_wins_logit|int}}, and
+  they tie on the rest; two-sided sign test p = {{confirm_sign_p}}, just above the pre-stated 0.05, so the verdict is
+  partial. Median best rank {{confirm_median_rank_j}} vs {{confirm_median_rank_logit}}; top 10 for
+  {{confirm_top10_j|int}} vs {{confirm_top10_logit|int}} of {{confirm_n|int}}. See tab 4 of the visualization.
 - Swapping the J-lens coordinates of two countries at the country token (layer {{swap_layer}}) puts the other country's
   answer in the top 5 for {{swap_top5|pct}} of {{swap_n}} prompts, vs {{swap_random|pct}} for a random direction.
 

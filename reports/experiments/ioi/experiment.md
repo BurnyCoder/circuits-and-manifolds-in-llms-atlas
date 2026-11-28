@@ -29,7 +29,7 @@ about ±0.17; 128 combinations are cheap (one forward pass each over 320 prompts
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | GPT-2 small prefers the indirect object over the subject | mean logit diff 3.56; IO > S in 99.3% of prompts | 3.54 [3.37, 3.70] on 320 prompts; IO > S in 99.4% | mean logit diff > 2 and IO > S in > 90% of prompts | ✅ pass |
 | Name movers (9.9, 9.6, 10.0) attend from END to the indirect object | mean attention to IO 0.59 (§3.1) | mean attention to IO 0.60 vs to S 0.09 | attention to IO > 2× attention to S | ✅ pass |
@@ -41,10 +41,10 @@ about ±0.17; 128 combinations are cheap (one forward pass each over 320 prompts
 ## Interpretation
 
 All five claims replicate, with the baseline numbers within sampling error of the paper (our prompts differ from
-theirs). The circuit keeps more of the logit difference than the paper reports; one plausible reason is that our
-templates are simpler and more uniform than the paper's 15 templates. Knocking out all 7 classes reverses the
-preference, while 26 random heads leave most of it intact — the circuit is necessary as well as sufficient in this
-metric.
+theirs). The circuit keeps more of the logit difference than the paper reports (93% vs 87%). Part of that is
+leniency: we keep circuit heads clean at **all** positions, whereas Wang et al. define circuit nodes as (head, token
+position) pairs (§2.1), e.g. name movers at END only. Simpler, more uniform templates may also contribute. Knocking
+out all 7 classes reverses the preference, while 26 random heads leave most of it intact.
 
 ## Deviations from the paper
 
@@ -54,6 +54,7 @@ metric.
 
 - Faithfulness is measured by one metric (logit diff) with one ablation type; Miller et al. 2024
   ([arXiv 2407.08734](https://arxiv.org/abs/2407.08734)) show faithfulness numbers vary strongly with ablation choice.
+- To do: mean-ablate circuit heads outside their class positions (S1+1, S2, END).
 
 ## All summary values
 

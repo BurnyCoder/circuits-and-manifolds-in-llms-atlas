@@ -12,5 +12,13 @@
   "ours": "top-16 PCs of mixed3b curve responses: harmonics 1\u20133 explain 28/26/9% (63%; shuffled-orientation null 95th pct 3%)",
   "criterion": "harmonics 1\u20133 \u2265 50% and above the null's 95th percentile",
   "verdict": "pass"
+ },
+ {
+  "claim": "Control: random mixed3b channels are less harmonic than the curve neurons",
+  "published": "the orientation ring is specific to the curve family",
+  "ours": "orientation harmonics 1\u20133 explain 71% of the 10 curve neurons' responses vs 65% for 10 random non-curve channels",
+  "criterion": "curve neurons \u2265 random channels + 10 points",
+  "verdict": "fail",
+  "post_hoc": "control added after the methods review"
  }
 ]

@@ -15,7 +15,7 @@ Do solid colours occupy a 3-D, HSL-like subspace of the FLUX.1 VAE latent (Pach 
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Solid colors occupy a 3-D subspace of the FLUX VAE latent | first three PCs explain essentially 100% of variance (Pach et al. 2026, §3) | top-3 PCs explain 96.14% over 400 colors (random-noise images: 60.1%) | ≥ 95% | ✅ pass |
 | The subspace is HSL-like: lightness axis, hue angle, saturation radius | PC1 = lightness; PC2–PC3 angle = hue; radius = saturation (bicone, Fig. 2) | corr(PC1, lightness) 0.98; circular corr(angle, hue) 0.99; corr(radius, chroma) 0.93 | all three ≥ 0.8 | ✅ pass |
@@ -23,12 +23,15 @@ Do solid colours occupy a 3-D, HSL-like subspace of the FLUX.1 VAE latent (Pach 
 
 ## Interpretation
 
-Both claims replicate. Three components carry almost all variance for solid colours, far more than for noise images, and the three axes line up with lightness, hue and saturation. That makes the HSL bicone of the paper.
+Both claims pass. Claim 1 is weakly discriminating: a family of inputs with three parameters (hue, saturation,
+lightness) is expected to occupy few dimensions in any smooth encoder, and noise images are an easy contrast. Claim 2
+is the real test: the three axes line up with lightness, hue and saturation, which makes the HSL bicone of the paper.
 
 ## Limitations
 
 - Solid colours are the easiest case; textures and lighting are not tested.
 - The weights are an ungated copy of the FLUX.1 VAE (same configuration), not the gated official repository.
+- To do: random-init VAE or linear-RGB baseline for claim 1.
 
 ## All summary values
 

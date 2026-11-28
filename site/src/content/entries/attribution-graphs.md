@@ -34,8 +34,8 @@ citations:
     year: 2025
     url: https://github.com/decoderesearch/circuit-tracer
   - id: np-landscape
-    title: "The Circuits Research Landscape (Neuronpedia)"
-    authors: Neuronpedia, Hanna, Lewis, Ameisen, et al.
+    title: "The Circuits Research Landscape: Results and Perspectives"
+    authors: Lindsey, Ameisen, Nanda, Shabalin, Piotrowski, McGrath, Hanna, Lewis, et al.
     year: 2025
     url: https://www.neuronpedia.org/graph/info
   - id: anthropic-open
@@ -53,7 +53,7 @@ replications:
     url: https://www.neuronpedia.org/graph/info
     model: Gemma-2-2B + GemmaScope transcoders
     outcome: partial
-    note: Dallas → Texas → Austin and the multilingual antonym circuit replicate; rhyme planning is partial; addition shows lookup-table features instead of the Claude mechanism.
+    note: Two-hop recall (with a Dallas → Austin shortcut) and language-agnostic multilingual circuits replicate on Gemma-2-2B. Rhyme features are found but match the rhyme imperfectly, and planning was not tested. Addition graphs show lookup-table features and do not recover the helix (the authors suspect transcoders).
   - who: Jacopin — planning on open models
     url: https://arxiv.org/abs/2609.18440
     model: four open models (0.6–2.6B) × six transcoders

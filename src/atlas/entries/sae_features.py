@@ -35,7 +35,7 @@ HOOK = f"blocks.{LAYER}.hook_resid_pre"
 # every probe), relative to how strongly it fires on ordinary WikiText. One focus token per concept picked word-sense
 # features in the smoke test (French " pain" = bread was read as English "pain" -> a violence feature).
 CONCEPTS = {
-    "Golden Gate Bridge": {"probes": ["We drove across the Golden Gate Bridge into San Francisco", "The Golden Gate Bridge was shrouded in fog this morning", "Tourists walked across the Golden Gate above San Francisco Bay"], "keywords": ["golden gate", "bridge", "san francisco"]},
+    "Golden Gate Bridge": {"probes": ["We drove across the Golden Gate Bridge into San Francisco", "The Golden Gate Bridge was shrouded in fog this morning", "Tourists walked across the Golden Gate above San Francisco Bay"], "keywords": ["golden gate", "bridge", "san francisco"], "specific": ["golden gate", "san francisco"]},
     "Python code": {"probes": ["def main():\n    for i in range(10):\n        print(i)", "import numpy as np\nx = np.zeros(3)\nreturn x", "if x == 0:\n    return None\nelse:\n    print(x)"], "keywords": ["def ", "print", "return", "import", "(", "=="]},
     "French": {"probes": ["Je suis allé au marché avec ma mère", "Nous avons mangé du fromage et bu du vin rouge", "Le chat dort sur la table de la cuisine"], "keywords": [" le ", " la ", " et ", " de ", " je ", " nous "]},
     "DNA": {"probes": ["The DNA sequence was amplified by PCR", "The genome of the bacterium was fully sequenced", "Mutations in this gene change the encoded protein"], "keywords": ["dna", "gene", "genome", "protein", "sequence", "cell"]},
@@ -165,7 +165,10 @@ def compute(ctx) -> None:
                         comps.append(o[len(p) :])
                         log.info("SAE steer %s α=%s %s | %s ||| %s", name, alpha, kind, p, comps[-1].replace("\n", " "))
                 rate = float(np.mean([any(kw in c.lower() for kw in spec["keywords"]) for c in comps]))
-                steer.append({"alpha": alpha, "kind": kind, "on_topic": rate, "examples": comps[:3]})
+                # Concept-specific mentions (e.g. "Golden Gate" / "San Francisco", not just "bridge"); added after the
+                # methods review showed the selected feature is a generic bridge feature.
+                specific = float(np.mean([any(kw in c.lower() for kw in spec.get("specific", spec["keywords"])) for c in comps]))
+                steer.append({"alpha": alpha, "kind": kind, "on_topic": rate, "specific": specific, "examples": comps[:3]})
         results[name] = {
             "feature": fid,
             "label": label,  # Neuronpedia auto-interp label ("" when the activation fallback was used)
@@ -189,6 +192,7 @@ def compute(ctx) -> None:
         "gg_base": on(gg, 0, "feature"),
         "gg_steer": on(gg, a_hi, "feature"),
         "gg_random": on(gg, a_hi, "random"),
+        "gg_specific": next((r["specific"] for r in gg if r["alpha"] == a_hi and r["kind"] == "feature"), float("nan")),
         "alpha": a_hi,
         "n_concepts": len(results),
         "n_lift": int(sum(x >= 0.3 for x in lifts)),
@@ -196,9 +200,10 @@ def compute(ctx) -> None:
     }
     repl = [
         verdict_row(
-            "Adding an SAE feature's direction steers generation toward its concept (Golden Gate)",
+            "Adding an SAE feature's direction steers generation toward its concept (a bridge feature; Golden Gate analogue)",
             "clamping the Golden Gate Bridge feature makes Claude 3 Sonnet obsessed with the bridge (Templeton et al. 2024)",
-            f"GPT-2 small layer 8, feature #{summary['gg_feature']}: completions mentioning the bridge {summary['gg_base'] * 100:.0f}% → {summary['gg_steer'] * 100:.0f}% at α = {a_hi} (random direction {summary['gg_random'] * 100:.0f}%)",
+            f"GPT-2 small layer 8, feature #{summary['gg_feature']}: completions mentioning the bridge {summary['gg_base'] * 100:.0f}% → {summary['gg_steer'] * 100:.0f}% at α = {a_hi} (random direction {summary['gg_random'] * 100:.0f}%); "
+            f"'Golden Gate' or 'San Francisco' named in {summary['gg_specific'] * 100:.0f}%",
             "≥ 50% on-topic and ≥ 30 points above baseline and random",
             summary["gg_steer"] >= 0.5 and summary["gg_steer"] - max(summary["gg_base"], summary["gg_random"]) >= 0.3,
             partial=summary["gg_steer"] - max(summary["gg_base"], summary["gg_random"]) >= 0.15,

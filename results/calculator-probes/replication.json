@@ -11,6 +11,7 @@
   "published": "Fourier probes peak at T \u2208 {2, 5, 10, 20, 50, 100} in Llama-3.1-8B (Feucht et al.)",
   "ours": "pythia-2.8b layer 21: top-8 periods by R\u00b2(T) \u2212 mean R\u00b2(T\u00b11): 2, 10, 38, 58, 5, 7, 15, 17 (3 of the base-10 set)",
   "criterion": "\u2265 3 base-10 periods among the top-8 peaks and R\u00b2(T=10) \u2265 neighbours + 0.1 (same thresholds)",
-  "verdict": "pass"
+  "verdict": "pass",
+  "post_hoc": "peak-score analysis added after the pre-stated ranking failed"
  }
 ]

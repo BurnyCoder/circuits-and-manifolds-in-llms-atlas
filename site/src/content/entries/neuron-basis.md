@@ -7,7 +7,7 @@ models: [Qwen3-1.7B]
 fidelity: recomputed
 evidence: causal
 order: 300
-summary: Each token needs only a small fraction of a model's MLP neurons — zero the rest and the model barely notices; the important ones are "gate-open".
+summary: Goodfire report that each token of a large MoE model needs only ~8% of its MLP neurons, and that the important ones are "gate-open". In dense Qwen3-1.7B zeroing the rest costs much more, and the gate-open pattern is weaker than reported.
 viz: neuron-basis
 data: neuron-basis.json
 locations:
@@ -69,7 +69,7 @@ neurons, which makes describing what they do feasible. We repeat this on an open
 ## How it works (technical)
 
 A SwiGLU MLP computes $a = \text{SiLU}(w_g^\top x)\,(w_u^\top x)$ for every neuron and writes $\sum_n a_n W_{\text{down}}[:, n]$.
-Goodfire rank $|a|$ per token across the routed neurons of each layer of Qwen3.6-35B-A3B and keep the top 320 of 4,096
+Goodfire rank the router-weighted $|a|$ per token across the routed neurons of each layer of Qwen3.6-35B-A3B and keep the top 320 of 4,096
 (92.2% zeroed): web-text loss 1.886 → 1.940 (KL 0.140), while keeping a random 64 of 512 per expert gives 4.214. They
 also split activations by the signs of gate and up (Q1 g>0,u>0; Q2 g>0,u<0; Q3 g<0,u<0; Q4 g<0,u>0): 71–72% of activations
 are gate-closed (Q3/Q4), yet the most causally important cells are gate-open (Q1/Q2).

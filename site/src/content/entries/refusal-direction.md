@@ -56,6 +56,10 @@ refusal judged by the paper's substring list):
 - Harmful prompts: refusal {{harm_base|pct}} → {{harm_ablate|pct}} with the direction ablated
   (random direction: {{harm_rand|pct}}).
 - Harmless prompts: refusal {{safe_base|pct}} → {{safe_add|pct}} with the direction added (random: {{safe_rand|pct}}).
+- A stronger control, added after the methods review: the same difference-of-means construction on randomly relabelled
+  prompts, at the same layer and norm. Ablating it leaves harmful refusal at {{harm_shuf|pct}}; adding it gives
+  {{safe_shuf|pct}} refusal on harmless prompts. (A random unit direction barely overlaps any activation, so ablating it
+  could hardly fail.) Wilson 95% CIs are in the verdict table.
 
 ## Limitations
 

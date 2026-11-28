@@ -15,21 +15,29 @@ GPT-2 small layer 7 residual activations at day/month tokens, with the template 
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Days and months are arranged in cyclic order (GPT-2 small, layer 7) | circles for days, months, years in GPT-2 L7 (Fig. 1) | days order 1.00 (p = 0.003); months 1.00 (p = 0.0000); random-word control significant in 2% of 40 sets | both p < 0.05 and control false-positive rate ≤ 10% | ✅ pass |
 | SAE latents reconstruct the circle | SAE-cluster reconstruction shows the circle (Fig. 1) | reconstruction from the top 24 day latents: cyclic order 1.00; months 1.00 | cyclic order ≥ 0.7 for both | ✅ pass |
-| The circle is causally used for day arithmetic (Qwen3-1.7B) | circular-probe patching shifts the answer in Mistral 7B / Llama 3 8B (§5) | accuracy 68% on 63 prompts; best layer 5: patch success 30% vs 0% for a random 2-D plane (n = 43) | some layer reaches ≥ 50% success with its random-plane control ≤ 20% | 🟡 partial |
+| The circle is causally used for day arithmetic (Qwen3-1.7B) | circular-probe patching shifts the answer in Mistral 7B / Llama 3 8B (§5) | accuracy 68% on 63 prompts; best layer 5: patch success 30% [19, 45] vs 0% [0, 8] for a norm-matched random 2-D plane (n = 43; Wilson 95% CIs) | some layer reaches ≥ 50% success with its random-plane control ≤ 20% | 🟡 partial (post-hoc: day-arithmetic templates changed after the smoke test showed this test failing) |
 <!-- /table:replication -->
 
 ## Interpretation
 
-The circular geometry replicates cleanly in GPT-2 small, both in raw activations and through SAE latents. The causal test is partial. Moving the start day along the circle shifts the answer by the matching amount in a minority of correctly solved prompts, while a random plane never does. The circle carries real information the model uses, but a 2-D patch at one position does not control the computation by itself in Qwen3-1.7B.
+The circular geometry replicates cleanly in GPT-2 small, both in raw activations and through SAE latents; these are
+descriptive results (the SAE latents are selected on the same tokens, and the random-word control draws from a small
+pool). The causal test is partial and post-hoc (its day-arithmetic templates changed after the smoke test). Moving the
+start day along the circle shifts the answer by the matching amount in a minority of correctly solved prompts. Until the
+methods review, the random-plane control moved the activation 1–2 orders of magnitude less than the circle patch; it is
+now norm-matched and still never succeeds, so the effect is specific to the circle plane, with a wide Wilson interval
+(n = 43). A 2-D patch at one position does not control the computation by itself in Qwen3-1.7B, and the best layer is
+chosen on the outcome. Details: [methods review](../../reviews/methods-review.md), M4 and m3.
 
 ## Limitations
 
 - The causal test uses our own day-arithmetic templates (see the amendment in `planned-runs.md`), not the paper's Mistral/Llama setups with circular probes.
 - Patching happens at one layer and one position at a time.
+- To do: a larger random-word pool, a "rotate by the wrong amount" control, and a fixed layer.
 
 ## All summary values
 

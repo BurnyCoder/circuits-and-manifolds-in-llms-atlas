@@ -7,7 +7,7 @@ models: [Qwen2.5-1.5B-Instruct]
 fidelity: recomputed
 evidence: correlational
 order: 650
-summary: As a model reads a story sentence by sentence, its internal state wanders through a map of emotions laid out like human valence and arousal.
+summary: As Llama reads a story sentence by sentence, its internal state wanders through a map of emotions laid out like human valence and arousal. In Qwen2.5-1.5B the emotional reading is only just decodable, and the geometry matches behaviour weakly.
 viz: stories
 data: stories-in-space.json
 locations:
@@ -16,7 +16,7 @@ tags: [in-context learning, emotions, trajectories, belief space]
 related: [emotions, manifold-steering, belief-fractal]
 quote:
   text: As an LLM reads sentence by sentence, its internal activations move through conceptual space
-  source: bigelow2026
+  source: stories-blog
 citations:
   - id: bigelow2026
     title: "Stories in Space: In-Context Learning Trajectories in Conceptual Belief Space"

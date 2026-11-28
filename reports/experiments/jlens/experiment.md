@@ -15,21 +15,31 @@ Qwen3-1.7B with Neuronpedia's pre-fitted J-lens. Slice grids for J-lens vs logit
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
-| The J-lens surfaces unspoken intermediate steps better than the logit lens | J-lens beats logit / tuned lens; intermediates (21, 42) become readable in middle layers (Claude) | best rank of the intermediate token at the last position: median 4 (J-lens) vs 9 (logit lens); top-10 for 3/3 vs 2/3 | J-lens median rank lower than the logit lens's and ≥ half of intermediates reach the top 10 | ✅ pass |
-| Swapping J-lens coordinates swaps the concept | France ↔ China swaps change capital/language answers; 59% top-5 success for the J-space component (Claude) | layer 11: target answer in top-5 for 12% of 8 prompts (random direction 0%) | ≥ 50% and ≥ 30 points above the random-direction swap | ❌ fail |
-| Swapping J-space coefficients (paper-style sparse NNLS decomposition) swaps the concept | J-space component swap: 59% top-5 success vs 5% for the non-J component (Claude) | layer 9: target answer in top-5 for 12% of 8 prompts (random vector 0%) | ≥ 50% and ≥ 30 points above the random-vector swap (amendment 2026-11-27, same thresholds) | ❌ fail |
+| The J-lens surfaces unspoken intermediate steps better than the logit lens | J-lens beats logit / tuned lens; intermediates (21, 42) become readable in middle layers (Claude) | best rank of the intermediate token at the last position: median 4 (J-lens) vs 9 (logit lens); top-10 for 3/3 vs 2/3 | J-lens median rank lower than the logit lens's and ≥ half of intermediates reach the top 10 | ✅ pass (post-hoc: arithmetic case removed from the metric after its ranks had been seen) |
+| Swapping J-lens coordinates swaps the concept | France → China swaps change capital/language/continent answers together (76/192 top-1 across functions, Claude) | layer 11: target answer in top-5 for 12% of 8 prompts (random direction 0%) | ≥ 50% and ≥ 30 points above the random-direction swap | ❌ fail |
+| Swapping J-space coefficients (paper-style sparse NNLS decomposition) swaps the concept | category ("think of a {category}") swap with the J-space component: 59% top-5 vs 5% for the non-J component (Claude) | layer 9: target answer in top-5 for 12% of 8 prompts (random vector 0%) | ≥ 50% and ≥ 30 points above the random-vector swap (amendment 2026-11-27, same thresholds) | ❌ fail (post-hoc: paper-style swap added after the pre-stated swap failed) |
+| Confirmatory: on 24 fresh two-hop prompts the J-lens ranks the unspoken intermediate better than the logit lens | J-lens beats the logit lens at surfacing unspoken intermediates (Claude) | J-lens better on 16, logit lens better on 6, tied on 2 of 24 prompts (sign test p = 0.0525); median best rank 5 vs 8; top-10 for 15 vs 14 | J-lens better on more prompts than the reverse and two-sided sign test p < 0.05 (pre-stated 2026-11-28 before running) | 🟡 partial |
 <!-- /table:replication -->
 
 ## Interpretation
 
-The lens claim replicates: intermediates rank higher under the J-lens than under the logit lens. Both swap variants fail: swapping France ↔ China–style concepts rarely moves the answer, though always more than random. This matches the open replication avalur/JLens, where selectivity did not reproduce up to 9B, and it suggests the workspace's causal role may need larger models.
+Suggestive, not established. The original lens row is post-hoc: the arithmetic prompt was removed from the metric
+after its ranks had been seen, and those ranks went against the J-lens (first-digit tokens of "21" and "42" at ranks
+1360 and 1088 under the J-lens vs 16 and 42 under the logit lens; the review recomputed the row with them included and
+it would still pass). To get past n = 3, a confirmatory test on 24 fresh two-hop prompts was pre-stated (commit
+`8d1376e`) and run unchanged: the J-lens gives the intermediate a better best rank on most prompts, but the sign test
+lands just above the pre-stated p < 0.05 (`confirm_sign_p` in the summary table), so the verdict is partial. The
+top-10 counts are nearly equal, so the advantage is in moving intermediates a few ranks up rather than surfacing ones
+the logit lens misses. Both swap variants fail (1/8 at best vs 0/8 random), the paper-style one being post-hoc as well.
+This matches the open replication avalur/JLens, where selectivity did not reproduce up to 9B.
+Details: [methods review](../../reviews/methods-review.md), M11.
 
 ## Limitations
 
-- Three rankable intermediate cases and eight swap prompts are small samples.
-- Qwen3's digit-level tokenization rules out the paper's arithmetic example.
+- Eight swap prompts are too few; the confirmatory rank test has 24 prompts and one layer range.
+- Qwen3's digit-level tokenization makes multi-digit intermediates unrankable.
 
 ## All summary values
 
@@ -49,4 +59,12 @@ The lens claim replicates: intermediates rank higher under the J-lens than under
 | `nnls_layer` | 9 |
 | `nnls_top5` | 0.125 |
 | `nnls_random` | 0.0 |
+| `confirm_n` | 24 |
+| `confirm_wins_j` | 16 |
+| `confirm_wins_logit` | 6 |
+| `confirm_sign_p` | 0.052479 |
+| `confirm_median_rank_j` | 5.0 |
+| `confirm_median_rank_logit` | 8.5 |
+| `confirm_top10_j` | 15 |
+| `confirm_top10_logit` | 14 |
 <!-- /table:summary -->

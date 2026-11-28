@@ -23,7 +23,7 @@ start year to the END token and MLPs 8–11 producing the "greater than" distrib
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | GPT-2 small predicts years greater than the start year | probability difference 81.7% | PD = 90.2% [89.7, 90.7] over 1164 prompts | PD > 50% | ✅ pass |
 | The identified heads + MLPs 8–11 carry the computation | patching the circuit with '01' activations destroys PD; circuit alone keeps 89.5% (72.7 of 81.7 points) | heads patched → -53.4%, MLPs 8–11 patched → -20.9%, both → -49.7%; circuit-only → 83.4% (92% of full) | patching heads+MLPs drops PD below 30% of full, and circuit-only keeps ≥ 60% of full | ✅ pass |
@@ -35,7 +35,8 @@ start year to the END token and MLPs 8–11 producing the "greater than" distrib
 GPT-2 small does greater-than reliably (PD higher than the paper's, plausibly because our nouns differ). Patching the 7
 circuit heads alone reverses PD; patching MLPs 8–11 alone also removes most of it — both stages are needed, as the paper
 argues. Seven random heads leave PD essentially unchanged. Keeping only circuit heads clean preserves most of the full
-PD.
+PD, but this test keeps **all** MLPs clean (pre-stated, see Deviations), which is more lenient than Hanna et al.'s path
+patching, so the faithfulness number is inflated relative to the paper's.
 
 ## Deviations from the paper
 

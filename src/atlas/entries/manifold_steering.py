@@ -32,6 +32,7 @@ from .calendar_circles import DAYS, day_prompts
 log = get_logger()
 SLUG = "manifold-steering"
 MODEL = "Qwen/Qwen3-1.7B"
+ENDPOINT_ONLY = [12, 16, 20]  # earlier layers: endpoint check only (documents why steering uses 22–26)
 LAYERS = [22, 24, 26]  # ~79–93% depth; the answer-day subspace is causal only from layer 22 on (endpoint check, amendment)
 K = 13  # points per path
 
@@ -50,7 +51,8 @@ def compute(ctx) -> None:
     day_ids = [tok(d, add_special_tokens=False).input_ids[0] for d in DAYS]
     prompts = day_prompts()
     results = []
-    for L in LAYERS if not ctx.quick else LAYERS[:1]:
+    endpoint_only = []
+    for L in (ENDPOINT_ONLY + LAYERS) if not ctx.quick else LAYERS[:1]:
         H, P, ans = [], [], []
         for k, d, text in prompts:
             ids = tok(text, return_tensors="pt", add_special_tokens=False).input_ids.to(ctx.device)
@@ -100,6 +102,19 @@ def compute(ctx) -> None:
                 hk.remove()
             return np.stack(outs)
 
+        # Endpoint check (the evidence behind choosing layers 22–26; see the amendment): writing day j's centroid into a
+        # correctly answered prompt should make the model answer j if the day subspace is causal at this layer.
+        ep_rng = np.random.default_rng(ctx.seed + L)
+        ok_idx = np.where(ok)[0]
+        ep = []
+        for n in ep_rng.choice(ok_idx, min(28, len(ok_idx)), replace=False):
+            j = int((ans[n] + ep_rng.integers(1, 7)) % 7)
+            ep.append(int(run_path(int(n), C[j][None])[0].argmax()) == j)
+        endpoint = float(np.mean(ep))
+        log.info("manifold steering L%d: endpoint success %.2f (n=%d)", L, endpoint, len(ep))
+        if L in ENDPOINT_ONLY:
+            endpoint_only.append({"layer": L, "endpoint_success": endpoint})
+            continue
         e_man, e_lin, mid_man, mid_lin, examples = [], [], [], [], []
         for i in range(7):
             for step in (2, 3, -2, -3):
@@ -118,7 +133,7 @@ def compute(ctx) -> None:
                 mid_lin.append(np.mean([p.argmax() in inter for p in pl]))
                 if len(examples) < 6 and step in (3, -3):
                     examples.append({"from": i, "to": j, "manifold": pm, "linear": pl})
-        res = {"layer": L, "accuracy": acc, "E_manifold": float(np.mean(e_man)), "E_linear": float(np.mean(e_lin)), "via_manifold": float(np.mean(mid_man)), "via_linear": float(np.mean(mid_lin)), "n_paths": len(e_man), "centroids_2d": C[:, :2], "examples": examples}
+        res = {"layer": L, "accuracy": acc, "endpoint_success": endpoint, "E_manifold": float(np.mean(e_man)), "E_linear": float(np.mean(e_lin)), "via_manifold": float(np.mean(mid_man)), "via_linear": float(np.mean(mid_lin)), "n_paths": len(e_man), "centroids_2d": C[:, :2], "examples": examples}
         results.append(res)
         log.info("manifold steering L%d: acc %.2f, E_BC manifold %.3f vs linear %.3f; via-intermediate %.2f vs %.2f (n=%d)", L, acc, res["E_manifold"], res["E_linear"], res["via_manifold"], res["via_linear"], len(e_man))
     best = min(results, key=lambda r: r["E_manifold"] / max(r["E_linear"], 1e-9))
@@ -141,6 +156,7 @@ def compute(ctx) -> None:
             partial=best["via_manifold"] > best["via_linear"],
         ),
     ]
-    write_entry(SLUG, {"layers": results, "days": DAYS}, summary, repl, models=[MODEL], runtime_s=time.time() - t0, ndigits=3)
+    summary["endpoint_by_layer"] = ", ".join(f"L{e['layer']} {e['endpoint_success']:.2f}" for e in endpoint_only + [{"layer": r["layer"], "endpoint_success": r["endpoint_success"]} for r in results])
+    write_entry(SLUG, {"layers": results, "endpoint_only": endpoint_only, "days": DAYS}, summary, repl, models=[MODEL], runtime_s=time.time() - t0, ndigits=3)
     del model
     torch.cuda.empty_cache()

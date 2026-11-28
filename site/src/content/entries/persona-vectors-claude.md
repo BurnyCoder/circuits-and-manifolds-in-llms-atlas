@@ -42,7 +42,7 @@ replications:
 
 ## In plain words
 
-Give the pipeline a trait name and a one-line description ("evil: actively seeks to harm…"). An LLM writes system prompts
+Give the pipeline a trait name and a one-line description (for "evil", roughly: actively seeking to harm, manipulate, and cause suffering). An LLM writes system prompts
 that encourage and discourage the trait, the model answers questions under both, and the difference in its average
 activations becomes a "persona vector". The vector lights up before the model starts behaving that way (monitoring),
 adding it produces the trait (steering), and — counter-intuitively — adding it *during* fine-tuning stops the fine-tuning
@@ -53,7 +53,7 @@ induce the trait.
 
 Difference of mean residual activations over response tokens (trait − anti-trait) per layer; the steering layer is chosen
 by effect. Projection of the last prompt token onto the vector predicts trait expression (r = 0.75–0.83); fine-tuning
-shifts along the vector correlate with trait changes (r = 0.76–0.97, vs 0.34–0.86 across traits); preventative steering
+shifts along the vector correlate with trait changes (r = 0.76–0.97, vs r = 0.34–0.86 for cross-trait baselines); preventative steering
 keeps coherence above 80 and MMLU better than inference-time steering. Models: Qwen2.5-7B-Instruct, Llama-3.1-8B-Instruct.
 
 ## Limitations

@@ -89,7 +89,8 @@ modular day/month arithmetic.
   {{q_months_best_layer}} ({{q_months_best_score}}). It answers {{q_acc|pct}} of day-arithmetic prompts correctly.
 - Causal test at layer {{q_causal_best_layer}}: moving the start day's activation along the circle plane to another
   day's position makes the answer move to the corresponding day in {{q_causal_best|pct}} of {{q_causal_n}} prompts,
-  versus {{q_causal_best_rand|pct}} for the same move in a random plane.
+  versus {{q_causal_best_rand|pct}} for a move of the same size in a random plane (norm-matched after the methods review;
+the causal row is post-hoc because its templates changed after the smoke test).
 
 ## Limitations
 

@@ -28,7 +28,7 @@ paper's grokking at ~10k epochs.
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Generalization comes long after memorization (grokking) | train acc ~100% by ~1.4k epochs; test generalizes at ~10k (Fig. 2, wd=1, 30% split) | seed 0: train≥99% @ 200, test≥95% @ 7200; seed 1: train≥99% @ 200, test≥95% @ 6100; seed 2: train≥99% @ 200, test≥95% @ 13500 | test-95% epoch ≥ 3× train-99% epoch and final test acc > 99%, for every seed | ✅ pass |
 | The embedding is sparse in the Fourier basis | W_E has ~6 non-negligible frequencies of 56 (§5.1) | ≤ 4 frequencies carry 90% of ‖W_E‖² (worst seed) | ≤ 10 frequencies carry 90% of the norm in every seed | ✅ pass |

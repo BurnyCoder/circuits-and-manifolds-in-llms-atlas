@@ -15,10 +15,10 @@ GPT-2 XL in bfloat16; steering vectors from "I talk about weddings constantly" �
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
-| Adding a 'weddings' vector steers the topic | > 90% of completions about weddings vs ~2% unsteered (Turner et al.) | wedding words in 0% of completions unsteered → 75% at c = 4 (random vector 0%); best 92% | c = 4 rate ≥ 50% and ≥ 30 points above both the unsteered and random-vector rates | ✅ pass |
-| A 'Love − Hate' vector makes text more positive | Love − Hate at layer 6 turns 'I hate you because' positive (Turner et al.) | positive sentiment 54% → 42% at c = 4 (random vector 42%) | ≥ 20 points above both baseline and random vector | ❌ fail |
+| Adding a 'weddings' vector steers the topic | > 90% of completions about weddings vs ~2% unsteered (Turner et al.) | wedding words in 0% [0, 14] of completions unsteered → 75% [55, 88] at c = 4 (random vector 0% [0, 14]); best 92% (n = 24 per cell; Wilson 95% CIs) | c = 4 rate ≥ 50% and ≥ 30 points above both the unsteered and random-vector rates | ✅ pass |
+| A 'Love − Hate' vector makes text more positive | Love − Hate at layer 6 turns 'I hate you because' positive (Turner et al.) | positive sentiment 54% [35, 72] → 42% [24, 61] at c = 4 (random vector 42% [24, 61]; n = 24 per cell; Wilson 95% CIs) | ≥ 20 points above both baseline and random vector | ❌ fail |
 <!-- /table:replication -->
 
 ## Interpretation

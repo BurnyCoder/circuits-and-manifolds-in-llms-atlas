@@ -47,7 +47,9 @@ flowchart LR
   computes the metrics and their controls, builds the visualization payload, and calls `common.io.write_entry`.
   `ctx.quick` shrinks sample sizes for smoke tests.
 - **`src/atlas/common/`**: shared helpers.
-  - `io.py`: compact JSON export and the published-vs-ours `verdict_row`.
+  - `io.py`: compact JSON export and the published-vs-ours `verdict_row`; `write_entry` applies the post-hoc flags.
+  - `post_hoc.py`: the one list of post-hoc rows and their reasons (shown everywhere, excluded from tallies).
+  - `stats.py`: percentile bootstrap and Wilson score intervals.
   - `stats.py`: bootstrap confidence intervals.
   - `geometry.py`: PCA, cyclic-order tests, ridge probes.
   - `fourier.py`: Fourier basis for modular arithmetic.

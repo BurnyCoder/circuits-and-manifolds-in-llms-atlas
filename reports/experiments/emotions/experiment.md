@@ -15,7 +15,7 @@ Qwen3-1.7B wrote short stories for 71 emotions × topics (emotion word excluded)
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | The main axis of emotion space is valence | PC1 26% of variance; r = 0.81 with human valence (Claude Sonnet 4.5) | PC1 48% of variance; \|r\| = 0.94 with human valence (shuffled-label 95th pct 0.12); 71 emotions, 1651 stories | \|r\| ≥ 0.6 and above the shuffled-label 95th percentile | ✅ pass |
 | The second axis is arousal | PC2 15%; r = 0.66 with human arousal | PC2 9% of variance; \|r\| = 0.06 with human arousal | \|r\| ≥ 0.4 | ❌ fail |
@@ -25,12 +25,19 @@ Qwen3-1.7B wrote short stories for 71 emotions × topics (emotion word excluded)
 
 ## Interpretation
 
-Valence replicates strongly: the first principal axis is pleasant ↔ unpleasant, with a correlation above the paper's. The dose sweep behaves as predicted (fear up, calm down with danger). The second axis does not correspond to arousal, and steering an option with blissful or hostile vectors does not change which option the model picks. In a 1.7B model the emotion space is effectively one-dimensional, and the vectors do not drive these choices.
+Valence replicates strongly: the first principal axis is pleasant ↔ unpleasant, with a correlation above the paper's
+and far above the shuffled-label null. The dose-sweep pass carries little weight: it is the sign of two slopes over 7
+single prompts with no control prompt, and because "afraid" and "calm" sit at opposite ends of the valence axis their
+slopes are strongly anti-correlated, so a joint pass by chance is closer to 50% than 25%. The second axis does not
+correspond to arousal, and steering an option with blissful or hostile vectors does not change which option the model
+picks. One hypothesis (not tested) is that a 1.7B model's emotion space is dominated by valence; PC2 still holds
+noticeable variance. Details: [methods review](../../reviews/methods-review.md), M12.
 
 ## Limitations
 
 - Self-generated, stereotyped stories; one model; one layer.
 - The preference test is a forced A/B choice, not the paper's Elo tournament.
+- To do: dose sweep with a matched benign control ("{d} ml of water"), paraphrases per dose and a permutation test.
 
 ## All summary values
 

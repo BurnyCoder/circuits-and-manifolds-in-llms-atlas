@@ -1,12 +1,14 @@
 {
  "meta": {
   "slug": "gpt2-map",
-  "generated": "2026-11-27 17:47 UTC",
-  "git_commit": "71f2afe9757578e6d47e45a747e12d66cb215392",
+  "generated": "2026-11-28 00:42 UTC",
+  "git_commit": "91921369b3d5f5bc288a27638a6a122d39688cee",
+  "src_dirty_at_start": false,
   "models": [
    "gpt2"
   ],
-  "runtime_s": null
+  "runtime_s": null,
+  "quick": false
  },
  "summary": {}
 }

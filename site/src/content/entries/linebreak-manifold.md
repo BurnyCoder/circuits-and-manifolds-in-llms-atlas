@@ -7,7 +7,7 @@ models: [Qwen3-1.7B, GPT-2 small]
 fidelity: replicated
 evidence: correlational
 order: 120
-summary: To know when to break a line, a model tracks how many characters it has written — on a twisting, rippled curve rather than a straight ruler.
+summary: Claude tracks how many characters it has written on a twisting, rippled curve to know when to break a line. In Qwen3-1.7B (and GPT-2) the count is decodable, but the curve is far less compact and not concentrated in the first layers.
 viz: linebreak
 data: linebreak-manifold.json
 locations:
@@ -16,9 +16,9 @@ locations:
 tags: [counting, manifolds, ringing, place cells, QK rotation]
 related: [othello-gpt, calendar-circles, sae-manifolds]
 quote:
-  text: Character counts are represented on low-dimensional curved manifolds
+  text: "[C]haracter counts are represented on low-dimensional curved manifolds"
   source: gurnee2025
-  where: Abstract
+  where: Abstract of the arXiv version (2601.04480)
 citations:
   - id: gurnee2025
     title: "When Models Manipulate Manifolds: The Geometry of a Counting Task"

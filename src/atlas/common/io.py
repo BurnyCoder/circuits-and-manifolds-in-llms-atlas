@@ -52,7 +52,8 @@ def to_jsonable(x: Any, ndigits: int = 4) -> Any:
 
 
 def verdict_row(claim: str, published: str, ours: str, criterion: str, passed: bool | None, partial: bool = False) -> dict:
-    """One row of the published-vs-ours table. ``passed=None`` -> 'n/a'."""
+    """One row of the published-vs-ours table. ``passed=None`` -> 'n/a'. Post-hoc rows are marked in write_entry from
+    the single list in common/post_hoc.py."""
     v = "n/a" if passed is None else ("pass" if passed else ("partial" if partial else "fail"))
     return {"claim": claim, "published": published, "ours": ours, "criterion": criterion, "verdict": v}
 
@@ -68,10 +69,15 @@ def write_entry(
     ndigits: int = 4,
 ) -> None:
     """Write ``site/public/data/<slug>.json`` and ``results/<slug>/{metrics,replication}.json``."""
+    from .post_hoc import mark
+
+    replication = mark(slug, replication or [])
     meta = {
         "slug": slug,
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "git_commit": _git_commit(),
+        # Set by atlas.run at start: did src/ differ from git_commit when this run began? (None: not run via atlas.run)
+        "src_dirty_at_start": {"1": True, "0": False}.get(os.environ.get("ATLAS_SRC_DIRTY", "")),
         "models": models or [],
         "runtime_s": runtime_s,
         # Smoke-test (--quick) outputs are flagged so atlas.report never puts them in result tables.

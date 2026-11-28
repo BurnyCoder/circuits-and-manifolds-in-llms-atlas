@@ -7,11 +7,11 @@ models: [Qwen3-1.7B]
 fidelity: recomputed
 evidence: causal
 order: 630
-summary: To change a model's answer from Monday to Thursday, walk along the curved weekday manifold — the outputs pass naturally through Tuesday and Wednesday.
+summary: To change Llama's answer from Monday to Thursday, walk along the curved weekday manifold — the outputs pass through Tuesday and Wednesday. In Qwen3-1.7B the path visits the intermediate days, as built, but does not stay closer to natural outputs.
 viz: manifold-steering
 data: manifold-steering.json
 locations:
-  - { model: qwen3-1.7b, part: resid, layers: [12, 20], label: periodic weekday spline used for along-manifold vs linear steering }
+  - { model: qwen3-1.7b, part: resid, layers: [22, 26], label: periodic weekday spline used for along-manifold vs linear steering }
   - { model: llama-3.1-8b, part: resid, layer: 28, label: weekday / month / letter / age manifolds (Wurgaft et al.) }
 tags: [steering, manifolds, splines, weekdays]
 related: [calendar-circles, world-model, geometric-calculator]
@@ -36,7 +36,7 @@ replications:
     url: https://github.com/BurnyCoder/circuits-and-manifolds-in-llms-atlas/blob/main/src/atlas/entries/manifold_steering.py
     model: Qwen3-1.7B
     outcome: ours
-    note: Periodic spline through the 7 answer centroids (64-D PCA), along-manifold vs chord paths for all day pairs 2–3 apart, behaviour-manifold energy.
+    note: Periodic spline through the 7 answer centroids (in their 6-D span; layers 22–26), along-manifold vs chord paths for all day pairs 2–3 apart, behaviour-manifold energy. Both rows are post-hoc (layers chosen after failing runs at 12–20).
   - who: Gupta, Fruengel & Heimersheim — "Spokes, not a Ring"
     url: https://arxiv.org/abs/2610.37796
     model: Llama-3.1-8B, Mistral-7B, GPT-2 XL
@@ -53,8 +53,8 @@ mixtures the model would never naturally output. We test the same idea in Qwen3-
 
 ## How it works (technical)
 
-The activation manifold is a periodic cubic spline through the 7 answer centroids in a 64-D PCA of the last-token
-activations; the behaviour manifold is the matching spline through the centroids' output distributions in Hellinger
+In the paper the activation manifold is a periodic cubic spline through the 7 answer centroids in a 64-D PCA of the
+last-token activations (we use the centroids' 6-D span, because ~60 prompts are too few for a 64-D PCA); the behaviour manifold is the matching spline through the centroids' output distributions in Hellinger
 (√p) coordinates. Energy $E_{BC}$ is the mean Bhattacharyya distance from a path's outputs to the behaviour manifold. In
 Llama-3.1-8B: $E_{BC}$ 0.34 along the manifold vs 0.93 for linear steering (weekdays).
 
@@ -62,7 +62,12 @@ Llama-3.1-8B: $E_{BC}$ 0.34 along the manifold vs 0.93 for linear steering (week
 
 - $E_{BC}$ = {{E_manifold}} along the manifold vs {{E_linear}} along the straight line.
 - {{via_manifold|pct}} of manifold path points predict one of the intermediate days vs {{via_linear|pct}} for the
-  straight line.
+  straight line. This is close to guaranteed by construction: the spline passes exactly through the intermediate
+  centroids, which make the model say that day almost every time at these layers, while a chord between two vertices
+  never passes a third. A fair control would be a piecewise-linear path through the same centroids.
+- Both rows are post-hoc: the layers (22–26) were chosen after full runs at layers 12–20 had failed. At layers 12–20,
+  writing a day's centroid makes the model say that day in almost no cases (endpoint success by layer: {{endpoint_by_layer}}),
+  so the answer is not yet formed there.
 
 ## Limitations
 

@@ -47,11 +47,11 @@ replications:
     model: GPT-2 small
     outcome: ours
     note: Probability difference, year × year heatmaps for all 32 on/off patching combinations, circuit-only faithfulness and a random-head control.
-  - who: Goodfire — circuit tracing on GPT-2 small finds the same mechanism
+  - who: Goodfire — replicating circuit tracing for a simple mechanism
     url: https://www.goodfire.ai/research/replicating-circuit-tracing-for-a-simple-mechanism
     model: GPT-2 small + cross-layer transcoder
-    outcome: replicated
-    note: Attribution graphs recover features that suppress years ≤ the start year and promote later years; also finds parity / multiple-of-5 features with no analogue in the original paper.
+    outcome: partial
+    note: Finds greater-than features plus parity and multiple-of-5 features, but the top features' logit attributions barely depend on the start year, unlike Hanna et al.'s MLP neurons; one feature does the inverse (promotes small years).
 ---
 
 ## In plain words

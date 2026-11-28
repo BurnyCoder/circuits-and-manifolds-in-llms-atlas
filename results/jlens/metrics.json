@@ -1,13 +1,14 @@
 {
  "meta": {
   "slug": "jlens",
-  "generated": "2026-11-27 22:40 UTC",
-  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "generated": "2026-11-28 00:47 UTC",
+  "git_commit": "212f9fd313dc7a0f4bfc0547ea19fa114c89725e",
+  "src_dirty_at_start": false,
   "models": [
    "Qwen/Qwen3-1.7B",
    "neuronpedia/jacobian-lens"
   ],
-  "runtime_s": 104.300105,
+  "runtime_s": 105.829968,
   "quick": false
  },
  "summary": {
@@ -23,6 +24,14 @@
   "swap_n": 8,
   "nnls_layer": 9,
   "nnls_top5": 0.125,
-  "nnls_random": 0.0
+  "nnls_random": 0.0,
+  "confirm_n": 24,
+  "confirm_wins_j": 16,
+  "confirm_wins_logit": 6,
+  "confirm_sign_p": 0.052479,
+  "confirm_median_rank_j": 5.0,
+  "confirm_median_rank_logit": 8.5,
+  "confirm_top10_j": 15,
+  "confirm_top10_logit": 14
  }
 }

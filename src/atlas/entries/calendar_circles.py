@@ -25,6 +25,7 @@ from ..common.geometry import cyclic_order_pvalue, cyclic_order_score, pca
 from ..common.io import verdict_row, write_entry
 from ..common.log import get_logger
 from ..common.models import hooked
+from ..common.stats import rate_str
 
 log = get_logger()
 SLUG = "calendar-circles"
@@ -231,8 +232,10 @@ def qwen_part(ctx) -> dict:
             j = int(rng.integers(1, 7))  # shift the start day by j
             target = (d + j + k) % 7
             pos = len(tok(text[: text.index(DAYS[d])], add_special_tokens=False).input_ids)  # index of the start-day token
-            for P, M, acc_list in ((P2, m_circle, succ), (R, m_rand, succ_rand)):
-                delta = P.T @ (M[(d + j) % 7] - M[d])  # move along the plane from day d's mean to day d+j's mean
+            d_circle = P2.T @ (m_circle[(d + j) % 7] - m_circle[d])  # move along the circle from day d to day d + j
+            d_rand = R.T @ (m_rand[(d + j) % 7] - m_rand[d])
+            d_rand = d_rand / (np.linalg.norm(d_rand) + 1e-8) * np.linalg.norm(d_circle)  # same displacement, random plane
+            for delta, acc_list in ((d_circle, succ), (d_rand, succ_rand)):
                 acc_list.append(answer(text, L, pos, torch.tensor(delta, device=ctx.device)) == target)
         causal.append({"layer": L, "success": float(np.mean(succ)) if succ else 0.0, "success_random_plane": float(np.mean(succ_rand)) if succ_rand else 0.0, "n": len(succ)})
         log.info("Qwen3 L%d causal circle patch: %.3f (random plane %.3f, n=%d)", L, causal[-1]["success"], causal[-1]["success_random_plane"], len(succ))
@@ -294,8 +297,9 @@ def compute(ctx) -> None:
         verdict_row(
             "The circle is causally used for day arithmetic (Qwen3-1.7B)",
             "circular-probe patching shifts the answer in Mistral 7B / Llama 3 8B (§5)",
-            f"accuracy {qw['accuracy'] * 100:.0f}% on {qw['n_prompts']} prompts; best layer {best_q['layer']}: patch success {best_q['success'] * 100:.0f}% "
-            f"vs {best_q['success_random_plane'] * 100:.0f}% for a random 2-D plane (n = {best_q['n']})",
+            f"accuracy {qw['accuracy'] * 100:.0f}% on {qw['n_prompts']} prompts; best layer {best_q['layer']}: patch success "
+            f"{rate_str(round(best_q['success'] * best_q['n']), best_q['n'])} vs {rate_str(round(best_q['success_random_plane'] * best_q['n']), best_q['n'])} "
+            f"for a norm-matched random 2-D plane (n = {best_q['n']}; Wilson 95% CIs)",
             "some layer reaches ≥ 50% success with its random-plane control ≤ 20%",
             best_q["success"] >= 0.5 and best_q["success_random_plane"] <= 0.2,
             partial=best_q["success"] > best_q["success_random_plane"] + 0.2,

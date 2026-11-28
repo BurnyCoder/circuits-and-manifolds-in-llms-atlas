@@ -56,6 +56,19 @@ class Ctx:
     extra: dict = field(default_factory=dict)
 
 
+def src_dirty() -> bool | None:
+    """True if `src/` has uncommitted changes (git status --porcelain -- src), None if git is unavailable."""
+    import subprocess
+
+    from .common.env import ROOT
+
+    try:
+        out = subprocess.check_output(["git", "status", "--porcelain", "--", "src"], cwd=ROOT, text=True, stderr=subprocess.DEVNULL)
+    except Exception:
+        return None
+    return bool(out.strip())
+
+
 def main(argv: list[str] | None = None) -> None:
     setup()  # must precede torch/transformers imports (cache paths from .env)
     from .common.log import get_logger
@@ -70,6 +83,9 @@ def main(argv: list[str] | None = None) -> None:
     a = p.parse_args(argv)
     if a.quick:
         os.environ["ATLAS_QUICK"] = "1"  # write_entry marks outputs as smoke-test data; atlas.report skips them
+    # Audit trail (methods review, m11): record whether the analysis code had uncommitted changes when the run started,
+    # so a result can be matched to the exact committed code. write_entry copies this flag into each result's meta.
+    os.environ["ATLAS_SRC_DIRTY"] = "1" if src_dirty() else "0"
     names = ENTRIES if a.entries == "all" else [s.strip() for s in a.entries.split(",") if s.strip()]
     log = get_logger("run_" + ("all" if a.entries == "all" else "_".join(names))[:60])
     ctx = Ctx(device=a.device or device(), quick=a.quick, seed=a.seed, extra=dict(kv.split("=", 1) for kv in a.set))

@@ -7,7 +7,7 @@ models: [GPT-2 small]
 fidelity: recomputed
 evidence: causal
 order: 210
-summary: A sparse autoencoder splits GPT-2's activations into readable features — a Golden Gate Bridge feature, a Python feature — and turning one up steers the text.
+summary: A sparse autoencoder splits GPT-2's activations into readable features, and turning one up steers the text. The closest GPT-2 analogue of Golden Gate Claude is a generic bridge feature — it steers toward bridges, not toward the Golden Gate.
 viz: sae-features
 data: sae-features.json
 locations:
@@ -61,7 +61,8 @@ replications:
 A sparse autoencoder (SAE) rewrites each activation as a combination of a few "features" out of tens of thousands, and
 many features turn out to mean one thing: the Golden Gate Bridge, Python code, French text. Anthropic famously turned up
 Claude's Golden Gate Bridge feature until the model believed it *was* the bridge ("Golden Gate Claude"). Claude's SAEs are
-private, but open SAEs exist for GPT-2, so here we find a Golden Gate feature in GPT-2 small and steer with it.
+private, but open SAEs exist for GPT-2, so here we look for a Golden Gate feature in GPT-2 small and steer with it. The
+best match is a feature for bridges in general.
 
 ## How it works (technical)
 
@@ -72,11 +73,14 @@ features, and showed clamping changes behaviour.
 
 **What we measured** (GPT-2 small, layer 8, {{n_concepts}} concepts):
 
-- The Golden Gate feature (#{{gg_feature}}): completions from neutral prompts mention the bridge or San Francisco in
-  {{gg_base|pct}} of samples without steering, {{gg_steer|pct}} with α = {{alpha}}, and {{gg_random|pct}} for a random
-  direction of the same norm.
+- The bridge feature (#{{gg_feature}}, the top Neuronpedia match for "Golden Gate Bridge"; its label is about bridges in
+  general): completions from neutral prompts mention a bridge, the Golden Gate or San Francisco in {{gg_base|pct}} of
+  samples without steering, {{gg_steer|pct}} with α = {{alpha}}, and {{gg_random|pct}} for a random direction of the same
+  norm. Only {{gg_specific|pct}} of the steered completions name the Golden Gate or San Francisco.
 - {{n_lift}} of {{n_concepts}} concept features gain ≥ 30 points of on-topic completions at α = {{alpha}} (median lift
   {{median_lift|pct}}).
+- Both rows are post-hoc: the feature-selection rule was changed twice after smoke tests that had logged steering
+  rates. Each cell has only 12 completions.
 
 ## Limitations
 

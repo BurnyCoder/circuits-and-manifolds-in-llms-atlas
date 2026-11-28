@@ -28,7 +28,7 @@ late heads to make it robust to this choice.
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | L10H7's OV circuit suppresses the token it attends to | 84.70% of tokens: diagonal among 10 most negative; 98.86% in bottom 5% (column ranking) | 66.6% in top-10 most negative; 94.0% in bottom 5% (row ranking, 5000 tokens); other L10–11 heads: median 0.0% | > 50% top-10 and > 5× the median other head in layers 10–11 | ✅ pass |
 | L10H7's QK circuit attends to tokens that are being predicted | 95.72% of rows have the diagonal as maximum | 85.6% diagonal-max over 5000 tokens | > 50% diagonal-max | ✅ pass |
@@ -38,9 +38,10 @@ late heads to make it robust to this choice.
 ## Interpretation
 
 L10H7's OV circuit is strongly self-suppressive and its QK circuit attends to predicted tokens, far above every other
-layer-10/11 head. Behaviourally, the head always pushes down the copied token, but zero-ablation raises that token's
-probability only on 5 of 8 prompts: other components (e.g. negative name movers such as 11.10, which the paper also
-identifies as partially copy-suppressive) partly compensate.
+layer-10/11 head. Behaviourally, the head pushes down the copied token on all 8 hand-written prompts (no control token
+is measured), and zero-ablation raises that token's probability on only 5 of 8. One hypothesis, not tested here, is
+that other components such as negative name mover 11.10 (which the paper also finds partly copy-suppressive)
+compensate.
 
 ## Deviations from the paper
 
@@ -48,7 +49,8 @@ identifies as partially copy-suppressive) partly compensate.
 
 ## Limitations
 
-- 8 hand-written prompts for behaviour; the paper's evaluation on OpenWebText (CSPA) is not reproduced.
+- 8 hand-written prompts for behaviour and no control token; the paper's evaluation on OpenWebText (CSPA) is not
+  reproduced.
 
 ## All summary values
 

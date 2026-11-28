@@ -7,7 +7,7 @@ models: [BSF / TopK SAE (trained here), InceptionV1]
 fidelity: recomputed
 evidence: correlational
 order: 620
-summary: Many concepts are not single directions but small 2–4-dimensional subspaces; grouping SAE latents into blocks captures them whole.
+summary: Goodfire report that many concepts are small 2–4-dimensional subspaces that block-sparse featurizers capture whole. In our toy test blocks beat a TopK SAE clearly; the InceptionV1 curve ring turns out not to be specific to curve neurons.
 viz: block-sparse
 data: block-sparse-featurizers.json
 locations:
@@ -16,7 +16,8 @@ tags: [block sparsity, SAE, vision, curve detectors, multidimensional features]
 related: [curve-detectors, sae-manifolds, colour-bicone]
 quote:
   text: most concepts appear to be multidimensional – and specifically, two- to four-dimensional
-  source: fel2026
+  source: bsf-blog
+  where: said of vision models
 citations:
   - id: fel2026
     title: "Structuring Sparsity: Block-Sparse Featurizers Capture Visual Concept Manifolds"
@@ -63,6 +64,10 @@ minimized at block size 2–4.
   (block-sparse) vs {{sae_r2_median}} (TopK SAE with the same latent budget).
 - InceptionV1: in the top-16 principal components of mixed3b's responses to curves, orientation harmonic 1 explains
   {{curve_h1|pct}} and harmonics 1–3 together {{curve_h123|pct}} (shuffled-orientation 95th percentile {{curve_null_p95|pct}}).
+- Control added after the methods review: harmonics 1–3 explain {{curve_neurons_harm_share|pct}} of the 10 curve
+  neurons' responses but also {{random_channels_harm_share|pct}} for 10 random non-curve channels. The orientation ring
+  is mostly a property of stimuli that vary only in orientation, not specific to curve detectors, so the InceptionV1
+  pass says little (the toy comparison is unaffected).
 
 ## Limitations
 

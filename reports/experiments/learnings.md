@@ -95,3 +95,36 @@ What we tried, what went wrong, why, and how it was fixed. Newest last. Per-entr
   (48 × 512 tokens × 152k vocabulary). The OOM then crashed the runner's cleanup and ended the whole batch. Now the
   reference is recomputed per sequence, parameters are frozen for gradient × activation, the cleanup is exception-safe,
   and each remaining entry runs in its own process.
+
+## 2026-11-28 — adversarial methods review and fact-check
+
+The full audit is in [`../reviews/methods-review.md`](../reviews/methods-review.md) and
+[`../reviews/fact-check.md`](../reviews/fact-check.md). What we learned:
+
+- **Iterating an analysis until it passes is the main risk, even with good intentions.** Attribution-graphs went 0/3 →
+  1/3 → 3/3 across three full runs while the path search was edited; sae-manifolds and manifold-steering changed a
+  metric or a layer after a full run; sae-features changed its selection rule after smoke tests that logged steering
+  rates. Each change had a stated reason, but the reasons were found after seeing the outcome. Fix: one auditable list
+  of post-hoc rows (`src/atlas/common/post_hoc.py`), shown with the reason and excluded from the tally. Next time:
+  commit the analysis before every non-quick run and have the runner refuse to start with a dirty tree.
+- **Smoke tests leak outcomes.** A smoke test that prints the verdict metric is a peek. Smoke tests should check
+  shapes, timing and degenerate values, not log the number the criterion is about.
+- **Check that a control is actually random.** `HookedTransformer(model.cfg)` on a pretrained config builds an
+  all-zero network because TransformerLens sets `init_weights=False` for pretrained configs. The saved data showed it
+  (the Othello "random-init" probe equalled the shuffled-label probe at every layer, and induction scores sat at the
+  uniform-attention value), but we read it as a finding. Properly initialised, the Othello control rises from 54% to
+  72%; the verdicts survive.
+- **A control must be able to fail.** Projecting out a random unit direction removes about 1/d of the variance;
+  shuffling orientations destroys the smoothness that any vision network has; a random plane without norm matching
+  moves the activation 1–2 orders of magnitude less than the real patch. Three new controls were added; two of them
+  fail and change the reading of a "pass": random InceptionV1 channels are nearly as orientation-harmonic as the curve
+  neurons (block-sparse featurizers), and an untrained encoder gives the same spline isometry as the trained world model.
+- **Dimension-match baselines.** The helix patch looked good against a 1-D linear patch, but a 9-D PCA patch does as
+  well, unlike in the paper.
+- **Check keyword metrics against the outputs.** "Golden Gate" steering counted any "bridge"; 0 of 24 steered
+  completions mentioned Golden Gate or San Francisco. The specific rate is now reported separately.
+- **Read the replication you cite, not its abstract.** Five "replicated by others" rows overstated the source (e.g.
+  the Goodfire greater-than post reports clear differences from the original mechanism, and zroe1's phase diagrams only
+  roughly match theory). Quotes found in a lab's blog post were attributed to its arXiv paper.
+- **Promise only the statistics you compute.** The README promised 95% bootstrap CIs everywhere; three entries had
+  them. Wilson intervals (`common.stats.wilson_ci`) are now added to rate-based rows as entries are rerun.

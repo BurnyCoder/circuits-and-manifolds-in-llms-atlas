@@ -15,7 +15,7 @@ Does a small transformer trained on the Mess3 hidden Markov process linearly rep
 ## Results vs published claims
 
 <!-- table:replication -->
-| Claim | Published | Ours | Pre-stated criterion | Verdict |
+| Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | Belief states are linearly decodable from the final residual stream | Mess3: linear regression recovers the belief fractal (MSE ≈ 4e-4, paper Fig. 3) | held-out R² 0.975 (MSE 3.99e-03) after 30000 steps vs 0.932 at initialization | R² ≥ 0.9 and ≥ 0.3 above the random-init control | ❌ fail |
 | The model approaches the optimal predictor | trained to near the process's entropy rate | final loss 0.8034 nats vs optimal 0.8032 and uniform 1.0986 | excess loss < 10% of the uniform-to-optimal gap | ✅ pass |

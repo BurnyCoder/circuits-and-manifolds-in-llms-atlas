@@ -42,6 +42,20 @@ PROMPTS = {
 # Qwen3 tokenizes numbers digit by digit ("21" -> "2", "1"; "42" and "49" both start with "4"), so multi-digit
 # intermediates are not single tokens: the arithmetic prompt stays in the slice grids but not in the rank metric.
 RANK_CASES = [k for k in PROMPTS if k != "arith"]
+# Confirmatory test (methods review M11: the rank row above rests on n = 3 and is post-hoc). 24 fresh two-hop prompts,
+# written before any lens readout on them; filtered only by tokenization (each intermediate is one Qwen3 token).
+# Criterion pre-stated in reports/planned-runs.md ("J-lens confirmatory test on fresh prompts"), commit 8d1376e.
+_STATE = "Fact: The capital of the state containing {} is"
+_LANDMARK = "Fact: The capital of the country where the {} is located is"
+_CAPITAL = "Fact: The language spoken in the country whose capital is {} is"
+CONFIRM = (
+    [(_STATE.format(c), " " + st) for c, st in [("Miami", "Florida"), ("Chicago", "Illinois"), ("Seattle", "Washington"), ("Detroit", "Michigan"),
+                                               ("Las Vegas", "Nevada"), ("Philadelphia", "Pennsylvania"), ("Cleveland", "Ohio"), ("New Orleans", "Louisiana")]]
+    + [(_LANDMARK.format(lm), " " + co) for lm, co in [("Colosseum", "Italy"), ("Kremlin", "Russia"), ("Acropolis", "Greece"), ("Taj Mahal", "India"),
+                                                      ("Great Wall", "China"), ("Sagrada Familia", "Spain"), ("pyramids of Giza", "Egypt"), ("CN Tower", "Canada")]]
+    + [(_CAPITAL.format(ca), " " + co) for ca, co in [("Berlin", "Germany"), ("Lisbon", "Portugal"), ("Tokyo", "Japan"), ("Moscow", "Russia"),
+                                                     ("Stockholm", "Sweden"), ("Warsaw", "Poland"), ("Oslo", "Norway"), ("Ankara", "Turkey")]]
+)
 N_DICT = 25  # J-space: sparse non-negative combination of up to ~25 J-lens vectors (Gurnee et al. 2026)
 SWAPS = [
     ("The capital of France is", " France", " China", " Paris", " Beijing"),
@@ -112,6 +126,28 @@ def compute(ctx) -> None:
         grids[key] = {"text": text, "tokens": toks, "layers": layers, "grid": grid, "intermediates": inter, "answer": ans}
         ranks[key] = rk
         log.info("J-lens %s: best ranks %s | logit lens %s", key, {w: min(v) for w, v in rk["jlens"].items()}, {w: min(v) for w, v in rk["logit"].items()})
+
+    # Confirmatory rank test: best rank over lens layers of the intermediate at the last position, per prompt.
+    from scipy.stats import binomtest
+
+    confirm = []
+    for text, inter_tok in CONFIRM:
+        assert len(tok(inter_tok, add_special_tokens=False).input_ids) == 1, inter_tok
+        ids = tok(text, return_tensors="pt", add_special_tokens=False).input_ids.to(ctx.device)
+        with torch.no_grad():
+            hs = model(ids, output_hidden_states=True).hidden_states
+        best = {}
+        for lens in ("jlens", "logit"):
+            rs = []
+            for L in layers:
+                lp = readout(hs[L][0, -1:], L, lens)[0]
+                rs.append(int((lp > lp[tid(inter_tok)]).sum()) + 1)
+            best[lens] = min(rs)
+        confirm.append({"prompt": text, "intermediate": inter_tok.strip(), "rank_j": best["jlens"], "rank_logit": best["logit"]})
+        log.info("J-lens confirm | %s -> %s | best rank J %d vs logit %d", text, inter_tok.strip(), best["jlens"], best["logit"])
+    wins_j = sum(c["rank_j"] < c["rank_logit"] for c in confirm)
+    wins_l = sum(c["rank_logit"] < c["rank_j"] for c in confirm)
+    sign_p = float(binomtest(wins_j, wins_j + wins_l, 0.5).pvalue) if wins_j + wins_l else 1.0  # two-sided sign test, ties dropped
 
     # Coordinate swaps at the country token in middle layers.
     def lens_dir(token: str, layer: int) -> torch.Tensor:
@@ -194,6 +230,14 @@ def compute(ctx) -> None:
         "nnls_layer": best_nnls["layer"],
         "nnls_top5": best_nnls["nnls_top5"],
         "nnls_random": best_nnls["nnls_random_top5"],
+        "confirm_n": len(confirm),
+        "confirm_wins_j": wins_j,
+        "confirm_wins_logit": wins_l,
+        "confirm_sign_p": sign_p,
+        "confirm_median_rank_j": float(np.median([c["rank_j"] for c in confirm])),
+        "confirm_median_rank_logit": float(np.median([c["rank_logit"] for c in confirm])),
+        "confirm_top10_j": int(sum(c["rank_j"] <= 10 for c in confirm)),
+        "confirm_top10_logit": int(sum(c["rank_logit"] <= 10 for c in confirm)),
     }
     repl = [
         verdict_row(
@@ -207,7 +251,7 @@ def compute(ctx) -> None:
         ),
         verdict_row(
             "Swapping J-lens coordinates swaps the concept",
-            "France ↔ China swaps change capital/language answers; 59% top-5 success for the J-space component (Claude)",
+            "France → China swaps change capital/language/continent answers together (76/192 top-1 across functions, Claude)",
             f"layer {best_swap['layer']}: target answer in top-5 for {best_swap['top5_success'] * 100:.0f}% of {best_swap['n']} prompts (random direction {best_swap['random_top5'] * 100:.0f}%)",
             "≥ 50% and ≥ 30 points above the random-direction swap",
             best_swap["top5_success"] >= 0.5 and best_swap["top5_success"] - best_swap["random_top5"] >= 0.3,
@@ -215,13 +259,23 @@ def compute(ctx) -> None:
         ),
         verdict_row(
             "Swapping J-space coefficients (paper-style sparse NNLS decomposition) swaps the concept",
-            "J-space component swap: 59% top-5 success vs 5% for the non-J component (Claude)",
+            "category (\"think of a {category}\") swap with the J-space component: 59% top-5 vs 5% for the non-J component (Claude)",
             f"layer {best_nnls['layer']}: target answer in top-5 for {best_nnls['nnls_top5'] * 100:.0f}% of {best_nnls['n']} prompts (random vector {best_nnls['nnls_random_top5'] * 100:.0f}%)",
             "≥ 50% and ≥ 30 points above the random-vector swap (amendment 2026-11-27, same thresholds)",
             best_nnls["nnls_top5"] >= 0.5 and best_nnls["nnls_top5"] - best_nnls["nnls_random_top5"] >= 0.3,
             partial=best_nnls["nnls_top5"] - best_nnls["nnls_random_top5"] >= 0.2,
         ),
+        verdict_row(
+            "Confirmatory: on 24 fresh two-hop prompts the J-lens ranks the unspoken intermediate better than the logit lens",
+            "J-lens beats the logit lens at surfacing unspoken intermediates (Claude)",
+            f"J-lens better on {wins_j}, logit lens better on {wins_l}, tied on {len(confirm) - wins_j - wins_l} of {len(confirm)} prompts "
+            f"(sign test p = {sign_p:.3g}); median best rank {summary['confirm_median_rank_j']:.0f} vs {summary['confirm_median_rank_logit']:.0f}; "
+            f"top-10 for {summary['confirm_top10_j']} vs {summary['confirm_top10_logit']}",
+            "J-lens better on more prompts than the reverse and two-sided sign test p < 0.05 (pre-stated 2026-11-28 before running)",
+            wins_j > wins_l and sign_p < 0.05,
+            partial=wins_j > wins_l,
+        ),
     ]
-    write_entry(SLUG, {"grids": grids, "ranks": ranks, "swap": swap, "n_layers": nl}, summary, repl, models=[MODEL, "neuronpedia/jacobian-lens"], runtime_s=time.time() - t0, ndigits=3)
+    write_entry(SLUG, {"grids": grids, "ranks": ranks, "swap": swap, "confirm": confirm, "n_layers": nl}, summary, repl, models=[MODEL, "neuronpedia/jacobian-lens"], runtime_s=time.time() - t0, ndigits=3)
     del model
     torch.cuda.empty_cache()

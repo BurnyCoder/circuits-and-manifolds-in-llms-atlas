@@ -50,26 +50,36 @@ def scoreboard_table(res: dict[str, dict], from_dir: Path = ROOT) -> str:
 
     Links are written relative to ``from_dir`` (the directory of the file the table goes into).
     """
-    lines = ["| Entry | Models | Claims | ✅ pass | 🟡 partial | ❌ fail | Runtime (s) | Generated (UTC) |",
-             "|---|---|---|---|---|---|---|---|"]
-    totals = {"pass": 0, "partial": 0, "fail": 0, "claims": 0}
+    lines = ["| Entry | Models | Pre-stated claims | ✅ pass | 🟡 partial | ❌ fail | Post-hoc rows (not counted) | Runtime (s) | Generated (UTC) |",
+             "|---|---|---|---|---|---|---|---|---|"]
+    totals = {"pass": 0, "partial": 0, "fail": 0, "claims": 0, "post_hoc": 0}
     for slug, r in res.items():
-        verdicts = [row.get("verdict", "n/a") for row in r["replication"]]
+        # Post-hoc rows (analysis chosen after seeing results for that claim) are listed but never counted.
+        pre = [row for row in r["replication"] if not row.get("post_hoc")]
+        n_post = len(r["replication"]) - len(pre)
+        verdicts = [row.get("verdict", "n/a") for row in pre]
         counts = {k: verdicts.count(k) for k in ("pass", "partial", "fail")}
         for k, v in counts.items():
             totals[k] += v
         totals["claims"] += len(verdicts)
+        totals["post_hoc"] += n_post
         meta = r["meta"]
         runtime = meta.get("runtime_s")
         link = Path(os.path.relpath(EXPERIMENTS / slug / "experiment.md", from_dir)).as_posix()
         lines.append(
             f"| [{slug}]({link}) | {_cell(', '.join(meta.get('models', [])))} | "
-            f"{len(verdicts)} | {counts['pass']} | {counts['partial']} | {counts['fail']} | "
+            f"{len(verdicts)} | {counts['pass']} | {counts['partial']} | {counts['fail']} | {n_post} | "
             f"{'' if runtime is None else round(runtime)} | {meta.get('generated', '')} |"
         )
     lines.append(f"| **Total ({len(res)} entries)** | | **{totals['claims']}** | **{totals['pass']}** | "
-                 f"**{totals['partial']}** | **{totals['fail']}** | | |")
+                 f"**{totals['partial']}** | **{totals['fail']}** | **{totals['post_hoc']}** | | |")
     return "\n".join(lines)
+
+
+def verdict_cell(row: dict) -> str:
+    """Verdict with icon; post-hoc rows are marked with their reason."""
+    v = VERDICT_ICON.get(row.get("verdict", "n/a"), row.get("verdict"))
+    return f"{v} (post-hoc: {_cell(row['post_hoc'])})" if row.get("post_hoc") else v
 
 
 def headline_table(res: dict[str, dict]) -> str:
@@ -78,7 +88,7 @@ def headline_table(res: dict[str, dict]) -> str:
     for slug, r in res.items():
         row = r["replication"][0]
         lines.append(f"| {slug} | " + " | ".join(_cell(row.get(k, "")) for k in ("claim", "published", "ours"))
-                     + f" | {VERDICT_ICON.get(row.get('verdict', 'n/a'), row.get('verdict'))} |")
+                     + f" | {verdict_cell(row)} |")
     return "\n".join(lines)
 
 
@@ -105,10 +115,10 @@ def catalogue_table() -> str:
 
 def replication_table(rows: list[dict]) -> str:
     """Published claim vs our measurement vs the pre-stated criterion (from reports/planned-runs.md) vs verdict."""
-    lines = ["| Claim | Published | Ours | Pre-stated criterion | Verdict |", "|---|---|---|---|---|"]
+    lines = ["| Claim | Published | Ours | Criterion | Verdict |", "|---|---|---|---|---|"]
     for row in rows:
         lines.append("| " + " | ".join(_cell(row.get(k, "")) for k in ("claim", "published", "ours", "criterion"))
-                     + f" | {VERDICT_ICON.get(row.get('verdict', 'n/a'), row.get('verdict'))} |")
+                     + f" | {verdict_cell(row)} |")
     return "\n".join(lines)
 
 

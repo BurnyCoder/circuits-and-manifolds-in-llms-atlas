@@ -1,5 +1,6 @@
 // J-lens: layer × position slice grid (top token per cell) for the Jacobian lens vs the logit lens; rank of the
-// unspoken intermediate token across layers; coordinate-swap results.
+// unspoken intermediate token across layers; coordinate-swap results; the confirmatory rank test on 24 fresh prompts
+// (added after the methods review, criterion pre-stated in reports/planned-runs.md).
 import { useState } from 'react'
 import type { VizProps } from '../registry'
 import Bars from '../primitives/Bars'
@@ -19,6 +20,7 @@ interface D {
   grids: Record<string, Grid>
   ranks: Record<string, { jlens: Record<string, number[]>; logit: Record<string, number[]> }>
   swap: { layer: number; top5_success: number; random_top5: number; baseline_correct: number; n: number }[]
+  confirm?: { prompt: string; intermediate: string; rank_j: number; rank_logit: number }[]
 }
 
 export default function JLens({ data }: VizProps) {
@@ -26,7 +28,7 @@ export default function JLens({ data }: VizProps) {
   const keys = Object.keys(d.grids)
   const [key, setKey] = useState(keys[0])
   const [lens, setLens] = useState<'jlens' | 'logit'>('jlens')
-  const [tab, setTab] = useState<'grid' | 'ranks' | 'swap'>('grid')
+  const [tab, setTab] = useState<'grid' | 'ranks' | 'swap' | 'confirm'>('grid')
   const g = d.grids[key]
   const pin = new Set([...g.intermediates, g.answer].map((s) => s.trim()))
   const rows = [...g.layers.keys()].reverse()
@@ -37,11 +39,12 @@ export default function JLens({ data }: VizProps) {
           ['grid', '1 · What each layer would say'],
           ['ranks', '2 · Unspoken intermediate steps'],
           ['swap', '3 · Swap a concept'],
+          ...(d.confirm ? ([['confirm', '4 · Confirmatory test (24 prompts)']] as [typeof tab, string][]) : []),
         ]}
         value={tab}
         onChange={setTab}
       />
-      <div className="viz-controls">
+      <div className="viz-controls" style={{ display: tab === 'confirm' ? 'none' : undefined }}>
         <select className="sel" value={key} onChange={(e) => setKey(e.target.value)}>
           {keys.map((k) => (
             <option key={k} value={k}>
@@ -125,6 +128,37 @@ export default function JLens({ data }: VizProps) {
             xLabel="target answer in top-5"
             domain={[0, 1]}
           />
+        </>
+      )}
+      {tab === 'confirm' && d.confirm && (
+        <>
+          <HowTo>
+            24 new two-hop prompts, written before the lens was run on them. For each, the best rank (over layers) of the unspoken
+            intermediate at the last position under each lens; the better lens is in bold. Pre-stated test: the J-lens wins more
+            prompts and a sign test over non-tied prompts gives p &lt; 0.05.
+          </HowTo>
+          <div className="table-wrap">
+            <table className="data" style={{ fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th>Prompt</th>
+                  <th>Intermediate</th>
+                  <th>J-lens rank</th>
+                  <th>logit-lens rank</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.confirm.map((c) => (
+                  <tr key={c.prompt}>
+                    <td>{c.prompt}</td>
+                    <td>{c.intermediate}</td>
+                    <td style={{ fontWeight: c.rank_j < c.rank_logit ? 700 : 400 }}>{c.rank_j}</td>
+                    <td style={{ fontWeight: c.rank_logit < c.rank_j ? 700 : 400 }}>{c.rank_logit}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </div>

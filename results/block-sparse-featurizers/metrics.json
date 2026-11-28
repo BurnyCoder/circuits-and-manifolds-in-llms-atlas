@@ -1,13 +1,13 @@
 {
  "meta": {
   "slug": "block-sparse-featurizers",
-  "generated": "2026-11-27 22:21 UTC",
-  "git_commit": "f54feef5b5a6885889da93eebd0bb81e50b44806",
+  "generated": "2026-11-28 00:08 UTC",
+  "git_commit": "49014a16dc6923938f9d7da4094c72d29a93f5bd",
   "models": [
    "BSF / TopK SAE (trained here)",
    "InceptionV1"
   ],
-  "runtime_s": 48.807856,
+  "runtime_s": 52.670676,
   "quick": false
  },
  "summary": {
@@ -16,6 +16,8 @@
   "n_concepts": 32,
   "curve_h1": 0.281271,
   "curve_h123": 0.628774,
-  "curve_null_p95": 0.02613
+  "curve_null_p95": 0.02613,
+  "curve_neurons_harm_share": 0.705829,
+  "random_channels_harm_share": 0.648308
  }
 }

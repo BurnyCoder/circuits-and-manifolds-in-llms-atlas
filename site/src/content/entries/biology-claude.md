@@ -31,7 +31,7 @@ replications:
     url: https://www.neuronpedia.org/graph/info
     model: Gemma-2-2B
     outcome: partial
-    note: Two-hop recall and multilingual circuits replicate; rhyme planning partial; addition shows lookup tables instead.
+    note: Two-hop recall (with a Dallas → Austin shortcut) and language-agnostic multilingual circuits replicate on Gemma-2-2B. Rhyme features are found but match the rhyme imperfectly, and planning was not tested. Addition graphs show lookup-table features and do not recover the helix (the authors suspect transcoders).
   - who: Jacopin — "Planning or Improvisation?"
     url: https://arxiv.org/abs/2609.18440
     model: four open models (0.6–2.6B)
@@ -50,7 +50,7 @@ Anthropic built a "microscope" for Claude 3.5 Haiku: replace its MLPs with inter
 prompt at a time, which features cause which until the answer comes out. They used it like biologists studying an
 organism and found surprisingly concrete behaviours — the model picks a rhyme word before writing the line, chains
 "Dallas → Texas → Austin" in its head, adds numbers with two parallel paths (a rough estimate and an exact last digit),
-refuses by default unless it recognises a name, and can be tricked by spelling a dangerous word letter by letter.
+refuses by default unless it recognises a name, and can be tricked into assembling a dangerous word from the first letters of harmless words.
 
 ## How it works (technical)
 
