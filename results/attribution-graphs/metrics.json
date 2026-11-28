@@ -1,12 +1,14 @@
 {
  "meta": {
   "slug": "attribution-graphs",
-  "generated": "2026-11-27 18:03 UTC",
-  "git_commit": "d15ed503d764d5bb80df9a846a940bb8230fbbab",
+  "generated": "2026-11-28 05:33 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "gemma-2-2b (Neuronpedia public graphs)"
   ],
-  "runtime_s": 88.006902
+  "runtime_s": 71.918021,
+  "quick": false
  },
  "summary": {
   "n_graphs": 9,
@@ -15,6 +17,13 @@
   "overlap_early": 0.057634,
   "overlap_middle": 0.170543,
   "overlap_late": 0.071895,
-  "error_share_median": 0.244004
+  "error_share_median": 0.244004,
+  "two_hop_specific": 0,
+  "wrong_paths_found": 0,
+  "wrong_paths_total": 9,
+  "label_null_p": "Dallas 0.122, Oakland 0.574, Shanghai 0.610",
+  "overlap_ctrl_early": 0.022031,
+  "overlap_ctrl_middle": 0.026738,
+  "overlap_ctrl_late": 0.003003
  }
 }

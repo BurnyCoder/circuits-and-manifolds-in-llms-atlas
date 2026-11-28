@@ -2,7 +2,7 @@
  {
   "claim": "Adding an SAE feature's direction steers generation toward its concept (a bridge feature; Golden Gate analogue)",
   "published": "clamping the Golden Gate Bridge feature makes Claude 3 Sonnet obsessed with the bridge (Templeton et al. 2024)",
-  "ours": "GPT-2 small layer 8, feature #17608: completions mentioning the bridge 0% \u2192 92% at \u03b1 = 40 (random direction 0%); 'Golden Gate' or 'San Francisco' named in 0%",
+  "ours": "GPT-2 small layer 8, feature #17608: completions mentioning the bridge 0% [0, 7] \u2192 77% [63, 87] at \u03b1 = 40 (random direction 0% [0, 7]); 'Golden Gate' or 'San Francisco' named in 0% [0, 7] (n = 48 per cell; Wilson 95% CIs)",
   "criterion": "\u2265 50% on-topic and \u2265 30 points above baseline and random",
   "verdict": "pass",
   "post_hoc": "feature-selection rule changed twice after smoke tests that showed steering outcomes"
@@ -10,7 +10,7 @@
  {
   "claim": "Feature steering generalizes across concepts",
   "published": "many features steer behaviour (feature steering section)",
-  "ours": "3/5 concepts gain \u2265 30 points of on-topic completions at \u03b1 = 40 (median lift 58 points)",
+  "ours": "3/5 concepts gain \u2265 30 points of on-topic completions at \u03b1 = 40 (median lift 77 points; steered on-topic rates: Golden Gate Bridge 77% [63, 87], Python code 6% [2, 17], French 0% [0, 7], DNA 83% [70, 91], Harry Potter 77% [63, 87])",
   "criterion": "\u2265 3 of 5 concepts",
   "verdict": "pass",
   "post_hoc": "feature-selection rule changed twice after smoke tests that showed steering outcomes"

@@ -12,5 +12,12 @@
   "ours": "corr(PC1, lightness) 0.98; circular corr(angle, hue) 0.99; corr(radius, chroma) 0.93",
   "criterion": "all three \u2265 0.8",
   "verdict": "pass"
+ },
+ {
+  "claim": "Confirmatory control: the HSL bicone is learned (random-init VAE)",
+  "published": "the bicone reflects the trained VAE's colour representation",
+  "ours": "min(r_light, r_hue, r_sat): trained 0.93 vs random-init VAE 0.08 (0.51 / 0.75 / 0.08); PCA of the RGB values themselves 0.40 (reported)",
+  "criterion": "trained \u2265 random-init + 0.2 (pre-stated 2026-11-28)",
+  "verdict": "pass"
  }
 ]

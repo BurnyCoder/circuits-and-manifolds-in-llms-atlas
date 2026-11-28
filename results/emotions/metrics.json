@@ -1,12 +1,13 @@
 {
  "meta": {
   "slug": "emotions",
-  "generated": "2026-11-27 23:22 UTC",
-  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "generated": "2026-11-28 06:45 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "Qwen/Qwen3-1.7B"
   ],
-  "runtime_s": 638.824835,
+  "runtime_s": 539.250989,
   "quick": false
  },
  "summary": {
@@ -23,6 +24,12 @@
   "pref_blissful": 0.545317,
   "pref_hostile": 0.543841,
   "pref_random": 0.529033,
-  "layer": 18
+  "layer": 18,
+  "r_valence_lo": 0.917923,
+  "r_valence_hi": 0.964248,
+  "dose_slope_tylenol": 6.515634,
+  "dose_slope_sugar": 4.57403,
+  "dose_p_tylenol": 0.0001,
+  "dose_p_diff": 0.10419
  }
 }

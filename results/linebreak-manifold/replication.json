@@ -26,5 +26,19 @@
   "ours": "AUC of P(newline) for true line breaks: Qwen3-1.7B 0.936, GPT-2 small 0.742",
   "criterion": "Qwen3-1.7B AUC \u2265 0.9",
   "verdict": "pass"
+ },
+ {
+  "claim": "Confirmatory: character count is linearly decodable (fresh documents)",
+  "published": "Haiku: probe R\u00b2 0.985 after layer 1; open models (T-Tech): Qwen3-8B 0.852 at L5",
+  "ours": "Qwen3-1.7B, 80 fresh test documents: R\u00b2 0.722 [0.681, 0.757] at validation-chosen layer 6 (shuffled -0.005); GPT-2 small 0.744 [0.704, 0.776] at layer 6",
+  "criterion": "CI rule at 0.7, and R\u00b2 \u2212 shuffled \u2265 0.5 for a pass (pre-stated 2026-11-28)",
+  "verdict": "partial"
+ },
+ {
+  "claim": "Confirmatory: the count is already represented in the first layers (fresh documents)",
+  "published": "Haiku: R\u00b2 0.985 already after layer 1 (T-Tech: early peak not replicated in open models)",
+  "ours": "Qwen3-1.7B: R\u00b2(layer 2) / R\u00b2(layer 6) = 0.872 [0.812, 0.922]",
+  "criterion": "CI rule at 0.9 (pre-stated 2026-11-28)",
+  "verdict": "partial"
  }
 ]

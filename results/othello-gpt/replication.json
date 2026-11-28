@@ -9,7 +9,7 @@
  {
   "claim": "The board is linearly decodable relative to the current player",
   "published": "linear mine/theirs probes \u2248 99.5% from layer 4; black/white \u2248 75% (Nanda et al.)",
-  "ours": "mine/theirs 98.9% (best layer 6); black/white 75.6%; random-init model 72.1%; shuffled labels 53.9%",
+  "ours": "mine/theirs 98.9% [98.8, 99.0] (best layer 6; occupied squares only 97.9% [97.7, 98.2]; 95% CIs over test games); black/white 75.6%; random-init model 72.2%; shuffled labels 53.9%",
   "criterion": "mine/theirs > 95% and \u2265 10 points above black/white, random-init and shuffled-label controls",
   "verdict": "pass"
  },

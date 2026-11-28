@@ -1,24 +1,26 @@
 {
  "meta": {
   "slug": "sae-features",
-  "generated": "2026-11-28 00:29 UTC",
-  "git_commit": "eed7a6bbeb9ace1e1d89e9cc7b027153fce461b4",
+  "generated": "2026-11-28 06:48 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "gpt2",
    "gpt2-small-res-jb SAE"
   ],
-  "runtime_s": 599.661031,
+  "runtime_s": 160.71066,
   "quick": false
  },
  "summary": {
+  "n_per_cell": 48,
   "gg_feature": 17608,
   "gg_base": 0.0,
-  "gg_steer": 0.916667,
+  "gg_steer": 0.770833,
   "gg_random": 0.0,
   "gg_specific": 0.0,
   "alpha": 40,
   "n_concepts": 5,
   "n_lift": 3,
-  "median_lift": 0.583333
+  "median_lift": 0.770833
  }
 }

@@ -20,5 +20,19 @@
   "criterion": "curve neurons \u2265 random channels + 10 points",
   "verdict": "fail",
   "post_hoc": "control added after the methods review"
+ },
+ {
+  "claim": "Confirmatory: blocks beat a TopK SAE on superposed (in-distribution) inputs",
+  "published": "per-block R\u00b2: BSF 0.93\u20130.97 vs TopK SAE \u2248 0.53 (toy, Fel et al. 2026)",
+  "ours": "median per-concept R\u00b2 on superposed inputs (L0 = 4), mean over 3 seeds: BSF 1.00 vs TopK SAE 0.45; BSF ahead in 3/3 seeds",
+  "criterion": "BSF \u2265 0.8 and \u2265 TopK + 0.2 with BSF ahead in all seeds; partial if BSF > TopK on average (pre-stated 2026-11-28)",
+  "verdict": "pass"
+ },
+ {
+  "claim": "Confirmatory control: the orientation ring is learned (random-init InceptionV1)",
+  "published": "the curve block reflects learned curve detectors",
+  "ours": "harmonics 1\u20133 of the top-16 PCs: trained 63% vs random-init network 73% (per-channel circular-shift null 63%, reported)",
+  "criterion": "trained \u2265 random-init + 10 points (pre-stated 2026-11-28)",
+  "verdict": "fail"
  }
 ]

@@ -1,12 +1,14 @@
 {
  "meta": {
   "slug": "ioi",
-  "generated": "2026-11-27 17:49 UTC",
-  "git_commit": "71f2afe9757578e6d47e45a747e12d66cb215392",
+  "generated": "2026-11-28 05:36 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
+  "src_dirty_at_start": false,
   "models": [
    "gpt2"
   ],
-  "runtime_s": 120.315288
+  "runtime_s": 106.21016,
+  "quick": false
  },
  "summary": {
   "n_prompts": 320,
@@ -17,6 +19,10 @@
   "io_win": 0.99375,
   "faithful_ld": 3.289322,
   "faithful_frac": 0.929927,
+  "faithful_pos_ld": 3.346889,
+  "faithful_pos_frac": 0.946202,
+  "faithful_pos_frac_lo": 0.89596,
+  "faithful_pos_frac_hi": 0.996697,
   "all_classes_ablated_ld": -1.270267,
   "rand_ablated_ld_median": 2.475566,
   "nm_attn_io": 0.598112,

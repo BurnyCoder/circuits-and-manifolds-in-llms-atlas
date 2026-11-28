@@ -1,13 +1,13 @@
 {
  "meta": {
   "slug": "refusal-direction",
-  "generated": "2026-11-28 00:45 UTC",
-  "git_commit": "212f9fd313dc7a0f4bfc0547ea19fa114c89725e",
+  "generated": "2026-11-28 05:54 UTC",
+  "git_commit": "c2cf7ef690dafa2037c97ad90d848be55cb4112b",
   "src_dirty_at_start": false,
   "models": [
    "Qwen/Qwen2.5-1.5B-Instruct"
   ],
-  "runtime_s": 147.185078,
+  "runtime_s": 139.596225,
   "quick": false
  },
  "summary": {
@@ -21,6 +21,10 @@
   "safe_rand": 0.0625,
   "harm_shuf": 0.9375,
   "safe_shuf": 0.015625,
-  "n_test": 64
+  "n_test": 64,
+  "nll_ablated": 1.367424,
+  "nll_safe_base": 0.512449,
+  "distinct3_ablated": 1.0,
+  "distinct3_safe_base": 1.0
  }
 }

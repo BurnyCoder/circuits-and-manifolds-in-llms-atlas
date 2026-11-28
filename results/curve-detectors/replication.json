@@ -2,7 +2,7 @@
  {
   "claim": "Curve neurons are tuned to one orientation",
   "published": "each curve detector responds to curves in a narrow orientation band (radial tuning curves)",
-  "ours": "median orientation selectivity 0.95 vs 0.10 for 20 random mixed3b neurons",
+  "ours": "median orientation selectivity 0.95 vs 0.10 for 20 random mixed3b neurons (difference 95% CI [0.75, 0.90]); 0.11 over the 18 responsive controls",
   "criterion": "curve median \u2265 control median + 0.2",
   "verdict": "pass"
  },

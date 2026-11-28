@@ -2,7 +2,7 @@
  {
   "claim": "Most neuron activations can be zeroed per token with little damage",
   "published": "keep 320/4,096 (92.2% ablated): loss 1.886 \u2192 1.940 (+2.9%), KL 0.140 (Qwen3.6-35B-A3B MoE); open Qwen3-1.7B replication: KL \u2248 0.80",
-  "ours": "keep 480/6,144 (92.2% ablated): loss 3.030 \u2192 4.112 (+35.7%), KL 1.609; random-480 \u2192 14.910",
+  "ours": "keep 480/6,144 (92.2% ablated): loss 3.030 \u2192 4.112 (+35.7% [+34.1, +37.2], 95% CI over 48 sequences), KL 1.609; random-480 \u2192 14.202",
   "criterion": "relative loss increase < 25% and KL < 1.0, and the random-480 control at least 3\u00d7 worse in loss increase",
   "verdict": "partial"
  },

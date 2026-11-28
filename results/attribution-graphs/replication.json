@@ -14,5 +14,19 @@
   "criterion": "middle-layer overlap higher than both early and late",
   "verdict": "pass",
   "post_hoc": "criteria written after the runs had been seen"
+ },
+ {
+  "claim": "Confirmatory: the two-hop path runs through the right intermediate",
+  "published": "Dallas \u2192 Texas \u2192 Austin (Claude 3.5 Haiku); the path should not appear for a wrong intermediate",
+  "ours": "path specific to the intermediate (label-permutation p < 0.05) in 0/3 graphs (p: Dallas 0.122, Oakland 0.574, Shanghai 0.610); paths through wrong intermediates found in 0/9 checks",
+  "criterion": "specific in all 3 graphs and wrong-intermediate paths in \u2264 1 of 9 (pre-stated 2026-11-28)",
+  "verdict": "fail"
+ },
+ {
+  "claim": "Confirmatory: middle-layer overlap is specific to the multilingual graphs",
+  "published": "language-independent features concentrate in the middle layers (Claude)",
+  "ours": "middle-band Jaccard: multilingual 0.17 vs unrelated-graph control 0.03 (multilingual early 0.06, late 0.07)",
+  "criterion": "middle > early and late, and \u2265 control middle + 0.05; partial if one holds (pre-stated 2026-11-28)",
+  "verdict": "pass"
  }
 ]

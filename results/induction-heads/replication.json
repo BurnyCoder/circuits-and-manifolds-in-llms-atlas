@@ -2,14 +2,14 @@
  {
   "claim": "A 2-layer attention-only model forms induction heads in layer 1",
   "published": "Induction heads need \u22652 layers (Elhage et al. 2021); score defined by Olsson et al. 2022",
-  "ours": "max layer-1 induction score 0.65 vs 0.031 at random init",
+  "ours": "max layer-1 induction score 0.65 vs 0.030 at random init",
   "criterion": "trained max score > 0.3 and > 10\u00d7 the random-init score",
   "verdict": "pass"
  },
  {
   "claim": "Induction heads causally implement in-context copying",
   "published": "Ablating induction heads removes in-context learning in small attn-only models (Olsson et al., Argument 3)",
-  "ours": "repeat loss 2.68 [2.55, 2.83] \u2192 12.45 [12.33, 12.56] nats when ablated (random-head control 2.64 [2.51, 2.79])",
+  "ours": "repeat loss 2.68 [2.55, 2.83] \u2192 12.45 [12.33, 12.56] nats when ablated (non-induction L1 head sets, mean over 7 sets: 2.77 [2.63, 2.92]; worst set 3.37)",
   "criterion": "ablation raises repeat loss by > 1 nat and > 3\u00d7 the random-head control's increase",
   "verdict": "pass"
  },
