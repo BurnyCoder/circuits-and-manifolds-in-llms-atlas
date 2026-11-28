@@ -7,7 +7,10 @@
    - Load the model with a cached loader (`atlas.common.models.hooked` for TransformerLens models).
    - Compute the metrics and **controls** (random heads/directions, shuffled labels, random-init models). Use
      `atlas.common.stats.bootstrap_ci` for 95% CIs.
-   - Build one `verdict_row(claim, published, ours, criterion, passed)` per pre-stated claim.
+   - Build one `verdict_row(claim, published, ours, criterion, passed)` per pre-stated claim. Report rates with
+     `common.stats.rate_str` (Wilson 95% CI) and averages with `bootstrap_ci`.
+   - If a row's analysis or criterion is chosen after its results were seen, add it to `POST_HOC` in
+     `src/atlas/common/post_hoc.py` with the reason; it is then shown but not counted.
    - Call `write_entry(slug, payload, summary, replication, models=[...], runtime_s=...)`. `summary` holds the scalars
      the page templates use; `payload` holds whatever the visualization needs (keep it small, ideally < 1 MB).
    - Respect `ctx.quick` (small samples) so the smoke test finishes in a minute or two.

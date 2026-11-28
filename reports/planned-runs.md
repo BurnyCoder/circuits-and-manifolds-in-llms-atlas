@@ -111,7 +111,7 @@ definitions (`docs/operationalizations.md`) independently, from its raw per-chec
 | grokking-runs | 11 wd = 1 seeds, 401 checkpoints each | Restricted loss falls before test loss | first checkpoint ≥ t1 where the restricted loss (all pairs) is ≤ 10% of its value at t1, vs the same for test loss | earlier in ≥ 10 of 11 seeds (companion rule: fewer than two failures) |
 | grokking-runs | same | Excluded loss rises during circuit formation | excluded loss (train pairs, key frequencies removed) at t2 ÷ at t1 | > 10× in ≥ 10 of 11 seeds |
 
-## Amendments (dated; each made after a smoke test and before the corresponding full run)
+## Amendments (dated; meant to be made after a smoke test and before the full run; exceptions in the next section)
 
 | Date | Entry | Amendment | Reason |
 |---|---|---|---|
@@ -128,6 +128,41 @@ definitions (`docs/operationalizations.md`) independently, from its raw per-chec
 | 2026-11-27 | sae-features | Each concept's feature is the top match of Neuronpedia's explanation search over this SAE's auto-interp labels (cached in `results/sae-features/neuronpedia_search.json`); activation on probe texts is only the fallback. Steering evaluation and criteria unchanged. | Activation-based selection picked wrong features. With one focus token, French " pain" (bread) gave an English "pain/killers" feature and " Hogwarts" a prison feature. With three probes, the bridge feature lost to a generic place-name feature. Auto-interp labels come from top-activating examples, independent of the steering test. All three variants are recorded in learnings.md. |
 | 2026-11-27 | sae-manifolds | Metrics re-implemented per the paper's App. E: in-distribution (superposed) evaluation rows, greedy decoder-direction restricted R², 10%/30-row support with per-atom magnitude floor; 48 instances (6 variants per type) as in the paper. Claim 1 is judged on restricted R² (the paper's capture score), same k ∈ {3, 4, 6}. Claim 2 is restated as small k → shattering, large k → dilution. | The first full run gave "capture 0% at every k", and claim 1 still printed "pass" because the argmax of all-zero fractions is the first k (a verdict bug). Our evaluation showed each manifold alone, where TopK always fires k atoms, and used 16 instances, so other manifolds' atoms crossed the 10% support threshold. The pre-stated claim 2 ("larger k shatters") had the paper's direction reversed (Fig. 4B: low k shatters, high k dilutes). |
 | 2026-11-27 | number-helix | The patching claim needs ≥ 20 correctly solved prompts in the largest model; otherwise the verdict is **n/a**, not pass/fail. The criterion itself is unchanged. | In the `--quick` smoke test Pythia-410m solved 1 of 59 few-shot `a+b=` prompts (CPU spot check: 23+45 → "53"), so a "pass" on n = 1 would be meaningless. Tokenization was checked: NeoX has single tokens for 0–99. |
+
+## Post-review disclosures and control fixes (2026-11-28)
+
+An adversarial methods review ([`reviews/methods-review.md`](reviews/methods-review.md)) matched run logs, `quick`
+flags and commit times. It found that the rule in the heading above was broken several times. Those rows are now
+**post-hoc**: they stay on the site and in every table, marked with the reason, and are excluded from the pre-stated
+tally. The list lives in one file, [`src/atlas/common/post_hoc.py`](../src/atlas/common/post_hoc.py), and is applied by
+`common.io.write_entry`.
+
+| Entry | What happened | Status |
+|---|---|---|
+| attribution-graphs | Three full runs (19:00, 19:01, 19:02 CET, 2026-11-27) moved the two-hop result from 0/3 to 1/3 to 3/3 while the analysis was edited; the criteria were committed 11 minutes after the passing run. The multilingual criterion was also written after the runs. No negative control. | both rows post-hoc |
+| sae-manifolds | Claim 1's metric (restricted R² peak) was adopted after a full run whose log already showed the peak at k = 6. Claim 2 was restated (direction corrected) after the same run. | both rows post-hoc |
+| manifold-steering | Layers 12/16/20 → 22/24/26 after two failing full runs; the second run started before the amendment was committed. The endpoint check that motivated it was not in the code (now it is, and its per-layer output is saved). | both rows post-hoc |
+| sae-features | The feature-selection rule changed twice after smoke tests that logged steering rates; only the final rule passes claim 2. | both rows post-hoc |
+| jlens | The arithmetic prompt left the rank metric after its ranks had been seen: first-digit ranks 1360/1088 (J-lens) vs 16/42 (logit lens), i.e. against the J-lens. With them included the row would still pass (medians 6 vs 14, top-10 3/5 vs 2/5, recomputed by the review). The paper-style swap was added after the pre-stated swap failed. | both rows post-hoc |
+| calculator-probes | The peak-score row was added after the pre-stated ranking failed. | row 2 post-hoc |
+| stories-in-space | RSA replaced the centroid analysis after the smoke test. | row 2 post-hoc |
+| calendar-circles | The day-arithmetic templates changed after the smoke test showed the causal test failing. | causal row post-hoc |
+| grokking-runs | Rows 1–3 never had a criterion here; the companion project's results were known. | rows 1–3 descriptive (post-hoc) |
+| several | Some amendments were committed minutes after the runs they enabled had started (`c57cb29` 21:15 vs a run at 21:12; `f54feef` 22:44 vs a run at 22:25). | disclosed |
+
+**Control fixes.** Committed in `49014a1` (01:05 CET, 2026-11-28) before the reruns that produced the current numbers.
+Fixes of existing controls keep their criteria; new control rows were written before they ran, but after the main
+results were known, so they are listed as post-hoc as well.
+
+| Entry | Fix | Criterion |
+|---|---|---|
+| induction-heads, othello-gpt | The "random-init" models were all-zero networks: TransformerLens pretrained configs carry `init_weights=False`. The config is now copied with `init_weights = True`. | unchanged |
+| calendar-circles | The random-plane control is norm-matched to the circle-plane displacement (it was 1–2 orders of magnitude smaller). | unchanged |
+| refusal-direction | New control: a difference-of-means direction from randomly relabelled training prompts, same layer and norm, ablated on harmful and added on harmless prompts. | both refusal-rate changes < 15 points |
+| world-model | New control: the same spline isometry on the untrained encoder's latents. | trained (r_arc − r_chord) exceeds untrained by ≥ 0.2 |
+| block-sparse-featurizers | New control: orientation-harmonic share of 10 random non-curve mixed3b channels vs the 10 curve neurons. | curve share − random share ≥ 10 points |
+| manifold-steering | Endpoint check in code for layers 12, 16, 20 (reported only) and 22, 24, 26. | reported, no verdict |
+| sae-features | Golden Gate specificity counted separately ("golden gate" or "san francisco" only); claim renamed to a bridge feature. | reported, no verdict |
 
 ## Later batches (criteria are added here before each batch runs)
 
