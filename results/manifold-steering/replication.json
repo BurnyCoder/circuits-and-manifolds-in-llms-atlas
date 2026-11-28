@@ -4,13 +4,15 @@
   "published": "weekdays, Llama-3.1-8B: E_BC 0.34 (manifold) vs 0.93 (linear)",
   "ours": "Qwen3-1.7B layer 22: E_BC 1.727 (manifold) vs 1.625 (linear) over 28 paths",
   "criterion": "manifold E_BC < 0.7 \u00d7 linear E_BC",
-  "verdict": "fail"
+  "verdict": "fail",
+  "post_hoc": "layers 22\u201326 chosen after failing full-mode runs at layers 12\u201320"
  },
  {
   "claim": "Manifold paths pass through the intermediate days",
   "published": "manifold steering moves Mon \u2192 Tue \u2192 Wed; linear steering cuts across",
   "ours": "fraction of path points predicting an intermediate day: 41% (manifold) vs 1% (linear)",
   "criterion": "manifold \u2265 linear + 15 points",
-  "verdict": "pass"
+  "verdict": "pass",
+  "post_hoc": "layers 22\u201326 chosen after failing full-mode runs at layers 12\u201320"
  }
 ]

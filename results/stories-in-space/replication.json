@@ -11,6 +11,7 @@
   "published": "distance-matrix correlation r = .92 (emotions)",
   "ours": "RSA Spearman r = 0.11 over 600 prefixes (story-shuffle null 95th percentile 0.06)",
   "criterion": "r \u2265 0.6 (amendment 2026-11-27: computed over prefixes, not 3\u20136 emotion centroids)",
-  "verdict": "fail"
+  "verdict": "fail",
+  "post_hoc": "RSA replaced the centroid analysis after the smoke test"
  }
 ]

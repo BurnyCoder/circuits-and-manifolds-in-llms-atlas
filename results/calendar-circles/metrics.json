@@ -1,13 +1,14 @@
 {
  "meta": {
   "slug": "calendar-circles",
-  "generated": "2026-11-27 21:11 UTC",
-  "git_commit": "0f536c80ebb23c3b6d9ad6e7870629520eff5759",
+  "generated": "2026-11-28 00:36 UTC",
+  "git_commit": "91921369b3d5f5bc288a27638a6a122d39688cee",
+  "src_dirty_at_start": false,
   "models": [
    "gpt2",
    "Qwen/Qwen3-1.7B"
   ],
-  "runtime_s": 797.644223,
+  "runtime_s": 390.719267,
   "quick": false
  },
  "summary": {

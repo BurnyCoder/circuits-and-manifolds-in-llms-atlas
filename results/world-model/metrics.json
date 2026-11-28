@@ -1,25 +1,27 @@
 {
  "meta": {
   "slug": "world-model",
-  "generated": "2026-11-27 22:54 UTC",
-  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "generated": "2026-11-28 00:15 UTC",
+  "git_commit": "7409294329b83f8ff118d008dd45bfe36ed9494f",
   "models": [
    "mountain-car world model (trained here)"
   ],
-  "runtime_s": 234.265308,
+  "runtime_s": 232.310067,
   "quick": false
  },
  "summary": {
-  "r2_position": 0.998551,
-  "r2_velocity": 0.061323,
+  "r2_position": 0.999259,
+  "r2_velocity": 0.061259,
   "r2_position_untrained": 0.968773,
-  "r2_velocity_gru": 0.874276,
+  "r2_velocity_gru": 0.830147,
   "r2_velocity_gru_untrained": 0.544898,
-  "r_arc": 0.994983,
-  "r_chord": 0.247711,
-  "void_manifold": 0.775999,
-  "void_linear": 1.327291,
+  "r_arc": 0.996517,
+  "r_chord": 0.369301,
+  "r_arc_untrained": 0.997961,
+  "r_chord_untrained": 0.418801,
+  "void_manifold": 0.825371,
+  "void_linear": 1.571868,
   "n_frames": 18151,
-  "var3": 0.62875
+  "var3": 0.56561
  }
 }

@@ -1,21 +1,23 @@
 {
  "meta": {
   "slug": "induction-heads",
-  "generated": "2026-11-27 17:47 UTC",
-  "git_commit": "71f2afe9757578e6d47e45a747e12d66cb215392",
+  "generated": "2026-11-28 00:42 UTC",
+  "git_commit": "91921369b3d5f5bc288a27638a6a122d39688cee",
+  "src_dirty_at_start": false,
   "models": [
    "attn-only-2l",
    "gpt2",
    "EleutherAI/pythia-160m"
   ],
-  "runtime_s": 1095.507485
+  "runtime_s": 366.020171,
+  "quick": false
  },
  "summary": {
   "a2_prev_head": "0.3",
   "a2_prev_score": 0.519901,
   "a2_ind_heads": "1.6",
   "a2_ind_max": 0.649771,
-  "a2_rand_ind_max": 0.033075,
+  "a2_rand_ind_max": 0.031402,
   "a2_loss_first": 14.503569,
   "a2_loss_second": 2.67987,
   "a2_loss_abl_ind": 12.449474,

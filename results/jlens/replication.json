@@ -4,20 +4,29 @@
   "published": "J-lens beats logit / tuned lens; intermediates (21, 42) become readable in middle layers (Claude)",
   "ours": "best rank of the intermediate token at the last position: median 4 (J-lens) vs 9 (logit lens); top-10 for 3/3 vs 2/3",
   "criterion": "J-lens median rank lower than the logit lens's and \u2265 half of intermediates reach the top 10",
-  "verdict": "pass"
+  "verdict": "pass",
+  "post_hoc": "arithmetic case removed from the metric after its ranks had been seen"
  },
  {
   "claim": "Swapping J-lens coordinates swaps the concept",
-  "published": "France \u2194 China swaps change capital/language answers; 59% top-5 success for the J-space component (Claude)",
+  "published": "France \u2192 China swaps change capital/language/continent answers together (76/192 top-1 across functions, Claude)",
   "ours": "layer 11: target answer in top-5 for 12% of 8 prompts (random direction 0%)",
   "criterion": "\u2265 50% and \u2265 30 points above the random-direction swap",
   "verdict": "fail"
  },
  {
   "claim": "Swapping J-space coefficients (paper-style sparse NNLS decomposition) swaps the concept",
-  "published": "J-space component swap: 59% top-5 success vs 5% for the non-J component (Claude)",
+  "published": "category (\"think of a {category}\") swap with the J-space component: 59% top-5 vs 5% for the non-J component (Claude)",
   "ours": "layer 9: target answer in top-5 for 12% of 8 prompts (random vector 0%)",
   "criterion": "\u2265 50% and \u2265 30 points above the random-vector swap (amendment 2026-11-27, same thresholds)",
-  "verdict": "fail"
+  "verdict": "fail",
+  "post_hoc": "paper-style swap added after the pre-stated swap failed"
+ },
+ {
+  "claim": "Confirmatory: on 24 fresh two-hop prompts the J-lens ranks the unspoken intermediate better than the logit lens",
+  "published": "J-lens beats the logit lens at surfacing unspoken intermediates (Claude)",
+  "ours": "J-lens better on 16, logit lens better on 6, tied on 2 of 24 prompts (sign test p = 0.0525); median best rank 5 vs 8; top-10 for 15 vs 14",
+  "criterion": "J-lens better on more prompts than the reverse and two-sided sign test p < 0.05 (pre-stated 2026-11-28 before running)",
+  "verdict": "partial"
  }
 ]

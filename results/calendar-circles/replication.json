@@ -16,8 +16,9 @@
  {
   "claim": "The circle is causally used for day arithmetic (Qwen3-1.7B)",
   "published": "circular-probe patching shifts the answer in Mistral 7B / Llama 3 8B (\u00a75)",
-  "ours": "accuracy 68% on 63 prompts; best layer 5: patch success 30% vs 0% for a random 2-D plane (n = 43)",
+  "ours": "accuracy 68% on 63 prompts; best layer 5: patch success 30% [19, 45] vs 0% [0, 8] for a norm-matched random 2-D plane (n = 43; Wilson 95% CIs)",
   "criterion": "some layer reaches \u2265 50% success with its random-plane control \u2264 20%",
-  "verdict": "partial"
+  "verdict": "partial",
+  "post_hoc": "day-arithmetic templates changed after the smoke test showed this test failing"
  }
 ]

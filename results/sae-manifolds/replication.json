@@ -4,13 +4,15 @@
   "published": "restricted R\u00b2 (k_i atoms reconstruct each manifold from superposed codes) peaks near k = 4 (Bhalla et al. 2026, Fig. 4A)",
   "ours": "mean restricted R\u00b2 peaks at k = 6 (0.53; 0.42 at k = 3, 0.48 at k = 25); regime label 'capture' for up to 100% of 48 manifolds",
   "criterion": "restricted-R\u00b2 peak at k \u2208 {3, 4, 6} (amendment 2026-11-27: the paper's capture score; was 'capture fraction')",
-  "verdict": "pass"
+  "verdict": "pass",
+  "post_hoc": "metric switched to restricted R\u00b2 after a full run whose log showed its peak"
  },
  {
   "claim": "Sparsity moves the SAE from shattering (small k) to dilution (large k)",
   "published": "low k: shattered across atoms; intermediate k: capture; high k: redundant atoms lose specificity (dilution) (Fig. 4B)",
   "ours": "shattering 0% at k = 3 \u2192 0% at k = 25; dilution 0% \u2192 100%",
   "criterion": "dilution at the largest k \u2265 30 points above the smallest k and shattering higher at the smallest k (amendment: the pre-stated claim had the direction reversed relative to the paper)",
-  "verdict": "fail"
+  "verdict": "fail",
+  "post_hoc": "claim restated (direction corrected) after a full run"
  }
 ]

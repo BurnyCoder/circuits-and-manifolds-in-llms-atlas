@@ -9,8 +9,16 @@
  {
   "claim": "Distances along the manifold match distances in the world; straight lines don't",
   "published": "arc-length r = 0.996 (manifold) vs 0.06 (chord)",
-  "ours": "r = 0.995 along the spline vs 0.248 for straight chords (50 anchors, 1,225 pairs)",
+  "ours": "r = 0.997 along the spline vs 0.369 for straight chords (50 anchors, 1,225 pairs)",
   "criterion": "manifold r \u2265 0.9 and > chord r",
   "verdict": "pass"
+ },
+ {
+  "claim": "Control: the isometry is specific to the trained model",
+  "published": "the manifold reflects learned world structure",
+  "ours": "untrained encoder: arc r = 0.998, chord r = 0.419 (trained: 0.997 / 0.369)",
+  "criterion": "trained arc-minus-chord gap \u2265 0.2 larger than the untrained encoder's",
+  "verdict": "fail",
+  "post_hoc": "control added after the methods review"
  }
 ]

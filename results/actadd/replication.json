@@ -2,14 +2,14 @@
  {
   "claim": "Adding a 'weddings' vector steers the topic",
   "published": "> 90% of completions about weddings vs ~2% unsteered (Turner et al.)",
-  "ours": "wedding words in 0% of completions unsteered \u2192 75% at c = 4 (random vector 0%); best 92%",
+  "ours": "wedding words in 0% [0, 14] of completions unsteered \u2192 75% [55, 88] at c = 4 (random vector 0% [0, 14]); best 92% (n = 24 per cell; Wilson 95% CIs)",
   "criterion": "c = 4 rate \u2265 50% and \u2265 30 points above both the unsteered and random-vector rates",
   "verdict": "pass"
  },
  {
   "claim": "A 'Love \u2212 Hate' vector makes text more positive",
   "published": "Love \u2212 Hate at layer 6 turns 'I hate you because' positive (Turner et al.)",
-  "ours": "positive sentiment 54% \u2192 42% at c = 4 (random vector 42%)",
+  "ours": "positive sentiment 54% [35, 72] \u2192 42% [24, 61] at c = 4 (random vector 42% [24, 61]; n = 24 per cell; Wilson 95% CIs)",
   "criterion": "\u2265 20 points above both baseline and random vector",
   "verdict": "fail"
  }

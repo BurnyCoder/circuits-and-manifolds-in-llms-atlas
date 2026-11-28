@@ -1,13 +1,13 @@
 {
  "meta": {
   "slug": "sae-features",
-  "generated": "2026-11-27 23:11 UTC",
-  "git_commit": "33cb57e0988eaee0ae767798d56efaa88abd9f7b",
+  "generated": "2026-11-28 00:29 UTC",
+  "git_commit": "eed7a6bbeb9ace1e1d89e9cc7b027153fce461b4",
   "models": [
    "gpt2",
    "gpt2-small-res-jb SAE"
   ],
-  "runtime_s": 582.016984,
+  "runtime_s": 599.661031,
   "quick": false
  },
  "summary": {
@@ -15,6 +15,7 @@
   "gg_base": 0.0,
   "gg_steer": 0.916667,
   "gg_random": 0.0,
+  "gg_specific": 0.0,
   "alpha": 40,
   "n_concepts": 5,
   "n_lift": 3,

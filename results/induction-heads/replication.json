@@ -2,7 +2,7 @@
  {
   "claim": "A 2-layer attention-only model forms induction heads in layer 1",
   "published": "Induction heads need \u22652 layers (Elhage et al. 2021); score defined by Olsson et al. 2022",
-  "ours": "max layer-1 induction score 0.65 vs 0.033 at random init",
+  "ours": "max layer-1 induction score 0.65 vs 0.031 at random init",
   "criterion": "trained max score > 0.3 and > 10\u00d7 the random-init score",
   "verdict": "pass"
  },
