@@ -1,6 +1,6 @@
 # Progress
 
-Updated 2026-11-28 01:20 (local time, WET). Plan: [plan.md](plan.md) · pre-stated criteria and dated amendments:
+Updated 2026-11-28 09:15 (local time, WET). Plan: [plan.md](plan.md) · pre-stated criteria and dated amendments:
 [planned-runs.md](planned-runs.md) · results: [experiments/experiments.md](experiments/experiments.md) · live site:
 https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/
 
@@ -18,11 +18,21 @@ https://burnycoder.github.io/circuits-and-manifolds-in-llms-atlas/
 | Hugging Face collection (grokking ×3, Mess3, world model) | ✅ |
 | RunPod paper-scale tier (≤ $20) | ⏳ launcher and spend guard ready; needs `RUNPOD_API_KEY` in `.env` |
 | Fact-check, adversarial methods review in `reports/reviews/` | ✅ done; controls fixed (random-init, norm-matched, label-shuffled, untrained encoder, random channels) and 8 entries rerun |
-| Review follow-ups (CIs everywhere, larger n, new pre-stated tests for post-hoc rows) | ⏳ 2026-11-28 05:40 WET: 18 new tests and 9 control fixes pre-registered (`3090314`) and implemented (`b4059db`); smoke tests running, then full runs of 21 entries (~3 h GPU) |
+| Review follow-ups (CIs everywhere, larger n, new pre-stated tests for post-hoc rows) | ✅ 2026-11-28: 18 confirmatory tests and 9 control fixes pre-registered (`3090314`), implemented (`b4059db`), smoke-tested and run in full (21 entries, clean `src/`); CIs in all entries except those listed in M8; status per item in [reviews/response-to-review.md](reviews/response-to-review.md) |
 | Stretch entries | ⏳ |
 
-Roughly 85% of the plan is done. Remaining: the review follow-ups (CIs, larger samples, new pre-stated tests), the
-optional RunPod tier, and the stretch entries.
+Roughly 90% of the plan is done. Remaining: a few review items (CIs for belief-fractal and colour-bicone, attribution
+interventions, a 64-D PCA steering subspace), the optional RunPod tier (needs `RUNPOD_API_KEY`), and the stretch entries.
+
+**Confirmatory tests (2026-11-28, pre-registered before running):** counts are generated in the README scoreboard.
+Passes: multilingual overlap above unrelated graphs, an SAE
+sparsity optimum over held-out seeds, block-sparse featurizers on superposed inputs, fluent refusal-ablated text, IOI
+faithfulness with (head, position) nodes, no colour bicone in a random-init VAE. Fails: the two-hop attribution path is
+not specific to the intermediate; a piecewise-linear path through the same weekday centroids beats the manifold spline;
+an untrained InceptionV1 is more orientation-harmonic than the trained one; no SAE shattering at small k; weak
+behaviour–activation geometry on fresh stories. Partial or inconclusive: calculator (parity and mod-10 only), helix (beats
+random 9-D but not PCA-9), emotions (the danger signal also rises for sugar), copy suppression (variants of the copied
+word are suppressed too), linebreak ×2 and stories decodability (CIs straddle the bar).
 
 **Negative results from the review reruns:** two new controls fail and weaken earlier passes. Random InceptionV1
 channels are nearly as orientation-harmonic as the curve neurons (block-sparse featurizers), and an untrained encoder

@@ -18,8 +18,8 @@ MountainCar-v0, 100 rollouts with mixed policies; conv encoder → 64-D LayerNor
 | Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
 | The world model's latents encode the car's state | linear probes: position R² ≈ 0.95, velocity ≈ 0.90 (Wurgaft et al. App. B) | position R² 1.00, velocity 0.06 (untrained encoder: position 0.97) | position R² ≥ 0.8 and ≥ 0.2 above the untrained encoder | ❌ fail |
-| Distances along the manifold match distances in the world; straight lines don't | arc-length r = 0.996 (manifold) vs 0.06 (chord) | r = 0.997 along the spline vs 0.369 for straight chords (50 anchors, 1,225 pairs) | manifold r ≥ 0.9 and > chord r | ✅ pass |
-| Control: the isometry is specific to the trained model | the manifold reflects learned world structure | untrained encoder: arc r = 0.998, chord r = 0.419 (trained: 0.997 / 0.369) | trained arc-minus-chord gap ≥ 0.2 larger than the untrained encoder's | ❌ fail (post-hoc: control added after the methods review) |
+| Distances along the manifold match distances in the world; straight lines don't | arc-length r = 0.996 (manifold) vs 0.06 (chord) | r = 0.994 [0.992, 0.995] along the spline vs 0.472 for straight chords (50 anchors, 1,225 pairs; 95% CI over rollouts) | manifold r ≥ 0.9 and > chord r | ✅ pass |
+| Control: the isometry is specific to the trained model | the manifold reflects learned world structure | untrained encoder: arc r = 0.998, chord r = 0.419 (trained: 0.994 / 0.472); contrast -0.058 [-0.075, -0.014] (95% CI over rollouts) | trained arc-minus-chord gap ≥ 0.2 larger than the untrained encoder's | ❌ fail (post-hoc: control added after the methods review) |
 <!-- /table:replication -->
 
 ## Interpretation
@@ -45,17 +45,22 @@ that is the only training effect seen here. Details: [methods review](../../revi
 <!-- table:summary -->
 | Key | Value |
 |---|---|
-| `r2_position` | 0.999259 |
-| `r2_velocity` | 0.061259 |
+| `r2_position` | 0.997593 |
+| `r2_velocity` | 0.061089 |
 | `r2_position_untrained` | 0.968773 |
-| `r2_velocity_gru` | 0.830147 |
+| `r2_velocity_gru` | 0.832189 |
 | `r2_velocity_gru_untrained` | 0.544898 |
-| `r_arc` | 0.996517 |
-| `r_chord` | 0.369301 |
+| `r_arc` | 0.993607 |
+| `r_chord` | 0.472164 |
 | `r_arc_untrained` | 0.997961 |
 | `r_chord_untrained` | 0.418801 |
-| `void_manifold` | 0.825371 |
-| `void_linear` | 1.571868 |
+| `r_arc_lo` | 0.992039 |
+| `r_arc_hi` | 0.995252 |
+| `contrast` | -0.057717 |
+| `contrast_lo` | -0.074514 |
+| `contrast_hi` | -0.014063 |
+| `void_manifold` | 1.187655 |
+| `void_linear` | 1.811917 |
 | `n_frames` | 18151 |
-| `var3` | 0.56561 |
+| `var3` | 0.471187 |
 <!-- /table:summary -->

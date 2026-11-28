@@ -17,10 +17,11 @@ Qwen3-1.7B wrote short stories for 71 emotions × topics (emotion word excluded)
 <!-- table:replication -->
 | Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
-| The main axis of emotion space is valence | PC1 26% of variance; r = 0.81 with human valence (Claude Sonnet 4.5) | PC1 48% of variance; \|r\| = 0.94 with human valence (shuffled-label 95th pct 0.12); 71 emotions, 1651 stories | \|r\| ≥ 0.6 and above the shuffled-label 95th percentile | ✅ pass |
+| The main axis of emotion space is valence | PC1 26% of variance; r = 0.81 with human valence (Claude Sonnet 4.5) | PC1 48% of variance; \|r\| = 0.94 [0.92, 0.96] with human valence (shuffled-label 95th pct 0.12); 71 emotions, 1651 stories | \|r\| ≥ 0.6 and above the shuffled-label 95th percentile | ✅ pass |
 | The second axis is arousal | PC2 15%; r = 0.66 with human arousal | PC2 9% of variance; \|r\| = 0.06 with human arousal | \|r\| ≥ 0.4 | ❌ fail |
 | Emotion vectors track danger in the user's situation | 'afraid' rises and 'calm' falls with the Tylenol dose (Fig. 3) | slope per decade of dose: afraid +4.74, calm -7.28 | afraid slope > 0 and calm slope < 0 | ✅ pass |
-| Steering with emotion vectors shifts preferences | blissful steering on an option raises its Elo (+212), hostile lowers it (−303) | P(choose A): baseline 0.54, +blissful on A 0.55, +hostile on A 0.54, random vector 0.53 | blissful > baseline > hostile, each by ≥ 0.05, with \|random − baseline\| < 0.05 | ❌ fail |
+| Steering with emotion vectors shifts preferences | blissful steering on an option raises its Elo (+212), hostile lowers it (−303) | P(choose A): baseline 0.54, +blissful on A 0.55, +hostile on A 0.54, random vector 0.53 (shifts from baseline, 95% CI over 120 pairs: blissful [-0.002, +0.010], hostile [-0.003, +0.008], random [-0.018, -0.006]) | blissful > baseline > hostile, each by ≥ 0.05, with \|random − baseline\| < 0.05 | ❌ fail |
+| Confirmatory: emotion vectors track danger, not the size of the number | 'afraid' rises and 'calm' falls with the Tylenol dose (Fig. 3) | slope of the afraid − calm projection per decade of dose, mean over 8 templates: Tylenol +6.52 (permutation p 0.0001), sugar +4.57; Tylenol − sugar p 0.1042 | Tylenol slope > 0 with p < 0.05 and Tylenol − sugar > 0 with p < 0.05; partial if only the first (pre-stated 2026-11-28) | 🟡 partial |
 <!-- /table:replication -->
 
 ## Interpretation
@@ -33,11 +34,22 @@ correspond to arousal, and steering an option with blissful or hostile vectors d
 picks. One hypothesis (not tested) is that a 1.7B model's emotion space is dominated by valence; PC2 still holds
 noticeable variance. Details: [methods review](../../reviews/methods-review.md), M12.
 
+**Confirmatory dose test (pre-stated 2026-11-28): partial.** Eight phrasings × seven doses, with "{d} mg of sugar" as a
+benign control using the same numbers, scored by the slope of the afraid − calm projection over log dose (which removes
+the anti-correlation problem above). The Tylenol slope is positive and far outside a dose-order permutation null
+(`dose_slope_tylenol`, `dose_p_tylenol`), but the sugar slope is almost as large (`dose_slope_sugar`), and the
+difference does not reach significance (`dose_p_diff`). The original single-prompt pass therefore mostly reflects a
+response to large numbers in a worried question, with at most a modest extra effect of danger. The preference-test
+shifts now carry paired bootstrap CIs over the 120 activity pairs; the blissful and hostile CIs include zero, while
+the random vector's small negative shift does not, so steering with an emotion vector at this strength moves the choice
+less than a random vector of the same norm.
+
 ## Limitations
 
 - Self-generated, stereotyped stories; one model; one layer.
 - The preference test is a forced A/B choice, not the paper's Elo tournament.
-- To do: dose sweep with a matched benign control ("{d} ml of water"), paraphrases per dose and a permutation test.
+- The benign control is sugar rather than the review's suggested water, because 8–16 litres of water is itself dangerous
+  (water intoxication); sugar stays harmless over the whole dose range.
 
 ## All summary values
 
@@ -58,4 +70,10 @@ noticeable variance. Details: [methods review](../../reviews/methods-review.md),
 | `pref_hostile` | 0.543841 |
 | `pref_random` | 0.529033 |
 | `layer` | 18 |
+| `r_valence_lo` | 0.917923 |
+| `r_valence_hi` | 0.964248 |
+| `dose_slope_tylenol` | 6.515634 |
+| `dose_slope_sugar` | 4.57403 |
+| `dose_p_tylenol` | 0.0001 |
+| `dose_p_diff` | 0.10419 |
 <!-- /table:summary -->

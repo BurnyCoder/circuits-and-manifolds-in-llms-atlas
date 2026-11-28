@@ -128,3 +128,40 @@ The full audit is in [`../reviews/methods-review.md`](../reviews/methods-review.
   roughly match theory). Quotes found in a lab's blog post were attributed to its arXiv paper.
 - **Promise only the statistics you compute.** The README promised 95% bootstrap CIs everywhere; three entries had
   them. Wilson intervals (`common.stats.wilson_ci`) are now added to rate-based rows as entries are rerun.
+
+## 2026-11-28 — review follow-ups: confirmatory tests, controls and CIs
+
+18 new tests and 9 control fixes were written into [`../planned-runs.md`](../planned-runs.md) and pushed (commit
+`3090314`) before any of their numbers existed; code in `b4059db`; smoke tests of all 21 entries, then full runs from a
+clean `src/`. Numbers are in the regenerated tables; what we learned:
+
+- **Re-testing a weak pass with a real control is the most informative thing we did.** Five new controls changed how
+  an earlier pass reads: the two-hop attribution path is not specific to the intermediate (label-permutation null); a
+  piecewise-linear path through the same day centroids does as well as the "manifold" spline (manifold steering); an
+  untrained InceptionV1 is *more* orientation-harmonic than the trained one; the "danger" emotion signal rises almost
+  as much for sugar as for Tylenol; the copied token is not singled out against a strict control token. Two controls
+  confirmed a pass that had looked fragile: the multilingual overlap beats unrelated graphs, and the bicone is absent
+  in a random-init VAE.
+- **Seeds can rescue a claim as well as sink it.** The SAE-manifold "sweet spot" looked like single-seed noise; with six
+  seeds, k* chosen on three and tested on the other three, the interior optimum at k = 6 is small but its CI excludes
+  zero. Without the seed sweep we would have reported it as noise.
+- **Leakage hides in splits by row.** In the calculator probes, splitting by unordered pair {a, b} instead of by row
+  cut R²(T = 10) by more than half at the same layer, because duplicate and commuted prompts sat on both sides.
+- **A CI rule turns "pass by 0.02" into what it is.** Both linebreak rows and the stories decodability row are now
+  "inconclusive": the 95% CI straddles the bar. The original argmax-of-test-R² rows passed or failed by hundredths.
+- **Fresh data for confirmatory tests.** Where the earlier analysis had seen the data (linebreak documents, stories),
+  the re-tests use documents and stories the main run never touched, so a re-test cannot inherit the earlier peek.
+- **Hypotheses from the review can be wrong too.** The review suspected IOI faithfulness was inflated by keeping heads
+  at every position; with the paper's (head, position) nodes faithfulness is slightly *higher*. The test settled it.
+- **A null can be predicted to be uninformative, and that is a result.** The per-channel circular-shift null was
+  expected to reproduce the observed harmonic share (shifts change only phase), and it did: the share measures how
+  smooth each channel is, so the InceptionV1 analysis cannot detect a learned curve block.
+- **Make permutation nulls cheap by caching what does not depend on labels.** The Fourier-probe ridge solves depend only
+  on the activations, so 200 label permutations cost matrix products instead of 200 × 149 × 7 solves (`ProbeBank`).
+- **Batch sampling instead of a loop.** Generating 16 samples of one prompt as one batch made 48 completions per steering
+  cell (was 12) cheaper than the old loop.
+- **Safety in logs needs a rule per condition, not per experiment.** Only the refusal-ablated condition withheld text;
+  a control condition that happened to comply was logged in full (locally; logs are gitignored). The logger now
+  withholds every non-refusing completion of a harmful prompt, and run-output `.txt` files in `logs/` are gitignored too.
+- **Benign controls must stay benign over the whole range.** The review suggested water for the dose sweep, but 8–16
+  litres of water is dangerous; sugar was used instead (stated in the pre-registration).

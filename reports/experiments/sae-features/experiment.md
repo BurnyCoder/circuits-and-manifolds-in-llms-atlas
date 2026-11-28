@@ -17,8 +17,8 @@ GPT-2 small, `gpt2-small-res-jb` layer 8. Features chosen by Neuronpedia's expla
 <!-- table:replication -->
 | Claim | Published | Ours | Criterion | Verdict |
 |---|---|---|---|---|
-| Adding an SAE feature's direction steers generation toward its concept (a bridge feature; Golden Gate analogue) | clamping the Golden Gate Bridge feature makes Claude 3 Sonnet obsessed with the bridge (Templeton et al. 2024) | GPT-2 small layer 8, feature #17608: completions mentioning the bridge 0% → 92% at α = 40 (random direction 0%); 'Golden Gate' or 'San Francisco' named in 0% | ≥ 50% on-topic and ≥ 30 points above baseline and random | ✅ pass (post-hoc: feature-selection rule changed twice after smoke tests that showed steering outcomes) |
-| Feature steering generalizes across concepts | many features steer behaviour (feature steering section) | 3/5 concepts gain ≥ 30 points of on-topic completions at α = 40 (median lift 58 points) | ≥ 3 of 5 concepts | ✅ pass (post-hoc: feature-selection rule changed twice after smoke tests that showed steering outcomes) |
+| Adding an SAE feature's direction steers generation toward its concept (a bridge feature; Golden Gate analogue) | clamping the Golden Gate Bridge feature makes Claude 3 Sonnet obsessed with the bridge (Templeton et al. 2024) | GPT-2 small layer 8, feature #17608: completions mentioning the bridge 0% [0, 7] → 77% [63, 87] at α = 40 (random direction 0% [0, 7]); 'Golden Gate' or 'San Francisco' named in 0% [0, 7] (n = 48 per cell; Wilson 95% CIs) | ≥ 50% on-topic and ≥ 30 points above baseline and random | ✅ pass (post-hoc: feature-selection rule changed twice after smoke tests that showed steering outcomes) |
+| Feature steering generalizes across concepts | many features steer behaviour (feature steering section) | 3/5 concepts gain ≥ 30 points of on-topic completions at α = 40 (median lift 77 points; steered on-topic rates: Golden Gate Bridge 77% [63, 87], Python code 6% [2, 17], French 0% [0, 7], DNA 83% [70, 91], Harry Potter 77% [63, 87]) | ≥ 3 of 5 concepts | ✅ pass (post-hoc: feature-selection rule changed twice after smoke tests that showed steering outcomes) |
 <!-- /table:replication -->
 
 ## Interpretation
@@ -34,21 +34,23 @@ make GPT-2 small write in those styles. Details: [methods review](../../reviews/
 ## Limitations
 
 - Keyword adherence is a coarse metric.
-- One layer and five concepts; 12 completions per cell and no CIs. To do: ≥ 50 completions per cell with Wilson CIs, and
-  all three selection rules' full-run results side by side.
+- One layer and five concepts. Since the review fixes, 48 completions per cell (3 prompts × 16 samples) with Wilson 95% CIs
+  (`n_per_cell`; the review asked for ≥ 50, 48 keeps the three prompts balanced). The rates moved within their old
+  noise and no verdict changed. Still to do: all three selection rules' full-run results side by side.
 
 ## All summary values
 
 <!-- table:summary -->
 | Key | Value |
 |---|---|
+| `n_per_cell` | 48 |
 | `gg_feature` | 17608 |
 | `gg_base` | 0.0 |
-| `gg_steer` | 0.916667 |
+| `gg_steer` | 0.770833 |
 | `gg_random` | 0.0 |
 | `gg_specific` | 0.0 |
 | `alpha` | 40 |
 | `n_concepts` | 5 |
 | `n_lift` | 3 |
-| `median_lift` | 0.583333 |
+| `median_lift` | 0.770833 |
 <!-- /table:summary -->

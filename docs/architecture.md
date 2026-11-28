@@ -49,9 +49,10 @@ flowchart LR
 - **`src/atlas/common/`**: shared helpers.
   - `io.py`: compact JSON export and the published-vs-ours `verdict_row`; `write_entry` applies the post-hoc flags.
   - `post_hoc.py`: the one list of post-hoc rows and their reasons (shown everywhere, excluded from tallies).
-  - `stats.py`: percentile bootstrap and Wilson score intervals.
-  - `stats.py`: bootstrap confidence intervals.
-  - `geometry.py`: PCA, cyclic-order tests, ridge probes.
+  - `stats.py`: percentile bootstrap (`bootstrap_ci`), cluster bootstrap over groups (`group_bootstrap`), Wilson score
+    intervals (`wilson_ci`, `rate_str`), the pre-stated CI rule (`ci_rule`) and permutation p-values (`perm_pvalue`).
+  - `geometry.py`: PCA, cyclic-order tests (NaN on tied angles), ridge probes (`ridge_r2`, `ridge_predict`) and the
+    confirmatory probe with a validation-chosen layer and a group-bootstrap CI (`validated_probe`).
   - `fourier.py`: Fourier basis for modular arithmetic.
   - `attention.py`: head scores.
   - `othello.py`: game engine.

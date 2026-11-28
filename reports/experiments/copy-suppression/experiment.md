@@ -33,6 +33,7 @@ late heads to make it robust to this choice.
 | L10H7's OV circuit suppresses the token it attends to | 84.70% of tokens: diagonal among 10 most negative; 98.86% in bottom 5% (column ranking) | 66.6% in top-10 most negative; 94.0% in bottom 5% (row ranking, 5000 tokens); other L10–11 heads: median 0.0% | > 50% top-10 and > 5× the median other head in layers 10–11 | ✅ pass |
 | L10H7's QK circuit attends to tokens that are being predicted | 95.72% of rows have the diagonal as maximum | 85.6% diagonal-max over 5000 tokens | > 50% diagonal-max | ✅ pass |
 | On natural prompts L10H7 lowers the logit of a copied token | worked examples, e.g. 'All's fair in love and' (Table 1) | negative direct effect on 8/8 prompts; ablation raises the copied token's probability on 5/8 | negative direct effect on ≥ 75% of prompts | ✅ pass |
+| Confirmatory: L10H7 suppresses the copied token specifically | copy suppression lowers the logit of tokens that appear earlier in the context (McDougall et al.) | direct effect lower on the copied token than on a control token (most probable next token not in the prompt) on 62% [43, 79] of 24 prompts; negative on 100% [86, 100] (Wilson 95% CIs) | both ≥ 75% of the 24 prompts; partial if one holds (pre-stated 2026-11-28) | 🟡 partial |
 <!-- /table:replication -->
 
 ## Interpretation
@@ -43,14 +44,23 @@ is measured), and zero-ablation raises that token's probability on only 5 of 8. 
 that other components such as negative name mover 11.10 (which the paper also finds partly copy-suppressive)
 compensate.
 
+**Confirmatory control (pre-stated 2026-11-28).** On 24 prompts (the 8 above plus 16 written before running), the
+direct effect on the copied token is negative in every prompt (`n_neg_direct_all`), but it is lower than the direct
+effect on a control token (the most probable next token absent from the prompt) in only `n_below_control` of 24, below
+the 75% threshold, so the row is partial. Inspecting the per-prompt values in the site data, many control tokens are
+variants of prompt words (" King" / "king", " doors" / "door", " Alice", " ocean" / "sea"), and the head lowers those
+too. The data support "L10H7 suppresses tokens related to what it attends to", with the exact copy not singled out on a
+quarter to a half of prompts.
+
 ## Deviations from the paper
 
 - Row- instead of column-ranking (see above); 5,000 instead of all tokens.
 
 ## Limitations
 
-- 8 hand-written prompts for behaviour and no control token; the paper's evaluation on OpenWebText (CSPA) is not
-  reproduced.
+- 24 hand-written prompts; the paper's evaluation on OpenWebText (CSPA) is not reproduced.
+- The control token is the model's own top prediction outside the prompt, which is often a near-variant of a prompt
+  word; a semantically unrelated control would make the test easier to pass.
 
 ## All summary values
 
@@ -65,7 +75,11 @@ compensate.
 | `ctrl_top10_max` | 0.4012 |
 | `ctrl_top10_argmax` | 11.10 |
 | `n_prompts` | 8 |
+| `n_prompts_all` | 24 |
 | `n_neg_direct` | 8 |
 | `n_ablation_up` | 5 |
-| `mean_attn_copy` | 0.34877 |
+| `n_neg_direct_all` | 24 |
+| `n_ablation_up_all` | 13 |
+| `mean_attn_copy` | 0.335905 |
+| `n_below_control` | 15 |
 <!-- /table:summary -->

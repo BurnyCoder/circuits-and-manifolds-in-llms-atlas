@@ -36,6 +36,7 @@ about ±0.17; 128 combinations are cheap (one forward pass each over 320 prompts
 | Negative name movers (10.7, 11.10) write against the answer | negative copy score 98% (§3.4) | direct logit attribution -2.11 and -0.92 | both heads have negative DLA on logit(IO) − logit(S) | ✅ pass |
 | The 26-head circuit is faithful | circuit keeps 87% of the logit difference (§4) | circuit-only logit diff 3.29 [3.12, 3.46] = 93% of full model | between 60% and 120% of the full model | ✅ pass |
 | Knocking out the circuit breaks the task; random heads don't | circuit knockouts collapse performance; random heads matter little (§4) | all 7 classes ablated → -1.27; 26 random heads → median 2.48 | circuit knockout drops logit diff by > 70%, random median drops it by < 40% | ✅ pass |
+| Confirmatory: the circuit is faithful with (head, position) nodes | circuit keeps 87% of the logit difference (§4), nodes = heads at their class positions (§2.1) | circuit heads kept only at S1+1 / S2 / END by class, everything else mean-ablated: logit diff 3.35 [3.17, 3.53] = 95% of full model (all-position circuit: 93%) | between 60% and 120% of the full model; partial 40–60% (pre-stated 2026-11-28) | ✅ pass |
 <!-- /table:replication -->
 
 ## Interpretation
@@ -46,6 +47,13 @@ leniency: we keep circuit heads clean at **all** positions, whereas Wang et al. 
 position) pairs (§2.1), e.g. name movers at END only. Simpler, more uniform templates may also contribute. Knocking
 out all 7 classes reverses the preference, while 26 random heads leave most of it intact.
 
+**Confirmatory test (pre-stated 2026-11-28).** Keeping circuit heads only at their class positions (Wang et al. §2.1:
+previous-token heads at S1+1, duplicate-token and induction heads at S2, S-inhibition and all name-mover classes at
+END) and mean-ablating every other (head, position) gives `faithful_pos_frac` of the full logit difference (CI
+`faithful_pos_frac_lo`–`faithful_pos_frac_hi`), slightly above the all-position circuit. The leniency hypothesis above
+is therefore not supported: the circuit's heads matter only at their class positions, and keeping them elsewhere adds
+nothing. The remaining gap to the paper's 87% more likely comes from our simpler, more uniform templates.
+
 ## Deviations from the paper
 
 - Own templates/names (the paper's exact dataset is not used), 8 instead of 15 templates.
@@ -54,7 +62,7 @@ out all 7 classes reverses the preference, while 26 random heads leave most of i
 
 - Faithfulness is measured by one metric (logit diff) with one ablation type; Miller et al. 2024
   ([arXiv 2407.08734](https://arxiv.org/abs/2407.08734)) show faithfulness numbers vary strongly with ablation choice.
-- To do: mean-ablate circuit heads outside their class positions (S1+1, S2, END).
+- Mean ablation with p_ABC means is one choice; resample ablation or path patching could give different numbers.
 
 ## All summary values
 
@@ -69,6 +77,10 @@ out all 7 classes reverses the preference, while 26 random heads leave most of i
 | `io_win` | 0.99375 |
 | `faithful_ld` | 3.289322 |
 | `faithful_frac` | 0.929927 |
+| `faithful_pos_ld` | 3.346889 |
+| `faithful_pos_frac` | 0.946202 |
+| `faithful_pos_frac_lo` | 0.89596 |
+| `faithful_pos_frac_hi` | 0.996697 |
 | `all_classes_ablated_ld` | -1.270267 |
 | `rand_ablated_ld_median` | 2.475566 |
 | `nm_attn_io` | 0.598112 |
